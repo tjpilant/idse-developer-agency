@@ -1,0 +1,198 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Enter IDSE Governance Mode",
+      "type": "shell",
+      "command": "echo '═══════════════════════════════════════════════════════════════' && echo '⚠️  IDSE GOVERNANCE MODE ACTIVE' && echo '═══════════════════════════════════════════════════════════════' && echo '' && echo 'You are now in IDE meta-layer mode.' && echo '' && echo 'Rules:' && echo '  • Only modify files in idse-governance/' && echo '  • Do NOT write application code' && echo '  • This is for Claude ↔ Codex coordination only' && echo '' && echo 'Governance layer: idse-governance/' && echo 'State file: idse-governance/state/state.json' && echo 'Config: .cursor/config/idse-governance.json' && echo '' && echo '═══════════════════════════════════════════════════════════════'",
+      "problemMatcher": [],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true
+      }
+    },
+    {
+      "label": "Validate IDSE Governance Layer",
+      "type": "shell",
+      "command": "${workspaceFolder}/.cursor/tasks/validate-idse-layer.sh",
+      "problemMatcher": [],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      }
+    },
+    {
+      "label": "View IDSE State",
+      "type": "shell",
+      "command": "python3 .cursor/tasks/governance.py view",
+      "problemMatcher": [],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      }
+    },
+    {
+      "label": "Handoff to Codex",
+      "type": "shell",
+      "command": "python3 .cursor/tasks/governance.py handoff claude_code codex_gpt \"${input:handoffReason}\"",
+      "problemMatcher": [],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true
+      }
+    },
+    {
+      "label": "Handoff to Claude",
+      "type": "shell",
+      "command": "python3 .cursor/tasks/governance.py handoff codex_gpt claude_code \"${input:handoffReason}\"",
+      "problemMatcher": [],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true
+      }
+    },
+    {
+      "label": "Acknowledge Handoff",
+      "type": "shell",
+      "command": "python3 .cursor/tasks/governance.py acknowledge --as \"${input:whichLLM}\"",
+      "problemMatcher": [],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true
+      }
+    },
+    {
+      "label": "Change Role to Builder",
+      "type": "shell",
+      "command": "python3 .cursor/tasks/governance.py role --as \"${input:whichLLM}\" builder \"${input:roleChangeReason}\"",
+      "problemMatcher": [],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      }
+    },
+    {
+      "label": "Change Role to Reviewer",
+      "type": "shell",
+      "command": "python3 .cursor/tasks/governance.py role --as \"${input:whichLLM}\" reviewer \"${input:roleChangeReason}\"",
+      "problemMatcher": [],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      }
+    },
+    {
+      "label": "Change Role to Planner",
+      "type": "shell",
+      "command": "python3 .cursor/tasks/governance.py role --as \"${input:whichLLM}\" planner \"${input:roleChangeReason}\"",
+      "problemMatcher": [],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      }
+    },
+    {
+      "label": "Change Role to Implementer",
+      "type": "shell",
+      "command": "python3 .cursor/tasks/governance.py role --as \"${input:whichLLM}\" implementer \"${input:roleChangeReason}\"",
+      "problemMatcher": [],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      }
+    },
+    {
+      "label": "Change IDSE Stage",
+      "type": "shell",
+      "command": "python3 .cursor/tasks/governance.py stage --as \"${input:whichLLM}\" \"${input:newStage}\"",
+      "problemMatcher": [],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "handoffReason",
+      "type": "promptString",
+      "description": "Reason for handoff (e.g., 'Implementation complete, need review')",
+      "default": "Handoff for review"
+    },
+    {
+      "id": "roleChangeReason",
+      "type": "promptString",
+      "description": "Reason for role change (optional)",
+      "default": ""
+    },
+    {
+      "id": "newStage",
+      "type": "pickString",
+      "description": "Select new IDSE stage",
+      "options": [
+        "Intent",
+        "Context",
+        "Specification",
+        "Plan",
+        "Tasks",
+        "Implementation",
+        "Feedback"
+      ],
+      "default": "Implementation"
+    },
+    {
+      "id": "whichLLM",
+      "type": "pickString",
+      "description": "Which LLM are you? (This verifies you're the active LLM)",
+      "options": [
+        "claude_code",
+        "codex_gpt"
+      ],
+      "default": "claude_code"
+    }
+  ]
+}

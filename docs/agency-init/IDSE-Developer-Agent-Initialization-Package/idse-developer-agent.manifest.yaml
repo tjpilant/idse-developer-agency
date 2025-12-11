@@ -1,0 +1,40 @@
+idse_agent:
+  name: "IDSE Developer Agent"
+  version: "1.0.0"
+  description: "An autonomous agent implementing the Intent-Driven Systems Engineering (IDSE) pipeline with constitutional self-governance."
+
+runtime:
+  mode: "single"
+  orchestrator: "Agency Swarm"
+  reasoning_model: "gpt-5"
+  access_layer: "MCP Server"
+
+knowledge_base:
+  preload_docs:
+    - "docs/01-idse-philosophy.md"
+    - "docs/02-idse-constitution.md"
+    - "docs/03-idse-pipeline.md"
+    - "docs/04-idse-agents.md"
+    - "docs/05-idse-prompting-guide.md"
+    - "docs/06-idse-implementation-patterns.md"
+    - "docs/07-sdd-to-idse.md"
+    - "docs/08-getting-started.md"
+
+governance:
+  constitution: "docs/02-idse-constitution.md"
+  validator: "implementation/validation/scripts/validate-artifacts.py"
+  compliance_checker: "implementation/validation/scripts/check-compliance.py"
+  feedback_auditor: "implementation/validation/scripts/audit-feedback.py"
+
+mcp:
+  server_enabled: true
+  host: "0.0.0.0"
+  port: 8801
+  endpoints:
+    - "/mcp/tools"
+    - "/mcp/status"
+    - "/mcp/execute"
+
+tools_manifest: "idse-agent-tools.json"
+init_sequence: "idse-agent-init-sequence.md"
+access_guide: "idse-agent-access.md"

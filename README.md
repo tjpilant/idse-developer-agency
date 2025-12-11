@@ -1,240 +1,227 @@
-# Agency Swarm GitHub Template
+# 🧠 IDSE Developer Agency
 
-A production-ready template for deploying [Agency Swarm](https://github.com/VRSEN/agency-swarm) agencies with Docker containerization and automated deployment to the [Agencii](https://agencii.ai/) cloud platform.
+A working, governed implementation of the **Intent-Driven Systems Engineering (IDSE)** framework — hosted as a multi-agent system using the [Agency Swarm](https://github.com/VRSEN/agency-swarm) orchestration framework.
 
-**🌐 [Agencii](https://agencii.ai/)** - The official cloud platform for Agency Swarm deployments  
-**🔗 [GitHub App](https://github.com/apps/agencii)** - Automated deployment integration
+> 🔧 **Based on:** [Agency Swarm Starter Template](https://github.com/VRSEN/agency-starter-template) for [Agencii Cloud](https://agencii.ai/)  
+> 🧭 **Governed by:** [IDSE Developer Agent](https://github.com/tjpilant/idse-developer-agent) — constitutional design, seven-stage pipeline, and principled agent behavior.
 
 ---
 
-## 🚀 Quick Start
+## 📜 About IDSE
 
-### 1. Use This Template
+**Intent-Driven Systems Engineering (IDSE)** builds complex software through structured reasoning, documentation, and constitutional governance.
 
-Click **"Use this template"** to create your own repository, or:
+**Core Principles**
+
+- **Intent Supremacy** – all work flows from explicit intent.  
+- **Constitutional Governance** – behavior is shaped by documents, not ad-hoc logic.  
+- **Seven Stages** – `Intent → Context → Specification → Plan → Tasks → Implementation → Feedback`.  
+- **Feedback Loops** – artifacts must be validated, audited, and traceable.  
+- **Simplicity & Atomicity** – every component should be small, testable, and clear.
+
+Full philosophy: see [`/docs/`](./docs/).
+
+---
+
+## 🏗️ Repository Overview
+
+| Path | Description |
+|------|--------------|
+| `agency.py` | Entry point that runs the IDSE Developer Agent. |
+| `idse_developer_agent/` | Tools and logic for the seven IDSE stages. |
+| `docs/` | IDSE Constitution, pipeline, prompting guide, and patterns. |
+| `.cursor/` | Cursor IDE automation and task scripts. |
+| `idse-governance/` | **IDE Governance Layer** – Claude ↔ Codex coordination system. |
+| `.vscode/` | Tasks integrating governance commands. |
+| `.env` | Environment keys. |
+| `requirements.txt` | Dependencies for Agency Swarm + IDSE tools. |
+
+---
+
+## ⚙️ Running the IDSE Developer Agency
 
 ```bash
-git clone https://github.com/your-username/agency-github-template.git
-cd agency-github-template
-```
-
-> **🌐 For Production**: Sign up at [agencii.ai](https://agencii.ai/) and use this template for automated cloud deployment
-
-### 2. Install Dependencies
-
-```bash
+git clone https://github.com/your-username/your-idse-agency.git
+cd your-idse-agency
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
-```
-
-### 3. Set Up Environment Variables
-
-Create a `.env` file in the root directory:
-
-```bash
-# Required
-OPENAI_API_KEY=your_openai_api_key_here
-
-# Optional - Add any additional API keys your agents need
-# EXAMPLE_API_KEY=your_api_key_here
-```
-
-### 4. Test the Example Agency
-
-```bash
 python agency.py
-```
+This launches the IDSE Developer Agent locally and enters the seven-stage loop.
 
-This runs the example agency in terminal mode for testing.
+🧠 Using the IDSE Agent with VS Code + Claude + Codex + Cursor
+🧩 The Dual-Governance System
+This workspace includes a self-governing IDE automation layer that:
 
-> **💡 Pro Tip**: For creating your own agency, open this template in [Cursor IDE](https://cursor.sh/) and use the AI assistant with the `.cursor/rules/workflow.mdc` file for automated agency creation!
+Manages state, handoffs, and roles for LLM collaboration.
 
----
+Automates all IDSE processes (stage, role, and handoff changes).
 
-## 🏗️ Project Structure
+Validates compliance via CI scripts and boundary enforcement.
 
-```
-agency-github-template/
-├── agency.py                 # Main entry point
-├── requirements.txt          # Python dependencies
-├── Dockerfile               # Container configuration
-├── .env                     # Environment variables (create this)
-├── example_agent/           # Your agency folder
-    ├── __init__.py
-    ├── example_agent.py
-    ├── instructions.md
-    ├── files/               # Local files accessible to the agent (via files_folder)
-    └── tools/
-        └── ExampleTool.py
-├── example_agent2/
-├── agency_manifesto.md  # Shared instructions
-├── requirements.txt
-├── .env
-└──...
-```
+Documents itself with auto-generated feedback artifacts.
 
----
+References IDSE Constitutional Articles dynamically at runtime.
 
-## 🔧 Creating Your Own Agency
+💡 This transforms VS Code from a text editor into an intent-driven governance workspace.
 
-### 🤖 **AI-Assisted Agency Creation with Cursor**
+🧭 Governance Lifecycle
+1️⃣ Intent → Context → Specification → Plan → Tasks → Implementation → Feedback
+Each IDE agent transition mirrors these seven IDSE stages.
 
-This template includes **AI-powered agency creation** using Cursor IDE:
+2️⃣ Claude ↔ Codex Alternation
 
-1. **Open this project in Cursor IDE**
+Claude builds → handoff → Codex reviews → feedback → Claude refines.
 
-2. **Use the AI Assistant** to create your agency by referencing:
-   ```
-   📁 .cursor/rules/workflow.mdc
-   ```
-3. **Simply ask the AI:**
+Each loop = one constitutional cycle, timestamped and tracked in handoff_cycle_id.
 
-   > "Create a new agency using the .cursor workflow"
+All handoffs, stage transitions, and role changes are logged automatically in
+idse-governance/state/state.json and accompanied by Markdown summaries in
+idse-governance/feedback/.
 
-   The AI will guide you through the complete 7-step process:
+🧩 Dual-Governance Workflow Diagram
+mermaid
+Copy code
+flowchart TD
+    subgraph IDSE_Cycle["IDSE Development Lifecycle"]
+        A1(Intent) --> A2(Context)
+        A2 --> A3(Specification)
+        A3 --> A4(Plan)
+        A4 --> A5(Tasks)
+        A5 --> A6(Implementation)
+        A6 --> A7(Feedback)
+        A7 --> A1
+    end
 
-   - ✅ PRD Creation
-   - ✅ Folder Structure Setup
-   - ✅ Tool Development
-   - ✅ Agent Creation
-   - ✅ Agency Configuration
-   - ✅ Testing & Validation
-   - ✅ Iteration & Refinement
+    subgraph Governance["Claude ↔ Codex Governance Layer"]
+        C1[Claude\n(Builder / Planner)] -->|Builds & documents| C2[Codex\n(Reviewer / Implementer)]
+        C2 -->|Feedback & handoff| C1
+    end
 
-### 📋 **What the AI Will Do For You**
+    A6 -. "handoff" .-> C1
+    C1 -. "review" .-> C2
+    C2 -. "feedback" .-> A7
+    A7 -. "refinement" .-> A1
 
-The AI assistant will automatically:
+    style IDSE_Cycle fill:#e0f7fa,stroke:#00acc1,stroke-width:2px
+    style Governance fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px
+This diagram visualizes how Claude and Codex alternate through the seven IDSE stages, forming a constitutional feedback loop between creative generation and critical validation.
 
-- Create proper folder structures
-- Generate agent classes and instructions
-- Build custom tools with full functionality
-- Set up communication flows
-- Create the main agency file
-- Test everything to ensure it works
+⚙️ Using the IDE Tasks
+Open VS Code / Cursor → Ctrl + Shift + P → “Tasks: Run Task”
 
-### 🚀 **Manual Alternative (Advanced Users)**
+Category	Tasks	Description
+Handoffs	Handoff to Codex, Handoff to Claude, Acknowledge Handoff	Exchange control between LLMs.
+Role Changes	Change Role to Builder / Planner / Implementer / Reviewer	Switch governance role — auto-links to Constitution Articles IV, VII, VIII, IX.
+Stage Management	Change IDSE Stage	Choose any of the seven IDSE stages.
+Utilities	View IDSE State, Validate Governance Layer	Display or validate current governance status.
 
-If you prefer manual setup, replace the `ExampleAgency/` folder with your own agency structure following the Agency Swarm conventions.
+🧮 Example Workflow
+Claude (Builder) completes a feature and runs
+Handoff to Codex → reason: "Feature ready for review".
 
-### Agency Structure Requirements
+Creates idse-governance/feedback/handoff_claude_to_codex_<timestamp>.md.
 
-Your agency must follow this structure:
+Updates state.json: active_llm → codex_gpt, awaiting_handoff → true.
 
-- **Agency Folder**: Contains all agents and manifesto
-- **Agent Folders**: Each agent has its own folder with:
-  - `AgentName.py` - Agent class definition
-  - `instructions.md` - Agent-specific instructions
-  - `tools/` - Folder containing agent tools
-- **agency_manifesto.md** - Shared instructions for all agents
+Codex (Reviewer) runs Acknowledge Handoff, reviews changes, and after approval executes
+Handoff to Claude → reason: "Review complete, recommendations logged".
 
----
+The system records the cycle and advances to the next IDSE stage automatically.
 
-## 🚀 Production Deployment with Agencii
+🧩 Building and Extending
+✍️ Want to Build Your Own Agency?
+You can fork this repository to create your own custom IDSE agency. Then:
 
-### **🌐 Deploy to Agencii Cloud Platform**
+Replace the logic in idse_developer_agent/ with your own tools and processes.
 
-For production deployment, use the [Agencii](https://agencii.ai/) platform:
+Update agency.py and instructions.md to define your unique workflow.
 
-#### **Step 1: Create Account & Use Template**
+Follow the IDSE pipeline (Intent → Context → Spec → Plan → Tasks → Implementation → Feedback) to scaffold your system.
 
-1. **Sign up** at [agencii.ai](https://agencii.ai/)
-2. **Use this template** to create your repository
-3. **Develop your agency** using Cursor IDE with `.cursor` workflow
+Use Claude and Codex in VS Code + Cursor for dual-agent design, implementation, and review.
 
-#### **Step 2: Install GitHub App**
+🌐 Optional: Cloud Deployment with Agencii
+You can deploy your agency directly to the Agencii Cloud:
 
-1. **Install** the [Agencii GitHub App](https://github.com/apps/agencii)
-2. **Grant permissions** to your repository
-3. **Configure** environment variables in Agencii dashboard
+Sign up at https://agencii.ai
 
-#### **Step 3: Deploy**
+Install the Agencii GitHub App
 
-1. **Push to main branch** - Agencii automatically detects and deploys
-2. **Monitor deployment** in your Agencii dashboard
-3. **Access your live agency** via provided endpoints
+Push to main — Agencii will auto-deploy your agency
 
-### **🔄 Automatic Deployments**
+Your live agency will be available via a secure API endpoint
 
-- **Auto-deploy** on every push to `main` branch
-- **Zero-downtime** deployments with rollback capability
-- **Environment management** through Agencii dashboard
+🧰 Development Workflow
+Tool	Purpose
+🧠 agency.py	Launch the IDSE Developer Agent.
+🤖 idse_developer_agent/	Implements each pipeline stage.
+🧩 idse-governance/	Dual-LLM coordination — governance scripts, state, and handoff templates.
+🧪 .cursor/tasks/governance.py	Automation of handoffs, role changes, and stage transitions.
+🧱 .cursor/tasks/validate-idse-layer.sh	CI validation of boundaries and config integrity.
+🖥️ .vscode/tasks.json	IDE-integrated task runner for governance commands.
 
----
+🧪 Validation
+Run:
 
-## 🔨 Development Workflow
+bash
+Copy code
+bash .cursor/tasks/validate-idse-layer.sh
+Checks:
 
-### **🎯 Recommended: AI-Assisted Development**
+Boundary notices and markers.
 
-1. **Open Cursor IDE** with this template
-2. **Ask the AI**: _"Create a new agency using the .cursor workflow"_
-3. **Follow the guided process** - the AI handles everything automatically
-4. **Test your agency**: `python agency.py`
-5. **Deploy to production**: Install [Agencii GitHub App](https://github.com/apps/agencii) and push to main
+Governance config validity.
 
-### **⚙️ Manual Development (Advanced)**
+Schema compliance for state.json.
 
-If you prefer hands-on development:
+Absence of governance artifacts in protected paths.
 
-1. **Create Tools**: Build agent tools in `tools/` folders
-2. **Configure Agents**: Write `instructions.md` and agent classes
-3. **Test Locally**: Run `python agency.py`
-4. **Deploy**: Push to your preferred platform
+Output example:
 
-The `.cursor/rules/workflow.mdc` file contains the complete development specifications for manual implementation.
+pgsql
+Copy code
+✔ Governance layer notice found
+✔ Config valid
+✔ State file in governance layer
+✔ No governance artifacts in code
+✅ IDSE Governance Layer validation passed!
+📚 References
+IDSE Constitution: docs/02-idse-constitution.md
 
----
+Pipeline: docs/03-idse-pipeline.md
 
-## 📚 Key Features
+Agency Swarm Framework: GitHub → VRSEN/agency-swarm
 
-- **🌐 Agencii Cloud Deploy**: One-click deployment to [Agencii platform](https://agencii.ai/)
-- **🤖 AI-Assisted Creation**: Built-in Cursor IDE workflow for automated agency development
-- **🔄 Auto-Deploy**: Automatic deployment on push to main branch
-- **🚀 Ready-to-Deploy**: Dockerfile and requirements included
-- **🔧 Modular Structure**: Easy to customize and extend
-- **🛠️ Example Implementation**: Complete working example
-- **📦 Container Ready**: Docker configuration for any platform
-- **🔒 Environment Management**: Secure API key handling via Agencii dashboard
-- **🧪 Local Testing**: Terminal demo for development
-- **📋 Guided Workflow**: 7-step process with AI assistance
+Governance Layer: idse-governance/
 
----
+Automation Scripts: .cursor/tasks/
 
-## 📖 Learn More
+Validation & Testing: .vscode/tasks.json, validate-idse-layer.sh
 
-- **[Agency Swarm Documentation](https://agency-swarm.ai/)**
-- **[Agency Swarm GitHub](https://github.com/VRSEN/agency-swarm)**
+Cloud Deployment: Agencii Platform
 
----
+🤝 Contributing
+Fork the repository
 
-## 🤝 Contributing
+Create a feature branch
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
+Run validation scripts before PR submission
 
----
+Submit a PR with a clear description and stage reference
 
-## ⚡ Quick Tips
+⚡ TL;DR
+This repository is both:
 
-- **Start Small**: Begin with 1-2 agents and expand
-- **Test Tools**: Each tool should work independently
-- **Clear Instructions**: Write detailed agent instructions
-- **Environment Setup**: Always use `.env` for API keys
-- **Documentation**: Update instructions as you develop
+a governed multi-agent system (Agency Swarm v1.0.0)
 
----
+and a self-governing IDE automation layer (Claude ↔ Codex Governance System)
 
-**Ready to build your AI agency?** 🤖✨
+Together, they form a constitutional workspace where:
 
-### 🌐 **Production Route (Recommended)**
+Code, documentation, and feedback are all governed artifacts.
 
-1. **Sign up** at [agencii.ai](https://agencii.ai/)
-2. **Use this template** to create your repository
-3. **Install** [Agencii GitHub App](https://github.com/apps/agencii)
-4. **Push to main** → Automatic deployment!
+Every action traces back to Intent, every decision to Context, and every correction to Feedback.
 
-### 🛠️ **Development Route**
-
-Open this template in **Cursor IDE** and ask the AI to create your agency using the `.cursor` workflow. The AI will handle everything from setup to testing automatically!
-
-For manual development, replace the `ExampleAgency` with your own implementation and start deploying intelligent agent systems!
+🏛️ Governed by IDSE, scaffolded by Agency Swarm, automated by VS Code + Claude + Codex + Cursor.
+Your IDE is now a constitutional engineering environment.

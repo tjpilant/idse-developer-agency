@@ -2,6 +2,10 @@
 
 Your task is to convert an MCP server into the **Code Execution Pattern** described in [Anthropic's blog post](https://www.anthropic.com/engineering/code-execution-with-mcp). This pattern enables **progressive disclosure** of tools, reducing token usage by up to 98% compared to loading all tools upfront.
 
+**Prerequisites:**
+- MCP server configured per `.cursor/commands/add-mcp.md`
+- Agent instruction patterns per `.cursor/commands/write-instructions.md`
+
 ## Why This Pattern?
 
 **Problem with Traditional MCP:**

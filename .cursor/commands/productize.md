@@ -54,7 +54,7 @@ class OnboardingTool(BaseTool):
         [],
         description="Upload documentation files for the agent to reference.",
         json_schema_extra={
-            "x-file-upload-path": "./agent_name/files",  # Replace with your agent folder. FIles will be automatically uploaded to this path.
+            "x-file-upload-path": "./agent_name/files",  # MUST match the agent's files_folder parameter.
         },
     )
 

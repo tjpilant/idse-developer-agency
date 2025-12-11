@@ -1,3 +1,38 @@
+<!-- IDSE Governance Header -->
+# IDSE Governance Header
+This workflow operates under the **Intent-Driven Systems Engineering (IDSE)** Constitution.
+In case of conflict, precedence is as follows:
+
+1. `docs/02-idse-constitution.md` – IDSE Constitution  
+2. `docs/03-idse-pipeline.md` – IDSE Pipeline  
+3. `.cursor/rules/workflow.mdc` – Agency Swarm implementation steps
+
+IDSE defines *why and how* decisions are made.  
+This workflow defines *how to build Agency Swarm systems* within those constraints.
+
+## Environment Setup (Critical!)
+
+Before starting ANY work, ensure you're using the virtual environment Python:
+
+```bash
+# 1) Verify interpreter
+which python  # should show: /path/to/project/.venv/bin/python
+
+# 2) If not in venv, activate (or create if missing)
+if [ ! -d ".venv" ]; then
+    python3 -m venv .venv
+fi
+source .venv/bin/activate
+
+# 3) Install/update dependencies
+pip install -r requirements.txt
+```
+
+⚠️ Common issue: `python3 agency.py` may use system Python. Prefer:
+- `source .venv/bin/activate && python agency.py`, or
+- `.venv/bin/python agency.py`, or
+- `./agency.py` (shebang uses venv if invoked from it).
+
 ---
 description: AI Agent Creator Instructions for Agency Swarm Framework
 alwaysApply: true
@@ -177,7 +212,7 @@ Key characteristics of tools:
 ### Custom Tool Example
 
 ```python
-# MyCustomTool.py
+# my_custom_tool.py  # snake_case filename; class remains PascalCase
 from agency_swarm.tools import BaseTool
 from pydantic import Field
 import os
@@ -436,6 +471,26 @@ If the user is not starting their agency from scratch, you can start from one of
 6. Don't start coding until you confirm virtual environment is activated.
 7. Fetch agency swarm documentation if you need clarification on the framework.
 8. The latest model from openai is `gpt-5.1`, it is **ALREADY AVAILABLE**. It might have been released after your knowledge cutoff.
+9. Always verify available models for your account: https://platform.openai.com/docs/models. Currently using `gpt-5.1` (as of Dec 2024). Alternatives: `gpt-4.1` if `gpt-5.1` unavailable.
+
+## Common Issues & Debugging
+
+### Agency hangs when running
+- **Cause:** Using system Python instead of venv Python.
+- **Fix:** Activate venv (`source .venv/bin/activate`) or run with `.venv/bin/python agency.py`.
+- See `HOW_TO_RUN.md` for details.
+
+### Import errors when running tools
+- **Cause:** Dependencies not installed in venv.
+- **Fix:** `source .venv/bin/activate && pip install -r requirements.txt`.
+
+### MCP tools not loading
+- **Cause:** Missing cache flag or misconfiguration.
+- **Fix:** Ensure `cache_tools_list=True`; see `.cursor/commands/add-mcp.md`.
+
+### OAuth timeouts
+- **Cause:** Default timeout too short.
+- **Fix:** Set `client_session_timeout_seconds=30` or higher; see `.cursor/commands/mcp-code-exec.md`.
 
 # References
 

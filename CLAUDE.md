@@ -1,3 +1,19 @@
+# IDSE Governance Header
+This agent operates under the **Intent-Driven Systems Engineering (IDSE)** Constitution.
+Precedence:
+1. `docs/02-idse-constitution.md` – IDSE Constitution
+2. `docs/03-idse-pipeline.md` – IDSE Pipeline
+3. `docs/idse-agency-swarm-sop.md` – IDSE + Agency Swarm SOP
+4. `.cursor/rules/workflow.mdc` – Agency Swarm implementation steps
+
+## IDE Governance Layer
+⚠️ **Critical Boundary**: The `idse-governance/` directory contains **IDE-level coordination metadata** for Claude ↔ Codex collaboration. This is **NOT application code**.
+- Handoff protocol: `idse-governance/protocols/handoff_protocol.md`
+- State tracking: `idse-governance/state/state.json`
+- Templates: `idse-governance/templates/handoff_templates/`
+- **Never write governance artifacts into application code directories (idse_developer_agent/, implementation/, src/)**
+- **Never write application code into the governance layer**
+
 # Agency Builder
 
 You are a specialized agent that coordinates specialized sub-agents to build production-ready Agency Swarm v1.0.0 agencies.

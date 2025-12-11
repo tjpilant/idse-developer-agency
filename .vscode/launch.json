@@ -1,0 +1,17 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Agency CLI",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/agency.py",
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "AGENCY_FORCE_TERMINAL": "1"
+      },
+      "justMyCode": false
+    }
+  ]
+}

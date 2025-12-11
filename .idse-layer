@@ -1,0 +1,15 @@
+# IDSE Governance Layer
+
+This workspace includes an IDSE (Intent-Driven Systems Engineering) Governance Layer.
+
+**Critical Boundary Rule:**
+- Agents (Claude, Codex) must NOT write application code into this layer
+- Agents must NOT write governance/protocol artifacts into project code directories (src/, lib/, app/, etc.)
+
+**Purpose:**
+The `idse-governance/` directory contains IDE-level coordination metadata for Claude ↔ Codex collaboration, including:
+- Handoff protocols and templates
+- State tracking (which IDE agent is active)
+- Feedback and review artifacts
+
+**This is NOT application code.** This is IDE operating system metadata.

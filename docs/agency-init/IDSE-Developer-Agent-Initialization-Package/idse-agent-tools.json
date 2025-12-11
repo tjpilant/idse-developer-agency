@@ -1,0 +1,46 @@
+{
+  "tools": [
+    {
+      "name": "generate_intent",
+      "description": "Prompts user for Intent and generates intent.md",
+      "module": "implementation.code.intent.intent_agent",
+      "method": "run"
+    },
+    {
+      "name": "derive_context",
+      "description": "Derives project context and constraints from intent.md",
+      "module": "implementation.code.context.context_agent",
+      "method": "run"
+    },
+    {
+      "name": "create_spec",
+      "description": "Generates a complete specification from intent and context",
+      "module": "implementation.code.spec.spec_agent",
+      "method": "run"
+    },
+    {
+      "name": "build_plan",
+      "description": "Creates plan.md and test-plan.md from specification",
+      "module": "implementation.code.plan.plan_agent",
+      "method": "run"
+    },
+    {
+      "name": "generate_tasks",
+      "description": "Generates atomic task list for implementation",
+      "module": "implementation.code.task.task_agent",
+      "method": "run"
+    },
+    {
+      "name": "implement_system",
+      "description": "Generates code and test scaffolding per plan and tasks",
+      "module": "implementation.code.implementation.implementation_agent",
+      "method": "run"
+    },
+    {
+      "name": "feedback_audit",
+      "description": "Analyzes feedback and integrates learning into upstream artifacts",
+      "module": "implementation.code.feedback.feedback_agent",
+      "method": "run"
+    }
+  ]
+}

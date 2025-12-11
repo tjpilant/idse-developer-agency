@@ -1,0 +1,27 @@
+{
+  "idse_layer_root": "idse-governance/",
+  "protected_paths": [
+    "src/",
+    "lib/",
+    "app/",
+    "backend/",
+    "idse_developer_agent/",
+    "implementation/",
+    "agency.py"
+  ],
+  "governance_paths": [
+    "idse-governance/",
+    ".idse-layer",
+    ".cursor/config/idse-governance.json"
+  ],
+  "allowed_agents": ["claude_code", "codex_gpt"],
+  "layer_mode": "governance",
+  "on_violation": "warn_and_abort",
+  "rules": {
+    "handoff_protocol": "Handoff coordination is IDE-level metadata, not application code",
+    "state_tracking": "state.json tracks IDE agent control, not application state",
+    "boundary": "Never write governance artifacts into protected_paths or application code into governance_paths"
+  },
+  "version": "1.0.0",
+  "last_updated": "2025-12-11"
+}

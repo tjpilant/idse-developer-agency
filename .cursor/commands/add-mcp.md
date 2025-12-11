@@ -2,6 +2,10 @@
 
 Your task is to add Model Context Protocol (MCP) server to an Agency Swarm agent. MCP servers expose external tools and data sources to agents through a standardized protocol.
 
+**Related Guides:**
+- Progressive disclosure pattern: see `.cursor/commands/mcp-code-exec.md`
+- Writing instructions for agents: see `.cursor/commands/write-instructions.md`
+
 ---
 
 ## Quick Reference: MCP Server Types
