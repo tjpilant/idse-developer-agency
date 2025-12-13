@@ -1,5 +1,7 @@
 #!/home/tjpilant/projects/idse-developer-agency/.venv/bin/python
 import sys
+import argparse
+
 # Force unbuffered output for better CLI experience
 sys.stdout.reconfigure(line_buffering=True)
 
@@ -48,9 +50,78 @@ def create_agency(load_threads_callback=None):
 
     return agency
 
+def run_web_server(host: str = "0.0.0.0", port: int = 8000, reload: bool = True):
+    """
+    Run FastAPI web server with multi-protocol support
+
+    Provides:
+    - AG-UI protocol at /admin/ag-ui/*
+    - CopilotKit protocol at /api/copilot/*
+
+    Args:
+        host: Host to bind to (default: 0.0.0.0)
+        port: Port to run on (default: 8000)
+        reload: Enable auto-reload for development (default: True)
+    """
+    import uvicorn
+
+    print("\n" + "="*70, flush=True)
+    print("🚀 Starting IDSE Developer Agency Web Server", flush=True)
+    print("="*70, flush=True)
+    print(f"Host: {host}:{port}", flush=True)
+    print(f"AG-UI Admin: http://{host}:{port}/admin/ag-ui", flush=True)
+    print(f"CopilotKit Widget: http://{host}:{port}/api/copilot", flush=True)
+    print(f"API Docs: http://{host}:{port}/docs", flush=True)
+    print("="*70 + "\n", flush=True)
+
+    uvicorn.run(
+        "backend.main:app",
+        host=host,
+        port=port,
+        reload=reload,
+        log_level="info",
+    )
+
+
 if __name__ == "__main__":
-    print("Starting agency initialization...", flush=True)
-    agency = create_agency()
-    print("Agency initialized successfully!", flush=True)
-    # Always launch the interactive CLI for local testing using a simple loop.
-    run_simple_cli(agency)
+    parser = argparse.ArgumentParser(
+        description="IDSE Developer Agency - Multi-mode AI Agent System"
+    )
+    parser.add_argument(
+        "--mode",
+        choices=["cli", "web"],
+        default="cli",
+        help="Run mode: 'cli' for interactive CLI, 'web' for web server (default: cli)",
+    )
+    parser.add_argument(
+        "--host",
+        default="0.0.0.0",
+        help="Host for web server mode (default: 0.0.0.0)",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=8000,
+        help="Port for web server mode (default: 8000)",
+    )
+    parser.add_argument(
+        "--no-reload",
+        action="store_true",
+        help="Disable auto-reload in web server mode",
+    )
+
+    args = parser.parse_args()
+
+    if args.mode == "web":
+        # Run web server with multi-protocol support
+        run_web_server(
+            host=args.host,
+            port=args.port,
+            reload=not args.no_reload,
+        )
+    else:
+        # Run interactive CLI (original mode)
+        print("Starting agency initialization...", flush=True)
+        agency = create_agency()
+        print("Agency initialized successfully!", flush=True)
+        run_simple_cli(agency)

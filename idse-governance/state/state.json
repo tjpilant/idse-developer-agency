@@ -1,23 +1,23 @@
 {
-  "active_llm": "claude_code",
+  "active_llm": "codex_gpt",
   "awaiting_handoff": false,
-  "handoff_cycle_id": "2025-12-11T17-49-50Z",
+  "handoff_cycle_id": "2025-12-13T02-08-16Z",
   "layer_scope": "governance",
   "enforced_paths": [
     "idse-governance/"
   ],
   "role_change_event": {
-    "from": "builder",
-    "to": "reviewer",
-    "reason": "Testing role change when not active LLM",
-    "timestamp": "2025-12-11T17:46:39.243953+00:00"
+    "from": "reviewer",
+    "to": "builder",
+    "reason": "Better coder maybe",
+    "timestamp": "2025-12-13T02:09:24.929811+00:00"
   },
   "active_stage": "Feedback",
   "last_handoff": {
-    "from": "codex_gpt",
-    "to": "claude_code",
-    "timestamp": "2025-12-11T17:49:50.013355+00:00",
-    "notes": "Returning control to Claude, fixing state sync"
+    "from": "claude_code",
+    "to": "codex_gpt",
+    "timestamp": "2025-12-13T02:08:16.052984+00:00",
+    "notes": "RNeeds to being Front end dev"
   },
-  "last_checked": "2025-12-11T17:53:17.269313+00:00"
+  "last_checked": "2025-12-13T02:09:24.929811+00:00"
 }
