@@ -10,6 +10,7 @@
     "lint": "echo \"No linter configured\""
   },
   "dependencies": {
+    "@ag-ui/core": "^0.0.42",
     "@copilotkit/react-core": "^1.16.2",
     "@copilotkit/react-ui": "^1.16.2",
     "@measured/puck": "^0.17.3",

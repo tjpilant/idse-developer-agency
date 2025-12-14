@@ -72,6 +72,11 @@ export const ChatWidget: ComponentConfig<ChatWidgetProps> = {
     placeholder,
     publicApiKey,
   }) => {
+    // Avoid rendering the popup inside the editor shell where a dedicated right-panel chat already exists.
+    if (typeof window !== "undefined" && window.location.pathname.includes("editor-shell")) {
+      return null;
+    }
+
     const base = (apiBase || fallbackApiBase).replace(/\/$/, "");
     const runtimeUrl = `${base}/api/copilot`;
     const chatEndpoint = `${base}/api/copilot/chat`;

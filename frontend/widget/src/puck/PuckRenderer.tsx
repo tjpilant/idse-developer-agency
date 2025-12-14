@@ -1,19 +1,19 @@
 import { useEffect, useState } from "react";
-import { Render, type PuckValue } from "@measured/puck";
+import { Render, type Data } from "@measured/puck";
 import { puckConfig } from "./config";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 
 const apiBase = (import.meta as any).env?.VITE_API_BASE ?? "http://localhost:8000";
 
 interface PuckRendererProps {
   pageId?: string;
-  data?: PuckValue;
+  data?: Data;
 }
 
 export function PuckRenderer({ pageId: propPageId, data: initialData }: PuckRendererProps) {
   const params = useParams();
   const pageId = propPageId ?? params.pageId;
-  const [data, setData] = useState<PuckValue | undefined>(initialData);
+  const [data, setData] = useState<Data | undefined>(initialData);
   const [status, setStatus] = useState<string | null>(null);
 
   useEffect(() => {
@@ -53,8 +53,31 @@ export function PuckRenderer({ pageId: propPageId, data: initialData }: PuckRend
     );
   }
 
+  // Extract page ID from data if available
+  const currentPageId = (data as any)?.id || pageId;
+  const pageTitle = (data as any)?.title || (data as any)?.root?.title || "Untitled";
+
   return (
     <div className="min-h-screen bg-white">
+      {/* Edit button bar */}
+      <div className="fixed top-4 right-4 z-50 flex gap-2">
+        <Link
+          to="/"
+          className="px-4 py-2 rounded-lg bg-slate-700 text-white font-semibold hover:bg-slate-800 shadow-lg transition-colors"
+        >
+          ← Home
+        </Link>
+        {currentPageId && (
+          <Link
+            to={`/editor?load=${currentPageId}`}
+            className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 shadow-lg transition-colors"
+          >
+            ✏️ Edit "{pageTitle}"
+          </Link>
+        )}
+      </div>
+
+      {/* Page content */}
       <Render config={puckConfig} data={data} />
     </div>
   );
