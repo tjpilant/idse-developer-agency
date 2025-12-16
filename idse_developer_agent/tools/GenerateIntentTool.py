@@ -2,6 +2,7 @@ from agency_swarm.tools import BaseTool
 from pydantic import Field
 
 from implementation.code.intent import intent_agent
+from SessionManager import SessionManager
 
 
 class GenerateIntentTool(BaseTool):
@@ -11,10 +12,19 @@ class GenerateIntentTool(BaseTool):
         default=None,
         description="Optional intent content to write. If omitted, preserves existing intent or initializes a template.",
     )
+    project: str = Field(
+        default="default",
+        description="Project name for session-scoped paths.",
+    )
     output_path: str = Field(
-        default="intents/current/intent.md",
-        description="Path where intent.md should be written.",
+        default="intents/projects/<project>/sessions/<active>/intent.md",
+        description="Path where intent.md should be written (session-scoped).",
     )
 
     def run(self) -> str:
-        return intent_agent.run(intent_text=self.intent_text, output_path=self.output_path)
+        # Switch active session project if needed
+        meta = SessionManager.get_active_session()
+        if meta.project != self.project:
+            SessionManager.switch_project(self.project)
+        output_resolved = SessionManager.build_path("intents", "intent.md")
+        return intent_agent.run(intent_text=self.intent_text, output_path=str(output_resolved))

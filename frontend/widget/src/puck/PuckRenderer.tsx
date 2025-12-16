@@ -13,7 +13,25 @@ interface PuckRendererProps {
 export function PuckRenderer({ pageId: propPageId, data: initialData }: PuckRendererProps) {
   const params = useParams();
   const pageId = propPageId ?? params.pageId;
-  const [data, setData] = useState<Data | undefined>(initialData);
+  const migrateZones = (page: any) => {
+    if (!page || typeof page !== "object" || !page.zones) return page;
+    const newZones: Record<string, any> = {};
+    let changed = false;
+    for (const [key, value] of Object.entries(page.zones)) {
+      const match = key.match(/^(?<prefix>[^:]+:)(?:four-col-)?(?<col>col[1-4])$/);
+      if (match?.groups) {
+        const normalizedKey = `${match.groups.prefix}${match.groups.col}`;
+        newZones[normalizedKey] = value;
+        if (normalizedKey !== key) changed = true;
+      } else {
+        newZones[key] = value;
+      }
+    }
+    if (!changed) return page;
+    return { ...page, zones: newZones };
+  };
+
+  const [data, setData] = useState<Data | undefined>(migrateZones(initialData));
   const [status, setStatus] = useState<string | null>(null);
 
   useEffect(() => {
@@ -26,8 +44,8 @@ export function PuckRenderer({ pageId: propPageId, data: initialData }: PuckRend
         if (!res.ok) {
           throw new Error(`Failed to load page (${res.status})`);
         }
-        const json = await res.json();
-        setData(json);
+        const json = migrateZones(await res.json());
+        setData(json as Data);
         setStatus(null);
       } catch (err) {
         setStatus(err instanceof Error ? err.message : "Load failed");

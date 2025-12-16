@@ -1,13 +1,90 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
-type ChatMessage = { role: "user" | "assistant"; content: string };
+type ChatMessage = { role: "user" | "assistant" | "system"; content: string };
+
+// AG-UI event names we care about; keep loose to avoid runtime coupling.
+type AguiEvent =
+  | { type: "TEXT_MESSAGE_CONTENT"; content: string }
+  | { type: "SYSTEM_MESSAGE"; content: string }
+  | { type: "TOOL_CALL_START"; tool_name?: string }
+  | { type: "TOOL_CALL_END"; tool_name?: string }
+  | { type: string; [key: string]: unknown };
+
+const apiBase = (import.meta as any).env?.VITE_API_BASE ?? "http://localhost:8000";
 
 export function RightPanel() {
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: "assistant", content: "Hi! I'm your IDSE Assistant. Ask me about publishing or workflows." },
+    { role: "assistant", content: "Hi! I'm your IDSE Assistant. Ask me about IDSE, page building, or workflows." },
   ]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [connected, setConnected] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
+  const streamUrl = useMemo(() => `${apiBase.replace(/\/$/, "")}/stream`, []);
+  const inboundUrl = useMemo(() => `${apiBase.replace(/\/$/, "")}/inbound`, []);
+  const eventSourceRef = useRef<EventSource | null>(null);
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+
+  // Helper to append messages and keep scroll pinned to bottom.
+  const pushMessage = (msg: ChatMessage) => {
+    setMessages((prev) => [...prev, msg]);
+    // Scroll after the state flushes.
+    requestAnimationFrame(() => {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    });
+  };
+
+  // Connect to AG-UI event stream (SSE).
+  useEffect(() => {
+    const es = new EventSource(streamUrl);
+    eventSourceRef.current = es;
+
+    es.onopen = () => {
+      setConnected(true);
+      setStatus(null);
+    };
+
+    es.onerror = () => {
+      setConnected(false);
+      setStatus("Connection lost. Retrying...");
+    };
+
+    es.onmessage = (event) => {
+      try {
+        const parsed: AguiEvent = JSON.parse(event.data);
+        switch (parsed.type) {
+          case "TEXT_MESSAGE_CONTENT":
+            pushMessage({ role: "assistant", content: parsed.content ?? "" });
+            break;
+          case "SYSTEM_MESSAGE":
+            pushMessage({ role: "system", content: parsed.content ?? "" });
+            break;
+          case "TOOL_CALL_START":
+            pushMessage({
+              role: "system",
+              content: `🛠 Starting tool${parsed.tool_name ? `: ${parsed.tool_name}` : ""}...`,
+            });
+            break;
+          case "TOOL_CALL_END":
+            pushMessage({
+              role: "system",
+              content: `✅ Finished tool${parsed.tool_name ? `: ${parsed.tool_name}` : ""}.`,
+            });
+            break;
+          default:
+            // Ignore unknown event types; they may include state deltas we don't render yet.
+            break;
+        }
+      } catch (err) {
+        pushMessage({ role: "system", content: `⚠️ Stream parse error: ${(err as Error).message}` });
+      }
+    };
+
+    return () => {
+      es.close();
+      eventSourceRef.current = null;
+    };
+  }, [streamUrl]);
 
   const handleSend = async (e: FormEvent) => {
     e.preventDefault();
@@ -15,23 +92,42 @@ export function RightPanel() {
     if (!text) return;
     setInput("");
     setSending(true);
-    setMessages((prev) => [...prev, { role: "user", content: text }]);
-    // Stub response for now; wire to AG-UI backend when available.
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: "Got it. I’ll help route this to the agency backend (AG-UI coming soon)." },
-      ]);
+    pushMessage({ role: "user", content: text });
+    try {
+      const res = await fetch(inboundUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "USER_MESSAGE", content: text }),
+      });
+      if (!res.ok) {
+        throw new Error(`Inbound failed (${res.status})`);
+      }
+      setStatus(null);
+    } catch (err) {
+      pushMessage({
+        role: "system",
+        content: `❌ Send failed: ${(err as Error).message}`,
+      });
+      setStatus("Send failed. Check backend.");
+    } finally {
       setSending(false);
-    }, 400);
+    }
   };
 
   return (
     <aside className="col-span-12 lg:col-span-3 bg-white border-l border-slate-200">
       <div className="h-full flex flex-col">
-        <div className="px-4 py-3 border-b border-slate-200">
-          <h3 className="font-semibold text-slate-900">AI Assistant</h3>
-          <p className="text-xs text-slate-500">AG-UI chat placeholder (no CopilotKit launcher).</p>
+        <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold text-slate-900">AI Assistant</h3>
+            <p className="text-xs text-slate-500">AG-UI stream {connected ? "connected" : "connecting…"}</p>
+          </div>
+          <span
+            className={`h-2.5 w-2.5 rounded-full ${
+              connected ? "bg-emerald-500" : "bg-amber-500 animate-pulse"
+            }`}
+            aria-hidden
+          />
         </div>
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {messages.map((msg, idx) => (
@@ -40,16 +136,20 @@ export function RightPanel() {
               className={`rounded-xl border px-3 py-2 text-sm ${
                 msg.role === "assistant"
                   ? "bg-slate-50 border-slate-200 text-slate-800"
-                  : "bg-indigo-50 border-indigo-100 text-indigo-900"
+                  : msg.role === "user"
+                  ? "bg-indigo-50 border-indigo-100 text-indigo-900"
+                  : "bg-slate-100 border-slate-200 text-slate-600"
               }`}
             >
               <strong className="block text-xs mb-1 uppercase tracking-wide text-slate-500">
-                {msg.role === "assistant" ? "Assistant" : "You"}
+                {msg.role === "assistant" ? "Assistant" : msg.role === "user" ? "You" : "System"}
               </strong>
               <div className="whitespace-pre-wrap">{msg.content}</div>
             </div>
           ))}
+          <div ref={bottomRef} />
         </div>
+        {status && <div className="px-4 py-2 text-xs text-amber-700 bg-amber-50 border-t border-amber-100">{status}</div>}
         <form onSubmit={handleSend} className="p-4 border-t border-slate-200 bg-white">
           <div className="flex items-end gap-2">
             <textarea

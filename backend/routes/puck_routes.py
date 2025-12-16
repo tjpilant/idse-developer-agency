@@ -72,12 +72,22 @@ def _ensure_unique_slug(base_slug: str, exclude_id: Optional[str] = None) -> str
     return slug
 
 
-def _normalize_page_payload(raw: Dict[str, Any], page_id: Optional[str] = None) -> Dict[str, Any]:
+def _normalize_page_payload(
+    raw: Dict[str, Any],
+    page_id: Optional[str] = None,
+    current_slug: Optional[str] = None,
+) -> Dict[str, Any]:
     """Apply defaults and metadata to a page payload."""
     page_id = page_id or str(uuid.uuid4())
     title = raw.get("title") or raw.get("root", {}).get("title") or "Untitled"
     desired_slug = raw.get("slug") or slugify(title)
-    slug = _ensure_unique_slug(desired_slug, exclude_id=raw.get("id"))
+    # If we are updating and the slug hasn't changed, keep it as-is to avoid
+    # unnecessary slug mutations (e.g., "-1" suffixes).
+    if current_slug and desired_slug == current_slug:
+        slug = current_slug
+    else:
+        # When updating, always exclude the current page id from collision checks
+        slug = _ensure_unique_slug(desired_slug, exclude_id=page_id or raw.get("id"))
 
     # Keep root.title in sync for Puck preview defaults
     root = raw.get("root", {}) if isinstance(raw.get("root"), dict) else {}
@@ -122,8 +132,20 @@ async def update_page(page_id_or_slug: str, page_data: Dict[str, Any]):
         raise HTTPException(status_code=404, detail="Page not found")
 
     page_id = existing["id"]
+    overwrite = bool(page_data.get("overwrite"))
+
     merged = {**existing, **page_data}
-    normalized = _normalize_page_payload(merged, page_id=page_id)
+
+    if overwrite:
+        # Force-keep the current slug unless caller explicitly changes it
+        desired_slug = page_data.get("slug") or existing.get("slug")
+        normalized = _normalize_page_payload(
+            merged,
+            page_id=page_id,
+            current_slug=desired_slug,
+        )
+    else:
+        normalized = _normalize_page_payload(merged, page_id=page_id, current_slug=existing.get("slug"))
     with _page_path(page_id).open("w", encoding="utf-8") as f:
         json.dump(normalized, f, indent=2)
 

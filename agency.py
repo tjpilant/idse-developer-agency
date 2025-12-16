@@ -9,15 +9,45 @@ from dotenv import load_dotenv
 from agency_swarm import Agency
 
 from idse_developer_agent import idse_developer_agent
+from SessionManager import SessionManager
+
+WELCOME = """
+────────────────────────────────────────────────────────
+ IDSE Developer Agent (CLI)
+ - Project: {project}
+ - Session: {session}
+ - Type '/menu' to see commands, '/quit' to exit.
+────────────────────────────────────────────────────────
+"""
+
+MENU = """Commands:
+  intent      Capture/adjust intent
+  context     Derive/update context
+  spec        Generate specification
+  plan        Build plan/test-plan
+  tasks       Generate tasks
+  impl        Scaffold implementation
+  feedback    Capture feedback / audit
+  /quit       Exit
+(Free-form requests are also accepted.)
+"""
 
 load_dotenv()
 
 
 def run_simple_cli(agency: Agency) -> None:
-    """Minimal interactive loop to avoid terminal_demo empty-input issues."""
-    print("\n────────────────────────────────────────────────────────────────────────", flush=True)
-    print("* IDSEDeveloperAgency interactive CLI (type '/exit' to quit)", flush=True)
-    print("────────────────────────────────────────────────────────────────────────\n", flush=True)
+    """Interactive CLI loop with simple cues and menu."""
+    # Show current project/session
+    try:
+        session = SessionManager.get_active_session()
+        project_name = getattr(session, "project", "Unknown")
+        session_name = getattr(session, "session", "Unknown")
+    except Exception:
+        project_name = "Unknown"
+        session_name = "Unknown"
+
+    print(WELCOME.format(project=project_name, session=session_name), flush=True)
+
     while True:
         try:
             sys.stdout.flush()  # Ensure prompt is visible before input
@@ -31,10 +61,24 @@ def run_simple_cli(agency: Agency) -> None:
         if user_msg.lower() in {"/exit", "/quit"}:
             print("Goodbye.")
             break
+        if user_msg.lower() in {"/menu", "menu"}:
+            print(MENU, flush=True)
+            continue
 
         try:
+            print("Agent is thinking…", flush=True)
             response = agency.get_response_sync(user_msg)
-            print(f"\nAgent: {response}\n", flush=True)
+            print("Agent finished.\n", flush=True)
+            # Strip verbose RunResult/guardrail footers if present
+            if isinstance(response, str):
+                cleaned_lines = []
+                stop_markers = ("runresult", "raw response", "new item(s)", "guardrail result")
+                for line in response.splitlines():
+                    if any(marker in line.lower() for marker in stop_markers):
+                        break
+                    cleaned_lines.append(line)
+                response = "\n".join(cleaned_lines).strip() or response
+            print(f"Agent: {response}\n", flush=True)
         except Exception as exc:  # pragma: no cover - interactive path
             print(f"\n[Error] {exc}\n", flush=True)
 
@@ -111,6 +155,12 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
+
+    # Ensure an active session exists for this run (both modes)
+    try:
+        SessionManager.get_active_session()
+    except Exception:
+        SessionManager.create_session(args.mode)
 
     if args.mode == "web":
         # Run web server with multi-protocol support

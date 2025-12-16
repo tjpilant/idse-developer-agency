@@ -1,118 +1,174 @@
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { ComponentConfig } from "@measured/puck";
-import { CopilotKit } from "@copilotkit/react-core";
-import { CopilotPopup } from "@copilotkit/react-ui";
+
+type ChatMessage = { role: "user" | "assistant" | "system"; content: string };
+
+const apiBase = (import.meta as any).env?.VITE_API_BASE ?? "http://localhost:8000";
 
 export interface ChatWidgetProps {
-  apiBase?: string;
-  position: "bottom-right" | "bottom-left" | "top-right" | "top-left";
-  primaryColor: string;
   title: string;
+  intro: string;
   placeholder: string;
-  publicApiKey?: string;
 }
 
-const env = (import.meta as any).env ?? {};
-const fallbackApiBase = env.VITE_API_BASE ?? "http://localhost:8000";
-
-const positionClasses: Record<ChatWidgetProps["position"], string> = {
-  "bottom-right": "bottom-4 right-4",
-  "bottom-left": "bottom-4 left-4",
-  "top-right": "top-4 right-4",
-  "top-left": "top-4 left-4",
-};
-
 export const ChatWidget: ComponentConfig<ChatWidgetProps> = {
+  label: "Chat Widget",
   fields: {
-    apiBase: {
-      type: "text",
-      label: "API Base URL",
-      description: "Backend base (e.g., https://your-agency.agencii.ai)",
-    },
-    position: {
-      type: "select",
-      label: "Position",
-      options: [
-        { label: "Bottom Right", value: "bottom-right" },
-        { label: "Bottom Left", value: "bottom-left" },
-        { label: "Top Right", value: "top-right" },
-        { label: "Top Left", value: "top-left" },
-      ],
-    },
-    primaryColor: {
-      type: "text",
-      label: "Primary Color",
-    },
-    title: {
-      type: "text",
-      label: "Widget Title",
-    },
-    placeholder: {
-      type: "text",
-      label: "Placeholder",
-    },
-    publicApiKey: {
-      type: "text",
-      label: "Public API Key (optional)",
-      description: "Needed if your CopilotKit setup requires it",
-    },
+    title: { type: "text", label: "Title" },
+    intro: { type: "textarea", label: "Intro message" },
+    placeholder: { type: "text", label: "Input placeholder" },
   },
   defaultProps: {
-    apiBase: "",
-    position: "bottom-right",
-    primaryColor: "#4F46E5",
-    title: "IDSE Developer Agent",
-    placeholder: "Ask me anything about IDSE...",
-    publicApiKey: "",
+    title: "Chat with IDSE Assistant",
+    intro: "Ask about intent, specs, tasks, or publishing.",
+    placeholder: "Type a message...",
   },
-  render: ({
-    apiBase,
-    position,
-    primaryColor,
-    title,
-    placeholder,
-    publicApiKey,
-  }) => {
-    // Avoid rendering the popup inside the editor shell where a dedicated right-panel chat already exists.
-    if (typeof window !== "undefined" && window.location.pathname.includes("editor-shell")) {
-      return null;
-    }
+  render: ({ title, intro, placeholder }) => {
+    const [messages, setMessages] = useState<ChatMessage[]>([
+      { role: "assistant", content: intro || "Ask about intent, specs, tasks, or publishing." },
+    ]);
+    const [input, setInput] = useState("");
+    const [sending, setSending] = useState(false);
+    const [connected, setConnected] = useState(false);
+    const [status, setStatus] = useState<string | null>(null);
 
-    const base = (apiBase || fallbackApiBase).replace(/\/$/, "");
-    const runtimeUrl = `${base}/api/copilot`;
-    const chatEndpoint = `${base}/api/copilot/chat`;
-    const websocketEndpoint = `${base.replace(/^http/, "ws")}/api/copilot/ws`;
-    const defaultAgent = {
-      id: "default",
-      name: title || "IDSE Developer Agent",
-      description: "Intent-Driven Systems Engineering assistant",
-      instructions: `You are ${title}. Assist users with IDSE, software delivery, and architecture.`,
+    const streamUrl = useMemo(() => `${apiBase.replace(/\/$/, "")}/stream`, []);
+    const inboundUrl = useMemo(() => `${apiBase.replace(/\/$/, "")}/inbound`, []);
+    const eventSourceRef = useRef<EventSource | null>(null);
+    const bottomRef = useRef<HTMLDivElement | null>(null);
+
+    const pushMessage = (msg: ChatMessage) => {
+      setMessages((prev) => [...prev, msg]);
+      requestAnimationFrame(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }));
+    };
+
+    useEffect(() => {
+      const es = new EventSource(streamUrl);
+      eventSourceRef.current = es;
+
+      es.onopen = () => {
+        setConnected(true);
+        setStatus(null);
+      };
+
+      es.onerror = () => {
+        setConnected(false);
+        setStatus("Connection lost. Retrying...");
+      };
+
+      es.onmessage = (event) => {
+        try {
+          const parsed = JSON.parse(event.data);
+          switch (parsed.type) {
+            case "TEXT_MESSAGE_CONTENT":
+              pushMessage({
+                role: parsed.from === "user" ? "user" : "assistant",
+                content: parsed.content ?? "",
+              });
+              break;
+            case "SYSTEM_MESSAGE":
+              pushMessage({ role: "system", content: parsed.content ?? "" });
+              break;
+            default:
+              break;
+          }
+        } catch (err) {
+          pushMessage({ role: "system", content: `⚠️ Stream parse error: ${(err as Error).message}` });
+        }
+      };
+
+      return () => {
+        es.close();
+        eventSourceRef.current = null;
+      };
+    }, [streamUrl]);
+
+    const handleSend = async (e: FormEvent) => {
+      e.preventDefault();
+      const text = input.trim();
+      if (!text) return;
+      setInput("");
+      setSending(true);
+      pushMessage({ role: "user", content: text });
+      try {
+        const res = await fetch(inboundUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "USER_MESSAGE", content: text }),
+        });
+        if (!res.ok) {
+          throw new Error(`Inbound failed (${res.status})`);
+        }
+        setStatus(null);
+      } catch (err) {
+        pushMessage({
+          role: "system",
+          content: `❌ Send failed: ${(err as Error).message}`,
+        });
+        setStatus("Send failed. Check backend.");
+      } finally {
+        setSending(false);
+      }
     };
 
     return (
-      <div className={`fixed ${positionClasses[position]} z-50`}>
-        <CopilotKit
-          // Use local runtime only; explicitly unset public key to avoid cloud calls
-          runtimeUrl={runtimeUrl}
-          publicApiKey={undefined}
-          websocketEndpoint={websocketEndpoint}
-          agents={[defaultAgent]}
-          defaultAgentId="default"
-        >
-          <CopilotPopup
-            instructions={`You are ${title}. Assist users with IDSE, software delivery, and architecture.`}
-            defaultOpen={false}
-            labels={{
-              title,
-              initial: `Hi! I'm ${title}. How can I help?`,
-              inputPlaceholder: placeholder,
-            }}
-            styles={{
-              palette: {
-                primary: primaryColor,
-              },
-            }}
+      <div className="w-full h-full flex flex-col rounded-2xl border border-slate-200 shadow-sm bg-white overflow-hidden">
+        <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold text-slate-900">{title || "Chat"}</h3>
+            <p className="text-xs text-slate-500">{connected ? "Connected" : "Connecting..."}</p>
+          </div>
+          <span
+            className={`h-2.5 w-2.5 rounded-full ${
+              connected ? "bg-emerald-500" : "bg-amber-500 animate-pulse"
+            }`}
+            aria-hidden
           />
-        </CopilotKit>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          {messages.map((msg, idx) => (
+            <div
+              key={idx}
+              className={`rounded-xl border px-3 py-2 text-sm ${
+                msg.role === "assistant"
+                  ? "bg-slate-50 border-slate-200 text-slate-800"
+                  : msg.role === "user"
+                  ? "bg-indigo-50 border-indigo-100 text-indigo-900"
+                  : "bg-slate-100 border-slate-200 text-slate-600"
+              }`}
+            >
+              <strong className="block text-xs mb-1 uppercase tracking-wide text-slate-500">
+                {msg.role === "assistant" ? "Assistant" : msg.role === "user" ? "You" : "System"}
+              </strong>
+              <div className="whitespace-pre-wrap">{msg.content}</div>
+            </div>
+          ))}
+          <div ref={bottomRef} />
+        </div>
+
+        {status && (
+          <div className="px-4 py-2 text-xs text-amber-700 bg-amber-50 border-t border-amber-100">{status}</div>
+        )}
+
+        <form onSubmit={handleSend} className="p-4 border-t border-slate-200 bg-white">
+          <div className="flex items-end gap-2">
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder={placeholder || "Type a message..."}
+              className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              rows={2}
+            />
+            <button
+              type="submit"
+              disabled={sending}
+              className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-60"
+            >
+              Send
+            </button>
+          </div>
+        </form>
       </div>
     );
   },

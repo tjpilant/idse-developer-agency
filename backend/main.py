@@ -67,7 +67,9 @@ async def health_check():
 def register_routes():
     """Register all API route modules"""
     try:
+        import os
         from backend.routes import agui_routes, copilot_routes, puck_routes
+        from backend.routes import agui_realtime, status_routes
 
         # AG-UI routes for admin interface
         app.include_router(
@@ -89,6 +91,23 @@ def register_routes():
             prefix="/api/pages",
             tags=["Puck Pages"],
         )
+
+        # Public AG-UI stream/inbound endpoints for the widget shell
+        app.include_router(
+            agui_realtime.router,
+            tags=["AG-UI Realtime"],
+        )
+
+        # Status Browser routes (feature-flagged)
+        status_enabled = os.environ.get("STATUS_BROWSER_ENABLED", "true").lower() == "true"
+        if status_enabled:
+            app.include_router(
+                status_routes.router,
+                tags=["Status Browser"],
+            )
+            logger.info("✅ Status Browser routes enabled")
+        else:
+            logger.info("⚪ Status Browser routes disabled by STATUS_BROWSER_ENABLED")
 
         logger.info("✅ All routes registered successfully")
     except Exception as e:

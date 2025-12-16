@@ -11,10 +11,11 @@ export interface ApplicationShellProps {
   onTitleChange: (value: string) => void;
   onSlugChange: (value: string) => void;
   onPublish: () => void;
+  onSave: () => void;
+  onOpenPages: () => void;
   onCopyLink: () => void;
   onLoadPage: (id: string) => void;
   onCreateNewPage: () => void;
-  onOpenPagesModal: () => void;
   children: ReactNode;
 }
 
@@ -27,17 +28,18 @@ export function ApplicationShell({
   onTitleChange,
   onSlugChange,
   onPublish,
+  onSave,
+  onOpenPages,
   onCopyLink,
   onLoadPage,
   onCreateNewPage,
-  onOpenPagesModal,
   children,
 }: ApplicationShellProps) {
   const [showPagesModal, setShowPagesModal] = useState(false);
 
   const handleOpenModal = () => {
     setShowPagesModal(true);
-    onOpenPagesModal();
+    onOpenPages();
   };
 
   return (
@@ -50,6 +52,8 @@ export function ApplicationShell({
         onTitleChange={onTitleChange}
         onSlugChange={onSlugChange}
         onPublish={onPublish}
+        onSave={onSave}
+        onOpenPages={handleOpenModal}
         onCopyLink={onCopyLink}
       />
 

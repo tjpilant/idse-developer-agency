@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface PagesDialogProps {
   isOpen: boolean;
@@ -10,6 +10,15 @@ interface PagesDialogProps {
 
 export function PagesDialog({ isOpen, pages, onClose, onLoad, onCreateNew }: PagesDialogProps) {
   const [selectedId, setSelectedId] = useState<string>("");
+
+  // When dialog opens or pages change, default-select the first page (if any)
+  useEffect(() => {
+    if (isOpen && pages.length > 0) {
+      setSelectedId(pages[0].id);
+    } else if (!isOpen) {
+      setSelectedId("");
+    }
+  }, [isOpen, pages]);
 
   if (!isOpen) return null;
 

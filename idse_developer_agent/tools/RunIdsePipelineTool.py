@@ -8,6 +8,7 @@ from implementation.code.plan import plan_agent
 from implementation.code.task import task_agent
 from implementation.code.implementation import implementation_agent
 from implementation.code.feedback import feedback_agent
+from SessionManager import SessionManager
 
 
 class RunIdsePipelineTool(BaseTool):
@@ -21,68 +22,73 @@ class RunIdsePipelineTool(BaseTool):
         default="No external feedback provided.",
         description="Feedback notes to record at the end of the run.",
     )
-
-    # Paths for artifacts (override if needed)
-    intent_path: str = Field(default="intents/current/intent.md", description="intent.md path")
-    context_path: str = Field(default="contexts/current/context.md", description="context.md path")
-    spec_path: str = Field(default="specs/current/spec.md", description="spec.md path")
-    plan_path: str = Field(default="plans/current/plan.md", description="plan.md path")
-    test_plan_path: str = Field(default="plans/current/test-plan.md", description="test-plan.md path")
-    tasks_path: str = Field(default="tasks/current/tasks.md", description="tasks.md path")
-    impl_path: str = Field(default="implementation/current/README.md", description="implementation scaffold path")
-    feedback_path: str = Field(default="feedback/current/feedback.md", description="feedback.md path")
-    force_overwrite: bool = Field(
+    project: str = Field(default="default", description="Project name for session-scoped paths.")
+    confirm: bool = Field(
         default=False,
-        description="If True, overwrite existing artifacts; otherwise, preserve and skip when present.",
+        description="Set True to allow the full pipeline to run. Default False prevents accidental autopilot.",
     )
 
     def run(self) -> str:
+        if not self.confirm:
+            raise RuntimeError(
+                "RunIdsePipelineTool requires confirm=True to execute. "
+                "Use individual stage tools for step-by-step control."
+            )
+        # Switch/resume project session
+        meta = SessionManager.get_active_session()
+        if meta.project != self.project:
+            SessionManager.switch_project(self.project)
+
+        paths = {
+            "intent": SessionManager.build_path("intents", "intent.md"),
+            "context": SessionManager.build_path("contexts", "context.md"),
+            "spec": SessionManager.build_path("specs", "spec.md"),
+            "plan": SessionManager.build_path("plans", "plan.md"),
+            "test_plan": SessionManager.build_path("plans", "test-plan.md"),
+            "tasks": SessionManager.build_path("tasks", "tasks.md"),
+            "impl": SessionManager.build_path("implementation", "README.md"),
+            "feedback": SessionManager.build_path("feedback", "feedback.md"),
+        }
+
         steps = []
-
-        steps.append(intent_agent.run(intent_text=self.intent_text, output_path=self.intent_path))
-
-        def maybe(step_fn, label):
-            from pathlib import Path
-
-            target_path = Path(label)
-            if target_path.exists() and not self.force_overwrite:
-                return f"⚠️ Skipped (exists): {target_path}"
-            return step_fn()
-
+        steps.append(intent_agent.run(intent_text=self.intent_text, output_path=str(paths["intent"])))
         steps.append(
-            maybe(
-                lambda: context_agent.run(context_text=None, intent_path=self.intent_path, output_path=self.context_path),
-                self.context_path,
+            context_agent.run(
+                context_text=None,
+                intent_path=str(paths["intent"]),
+                output_path=str(paths["context"]),
             )
         )
         steps.append(
-            maybe(
-                lambda: spec_agent.run(intent_path=self.intent_path, context_path=self.context_path, output_path=self.spec_path),
-                self.spec_path,
+            spec_agent.run(
+                intent_path=str(paths["intent"]),
+                context_path=str(paths["context"]),
+                output_path=str(paths["spec"]),
             )
         )
         steps.append(
-            maybe(
-                lambda: plan_agent.run(spec_path=self.spec_path, plan_path=self.plan_path, test_plan_path=self.test_plan_path),
-                self.plan_path,
+            plan_agent.run(
+                spec_path=str(paths["spec"]),
+                plan_path=str(paths["plan"]),
+                test_plan_path=str(paths["test_plan"]),
             )
         )
         steps.append(
-            maybe(
-                lambda: task_agent.run(plan_path=self.plan_path, output_path=self.tasks_path),
-                self.tasks_path,
+            task_agent.run(
+                plan_path=str(paths["plan"]),
+                output_path=str(paths["tasks"]),
             )
         )
         steps.append(
-            maybe(
-                lambda: implementation_agent.run(tasks_path=self.tasks_path, output_path=self.impl_path),
-                self.impl_path,
+            implementation_agent.run(
+                tasks_path=str(paths["tasks"]),
+                output_path=str(paths["impl"]),
             )
         )
         steps.append(
-            maybe(
-                lambda: feedback_agent.run(feedback_text=self.feedback_text, output_path=self.feedback_path),
-                self.feedback_path,
+            feedback_agent.run(
+                feedback_text=self.feedback_text,
+                output_path=str(paths["feedback"]),
             )
         )
 
