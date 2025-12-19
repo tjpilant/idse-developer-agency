@@ -12,29 +12,13 @@ import type { SessionStatus } from "./components/types";
 const apiBase = (import.meta as any).env?.VITE_API_BASE ?? "http://localhost:8000";
 
 const seedContent: Data = {
-  content: [
-    {
-      type: "Hero",
-      props: {
-        heading: "IDSE Developer Agency",
-        subheading: "Visual page builder + embedded AI chat widget.",
-        ctaText: "Open chat",
-        ctaLink: "#chat",
-      },
-    },
-    {
-      type: "Card",
-      props: {
-        title: "Intent-driven",
-        description: "Guide every step with IDSE pipeline stages.",
-        icon: "🎯",
-      },
-    },
-    // ChatWidget removed from seed - add it manually via Puck if needed
-  ],
+  content: [],
   root: {
-    title: "IDSE Landing Page",
+    props: {
+      title: "Untitled",
+    },
   },
+  slug: "",
 };
 
 export function PuckEditor({ hideEmbeddedChat = false }: { hideEmbeddedChat?: boolean } = {}) {
@@ -57,47 +41,88 @@ export function PuckEditor({ hideEmbeddedChat = false }: { hideEmbeddedChat?: bo
     return { ...page, zones: newZones };
   };
 
+  /**
+   * Normalize legacy Puck data into the current schema:
+   * - move root.* into root.props.*
+   * - strip legacy zones (DropZone) to avoid drag crashes
+   * - ensure ids and props exist on all components
+   */
+  const sanitizeData = (raw: any): Data => {
+    const page = migrateZones(raw) || {};
+
+    // Normalize root
+    const rootProps = { ...(page.root?.props ?? {}) };
+    if (page.root) {
+      for (const [k, v] of Object.entries(page.root)) {
+        if (k !== "props") {
+          (rootProps as any)[k] = v;
+        }
+      }
+    }
+
+    const contentArray = Array.isArray(page.content) ? page.content : [];
+    const normalizedContent = contentArray.map((item: any, idx: number) => {
+      const id = item?.id ?? `auto-${idx}-${Date.now()}`;
+      const props = item?.props ?? {};
+      return { ...item, id, props };
+    });
+
+    return {
+      ...page,
+      zones: undefined, // drop legacy drop-zone payloads
+      content: normalizedContent,
+      root: { props: rootProps },
+      title: page.title ?? page.root?.title,
+      slug: page.slug,
+    } as Data;
+  };
+
   const [searchParams, setSearchParams] = useSearchParams();
-  const [data, setData] = useState<Data>(seedContent);
+  const [data, setData] = useState<Data>(sanitizeData(seedContent));
   const [status, setStatus] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [pages, setPages] = useState<Array<{ id: string; title: string; slug?: string }>>([]);
+  const [loadNonce, setLoadNonce] = useState(0);
+  type PageSummary = { slug: string; title?: string };
+  const [pages, setPages] = useState<PageSummary[]>([]);
   const [loadingList, setLoadingList] = useState(false);
-  const [titleInput, setTitleInput] = useState<string>(seedContent.root?.title ?? "Untitled");
+  const [titleInput, setTitleInput] = useState<string>(seedContent.root?.props?.title ?? "Untitled");
   const [slugInput, setSlugInput] = useState<string>("");
   const [showPublishDialog, setShowPublishDialog] = useState(false);
   const statusBrowserEnabled = (import.meta as any).env?.VITE_STATUS_BROWSER_ENABLED !== "false";
   const [activeTab, setActiveTab] = useState<"blocks" | "fields" | "outline" | "status">("blocks");
   const [selectedSession, setSelectedSession] = useState<SessionStatus | null>(null);
 
-  // Use trailing slash to avoid FastAPI redirect for POST (307)
-  const apiUrl = useMemo(() => `${apiBase.replace(/\/$/, "")}/api/pages/`, []);
+  const apiUrl = useMemo(() => `${apiBase.replace(/\/$/, "")}/api/status-pages`, []);
 
-  // Load page from query param (?load=id) or localStorage
+  // Load page from query param (?load=slug) or localStorage
   useEffect(() => {
     const load = async () => {
-      // Check for ?load=pageId query parameter first
-      const loadPageId = searchParams.get("load");
-      const storedId = localStorage.getItem("puckPageId");
-      const pageIdToLoad = loadPageId || storedId;
+      const loadSlug = searchParams.get("load");
+      const storedSlug = localStorage.getItem("puckPageSlug");
+      const slugToLoad = loadSlug || storedSlug;
 
-      if (!pageIdToLoad) return;
+      if (!slugToLoad) return;
 
       try {
-        setStatus(loadPageId ? "Loading requested page..." : "Loading last published page...");
-        const res = await fetch(`${apiUrl}${pageIdToLoad}`);
+        setStatus(loadSlug ? "Loading requested page..." : "Loading last published page...");
+        const res = await fetch(`${apiUrl}/${encodeURIComponent(slugToLoad)}`);
         if (!res.ok) {
           throw new Error(`Load failed (${res.status})`);
         }
-        const json = migrateZones(await res.json());
+        const raw = await res.json();
+        const page = (raw as any).page ?? raw;
+        const json = sanitizeData(page);
         setData(json as Data);
-        setTitleInput((json as any).title ?? json?.root?.title ?? "Untitled");
-        setSlugInput((json as any).slug ?? "");
-        localStorage.setItem("puckPageId", pageIdToLoad);
+        const loadedTitle = (json as any).title ?? (json as any).root?.props?.title ?? "Untitled";
+        const loadedSlug = (json as any).slug ?? slugToLoad;
+        setTitleInput(loadedTitle);
+        setSlugInput(loadedSlug);
+        setLoadNonce((prev) => prev + 1);
+        localStorage.setItem("puckPageSlug", loadedSlug);
         setStatus(null);
 
         // Clear the query parameter after loading
-        if (loadPageId) {
+        if (loadSlug) {
           setSearchParams({});
         }
       } catch (err) {
@@ -141,77 +166,29 @@ export function PuckEditor({ hideEmbeddedChat = false }: { hideEmbeddedChat?: bo
     await handlePublish(title, slug);
   };
 
-  // Save without changing slug: requires an existing id
-  const handleSaveExisting = async () => {
-    if (!(data as any).id) {
-      // If no id yet, fallback to normal publish/create
-      await handlePublish();
-      return;
-    }
-    setSaving(true);
-    setStatus(null);
-    try {
-      const pageId = (data as any).id;
-      const finalTitle = titleInput || (data as any).title || (data as any).root?.title || "Untitled";
-      const finalSlug = slugInput || (data as any).slug || "";
-      const payload = {
-        ...data,
-        title: finalTitle,
-        slug: finalSlug,
-        overwrite: true,
-        root: {
-          ...(data as any).root,
-          title: finalTitle,
-        },
-      };
-
-      const res = await fetch(`${apiUrl}${pageId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        throw new Error(`Save failed (${res.status})`);
-      }
-      const result = await res.json();
-      setData((prev) => ({
-        ...(prev as any),
-        id: result.id,
-        title: finalTitle,
-        slug: result.slug ?? finalSlug,
-        root: { ...(prev as any).root, title: finalTitle },
-      }));
-      setSlugInput(result.slug ?? finalSlug);
-      setTitleInput(finalTitle);
-      setStatus("Saved");
-    } catch (err) {
-      setStatus(err instanceof Error ? err.message : "Save failed");
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const handlePublish = async (title?: string, slug?: string) => {
     setSaving(true);
     setStatus(null);
     try {
-      const hasId = Boolean((data as any).id);
-      const targetUrl = hasId ? `${apiUrl}${(data as any).id}` : apiUrl;
-      const method = hasId ? "PUT" : "POST";
-
-      // Use provided params or fall back to state
+      const existingSlug = ((data as any).slug || "").toLowerCase();
       const finalTitle = title || titleInput || (data as any).title || "Untitled";
-      const finalSlug = slug || slugInput || (data as any).slug || "";
+      const rawSlugInput = slug || slugInput || existingSlug || "";
+      const finalSlugInput = rawSlugInput ? rawSlugInput.toLowerCase() : "";
 
       const payload = {
         ...data,
         title: finalTitle,
-        slug: finalSlug,
+        slug: finalSlugInput, // may be empty on first publish
+        schemaVersion: (data as any).schemaVersion ?? 1,
         root: {
           ...(data as any).root,
           title: finalTitle,
         },
       };
+
+      const hasExistingSlug = Boolean(existingSlug);
+      const method = hasExistingSlug ? "PUT" : "POST";
+      const targetUrl = hasExistingSlug ? `${apiUrl}/${encodeURIComponent(existingSlug)}` : apiUrl;
 
       const res = await fetch(targetUrl, {
         method,
@@ -223,25 +200,25 @@ export function PuckEditor({ hideEmbeddedChat = false }: { hideEmbeddedChat?: bo
         throw new Error(`Publish failed (${res.status})`);
       }
 
-      const result = await res.json();
-      // Persist the page id locally so reloads keep the current page
-      if (result.id) {
-        localStorage.setItem("puckPageId", result.id);
-        refreshList();
-      }
-      setData((prev) => ({
-        ...(prev as any),
-        id: result.id,
-        title: finalTitle,
-        slug: result.slug ?? finalSlug,
-        root: {
-          ...(prev as any).root,
-          title: finalTitle,
-        },
-      }));
-      setSlugInput(result.slug ?? finalSlug);
+      const rawResult = await res.json();
+      const savedPage = (rawResult as any).page ?? rawResult;
+      const savedSlug = ((savedPage.slug ?? finalSlugInput) || savedPage.id || "").toLowerCase();
+      const merged = {
+        ...(data as any),
+        ...(savedPage as any),
+        title: savedPage.title ?? finalTitle,
+        slug: savedSlug,
+        schemaVersion: (savedPage as any).schemaVersion ?? (data as any).schemaVersion ?? 1,
+      };
+
+      setData(sanitizeData(merged) as Data);
       setTitleInput(finalTitle);
-      setStatus(`Page published. Slug: ${result.slug ?? finalSlug ?? result.id}`);
+      setSlugInput(savedSlug);
+      if (savedSlug) {
+        localStorage.setItem("puckPageSlug", savedSlug);
+      }
+      refreshList();
+      setStatus(`Page published. Slug: ${savedSlug}`);
     } catch (err) {
       setStatus(err instanceof Error ? err.message : "Publish failed");
       throw err; // Re-throw so dialog can handle it
@@ -250,30 +227,34 @@ export function PuckEditor({ hideEmbeddedChat = false }: { hideEmbeddedChat?: bo
     }
   };
 
-  const handleLoad = async (id: string) => {
-    if (!id) return;
+  const handleLoad = async (slug: string) => {
+    if (!slug) return;
     try {
-      setStatus(`Loading page ${id}...`);
-      const res = await fetch(`${apiUrl}${id}`);
+      setStatus(`Loading page ${slug}...`);
+      const res = await fetch(`${apiUrl}/${encodeURIComponent(slug)}`);
       if (!res.ok) {
         throw new Error(`Load failed (${res.status})`);
       }
-      const json = migrateZones(await res.json());
+      const raw = await res.json();
+      const page = (raw as any).page ?? raw;
+      const json = sanitizeData(page);
       setData(json as Data);
-      setTitleInput((json as any).title ?? json?.root?.title ?? "Untitled");
-      setSlugInput((json as any).slug ?? "");
-      localStorage.setItem("puckPageId", id);
-      setStatus(`Loaded page ${(json as any).slug ?? id}`);
+      const loadedTitle = (json as any).title ?? (json as any).root?.props?.title ?? "Untitled";
+      const loadedSlug = (json as any).slug ?? slug;
+      setTitleInput(loadedTitle);
+      setSlugInput(loadedSlug);
+      setLoadNonce((prev) => prev + 1);
+      localStorage.setItem("puckPageSlug", loadedSlug);
+      setStatus(`Loaded page ${loadedSlug}`);
     } catch (err) {
       setStatus(err instanceof Error ? err.message : "Load failed");
     }
   };
 
   const handleCopyLink = () => {
-    const id = (data as any).id;
-    const slug = (data as any).slug;
-    if (!id && !slug) return;
-    const link = `${window.location.origin}/page/${slug || id}`;
+    const slug = (data as any).slug || slugInput;
+    if (!slug) return;
+    const link = `${window.location.origin}/status/${slug}`;
     navigator.clipboard?.writeText(link).then(
       () => setStatus(`Copied link: ${link}`),
       () => setStatus(`Link: ${link}`)
@@ -281,10 +262,12 @@ export function PuckEditor({ hideEmbeddedChat = false }: { hideEmbeddedChat?: bo
   };
 
   const handleCreateNew = () => {
-    setData(seedContent);
-    setTitleInput("Untitled");
-    setSlugInput("");
-    localStorage.removeItem("puckPageId");
+    const fresh = sanitizeData(seedContent);
+    setData(fresh);
+    setTitleInput(fresh.root?.props?.title ?? "Untitled");
+    setSlugInput(fresh.slug ?? "");
+    setLoadNonce((prev) => prev + 1);
+    localStorage.removeItem("puckPageSlug");
     setStatus("New page created");
   };
 
@@ -296,16 +279,16 @@ export function PuckEditor({ hideEmbeddedChat = false }: { hideEmbeddedChat?: bo
         status={status}
         saving={saving}
         pages={pages}
-        onTitleChange={(value) => setTitleInput(value)}
-        onSlugChange={(value) => setSlugInput(value)}
+        onTitleChange={setTitleInput}
+        onSlugChange={setSlugInput}
         onPublish={openPublishDialog}
-        onSave={handleSaveExisting}
         onOpenPages={refreshList}
         onCopyLink={handleCopyLink}
         onLoadPage={handleLoad}
         onCreateNewPage={handleCreateNew}
       >
         <Puck
+          key={`puck-editor-${loadNonce}`}
           config={puckConfig}
           data={data}
           onChange={setData}
