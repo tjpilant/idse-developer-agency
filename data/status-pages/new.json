@@ -1,0 +1,43 @@
+{
+  "id": "0d5af829-3919-41ff-92a4-d4e686d92662",
+  "slug": "new",
+  "title": "newtest",
+  "schemaVersion": 1,
+  "root": {
+    "props": {
+      "title": "Untitled"
+    },
+    "title": "newtest"
+  },
+  "content": [
+    {
+      "type": "Hero",
+      "props": {
+        "heading": "Welcome to IDSE Developer Agency",
+        "subheading": "Build better software with intent-driven guidance and AI copilots.",
+        "ctaText": "Open the editor",
+        "ctaLink": "/editor",
+        "id": "Hero-bf95d386-4f28-4840-bd94-67eb16dbf9e6"
+      }
+    },
+    {
+      "type": "Card",
+      "props": {
+        "title": "Feature Title",
+        "description": "Describe what this feature unlocks for the user.",
+        "icon": "\ud83d\ude80",
+        "id": "Card-be57accd-03e6-4289-b66c-9cd9d7451fdb"
+      }
+    },
+    {
+      "type": "Card",
+      "props": {
+        "title": "Feature Title",
+        "description": "Describe what this feature unlocks for the user.",
+        "icon": "\ud83d\ude80",
+        "id": "Card-db68d80c-7a98-4e7a-a03b-a93a5155eac1"
+      }
+    }
+  ],
+  "zones": {}
+}

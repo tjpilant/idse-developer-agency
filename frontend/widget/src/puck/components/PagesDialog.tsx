@@ -2,21 +2,21 @@ import { useEffect, useState } from "react";
 
 interface PagesDialogProps {
   isOpen: boolean;
-  pages: Array<{ id: string; title: string; slug?: string }>;
+  pages: Array<{ slug: string; title?: string }>;
   onClose: () => void;
-  onLoad: (id: string) => void;
+  onLoad: (slug: string) => void;
   onCreateNew: () => void;
 }
 
 export function PagesDialog({ isOpen, pages, onClose, onLoad, onCreateNew }: PagesDialogProps) {
-  const [selectedId, setSelectedId] = useState<string>("");
+  const [selectedSlug, setSelectedSlug] = useState<string>("");
 
   // When dialog opens or pages change, default-select the first page (if any)
   useEffect(() => {
     if (isOpen && pages.length > 0) {
-      setSelectedId(pages[0].id);
+      setSelectedSlug(pages[0].slug);
     } else if (!isOpen) {
-      setSelectedId("");
+      setSelectedSlug("");
     }
   }, [isOpen, pages]);
 
@@ -30,13 +30,13 @@ export function PagesDialog({ isOpen, pages, onClose, onLoad, onCreateNew }: Pag
         <div className="space-y-2 mb-4 max-h-96 overflow-y-auto">
           {pages.map((p) => (
             <label
-              key={p.id}
+              key={p.slug}
               className="flex items-center gap-2 p-2 hover:bg-slate-50 cursor-pointer rounded"
             >
               <input
                 type="radio"
-                checked={selectedId === p.id}
-                onChange={() => setSelectedId(p.id)}
+                checked={selectedSlug === p.slug}
+                onChange={() => setSelectedSlug(p.slug)}
               />
               <span className="text-sm text-slate-800">
                 {p.title || "Untitled"} {p.slug ? `(${p.slug})` : ""}
@@ -60,9 +60,9 @@ export function PagesDialog({ isOpen, pages, onClose, onLoad, onCreateNew }: Pag
           </button>
           <button
             onClick={() => {
-              onLoad(selectedId);
+              onLoad(selectedSlug);
             }}
-            disabled={!selectedId}
+            disabled={!selectedSlug}
             className="rounded-lg bg-indigo-600 text-white px-4 py-2 text-sm font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
           >
             Load Selected

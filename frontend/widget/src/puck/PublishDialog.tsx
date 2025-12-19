@@ -85,7 +85,7 @@ export function PublishDialog({
 
   if (!isOpen) return null;
 
-  const previewUrl = `/page/${slug || slugify(title) || "untitled"}`;
+  const previewUrl = `/status/${slug || slugify(title) || "untitled"}`;
 
   return (
     <div className="fixed inset-0 z-50" onKeyDown={handleKeyDown}>

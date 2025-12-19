@@ -1,7 +1,7 @@
 {
-  "active_llm": "claude_code",
+  "active_llm": "codex_gpt",
   "awaiting_handoff": false,
-  "handoff_cycle_id": "2025-12-14T12-59-57Z",
+  "handoff_cycle_id": "2025-12-17T12-41-06Z",
   "layer_scope": "implementation",
   "enforced_paths": [
     "frontend/",
@@ -15,10 +15,10 @@
   },
   "active_stage": "Implementation",
   "last_handoff": {
-    "from": "codex_gpt",
-    "to": "claude_code",
-    "timestamp": "2025-12-14T12:59:57.918818+00:00",
-    "notes": "Review Puck Development "
+    "from": "claude_code",
+    "to": "codex_gpt",
+    "timestamp": "2025-12-17T12:41:06.713684+00:00",
+    "notes": "Build Research Tools"
   },
-  "last_checked": "2025-12-14T13:00:17.437756+00:00"
+  "last_checked": "2025-12-17T12:44:20.451556+00:00"
 }

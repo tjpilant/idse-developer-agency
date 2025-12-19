@@ -65,11 +65,53 @@ async def health_check():
 # Import and register route modules
 # Note: These imports are deferred to avoid circular dependencies
 def register_routes():
-    """Register all API route modules"""
+    """Register all API route modules."""
     try:
         import os
-        from backend.routes import agui_routes, copilot_routes, puck_routes
-        from backend.routes import agui_realtime, status_routes
+        from backend.routes import (
+            agui_realtime,
+            agui_routes,
+            copilot_routes,
+            puck_routes,
+            status_routes,
+            status_pages,
+        )
+
+        status_enabled = (
+            os.environ.get("STATUS_BROWSER_ENABLED", "true").lower() == "true"
+        )
+
+        app.include_router(
+            agui_routes.router, prefix="/admin/ag-ui", tags=["AG-UI Admin"]
+        )
+        app.include_router(
+            copilot_routes.router, prefix="/api/copilot", tags=["CopilotKit Widget"]
+        )
+        app.include_router(
+            puck_routes.router, prefix="/api/pages", tags=["Puck Pages"]
+        )
+        app.include_router(agui_realtime.router, tags=["AG-UI Realtime"])
+
+        if status_enabled:
+            app.include_router(status_routes.router, tags=["Status Browser"])
+            app.include_router(status_pages.router, tags=["Status Pages"])
+            logger.info("✅ Status browser routes enabled")
+        else:
+            logger.info(
+                "ℹ️ Status browser routes disabled via STATUS_BROWSER_ENABLED=false"
+            )
+
+        logger.info(
+            "✅ Routes registered: %s",
+            [
+                r.prefix
+                for r in app.router.routes
+                if hasattr(r, "prefix") and r.prefix is not None
+            ],
+        )
+    except Exception as e:
+        logger.error("❌ Failed to register routes: %s", e)
+        raise
 
         # AG-UI routes for admin interface
         app.include_router(
@@ -104,6 +146,10 @@ def register_routes():
             app.include_router(
                 status_routes.router,
                 tags=["Status Browser"],
+            )
+            app.include_router(
+                status_pages.router,
+                tags=["Status Pages"],
             )
             logger.info("✅ Status Browser routes enabled")
         else:

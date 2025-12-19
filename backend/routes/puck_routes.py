@@ -105,10 +105,82 @@ def _normalize_page_payload(
     return normalized
 
 
+def _migrate_zones(page: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Normalize legacy DropZone payload keys so they don't collide with slots.
+
+    This mirrors the frontend migration logic to keep old pages from crashing
+    the editor/renderer while we transition to slots-only layouts.
+    """
+    zones = page.get("zones")
+    if not isinstance(zones, dict):
+        return page
+
+    new_zones: Dict[str, Any] = {}
+    changed = False
+    for key, value in zones.items():
+        match = re.match(r"^(?P<prefix>[^:]+:)(?:four-col-)?(?P<col>col[1-4])$", key)
+        if match and match.group("prefix") and match.group("col"):
+            normalized_key = f"{match.group('prefix')}{match.group('col')}"
+            new_zones[normalized_key] = value
+            if normalized_key != key:
+                changed = True
+        else:
+            new_zones[key] = value
+
+    if not changed:
+        return page
+
+    updated = dict(page)
+    updated["zones"] = new_zones
+    return updated
+
+
+def _sanitize_page_payload(raw: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Strip legacy DropZone data and ensure root/content props are well-formed.
+
+    This keeps persisted JSON aligned with the slot-based schema the frontend
+    now expects, preventing drag/drop crashes from stale data.
+    """
+    if not isinstance(raw, dict):
+        return {}
+
+    page = _migrate_zones(raw)
+
+    # Normalize root props
+    root_props: Dict[str, Any] = {}
+    if isinstance(page.get("root"), dict):
+        root_props.update(page["root"].get("props", {}) or {})
+        for k, v in page["root"].items():
+            if k != "props":
+                root_props[k] = v
+
+    # Normalize content list
+    content: List[Dict[str, Any]] = []
+    if isinstance(page.get("content"), list):
+        for idx, item in enumerate(page["content"]):
+            if not isinstance(item, dict):
+                continue
+            item_id = item.get("id") or f"auto-{idx}-{uuid.uuid4().hex[:8]}"
+            props = item.get("props") or {}
+            content.append({**item, "id": item_id, "props": props})
+
+    sanitized = {
+        **page,
+        "zones": None,  # drop legacy drop-zone payloads
+        "root": {"props": root_props},
+        "content": content,
+    }
+    sanitized.pop("zones", None)
+    return sanitized
+
+
 @router.post("/", summary="Create a Puck page")
 async def create_page(page_data: Dict[str, Any]):
     """Save a new Puck page configuration with title/slug metadata."""
-    normalized = _normalize_page_payload(page_data)
+    clean = _sanitize_page_payload(page_data)
+    normalized = _normalize_page_payload(clean)
     with _page_path(normalized["id"]).open("w", encoding="utf-8") as f:
         json.dump(normalized, f, indent=2)
 
@@ -134,7 +206,7 @@ async def update_page(page_id_or_slug: str, page_data: Dict[str, Any]):
     page_id = existing["id"]
     overwrite = bool(page_data.get("overwrite"))
 
-    merged = {**existing, **page_data}
+    merged = {**existing, **_sanitize_page_payload(page_data)}
 
     if overwrite:
         # Force-keep the current slug unless caller explicitly changes it
