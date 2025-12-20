@@ -1,0 +1,9 @@
+---
+description: IDSE session bootstrap rule
+alwaysApply: true
+---
+
+# IDSE Session Bootstrap
+- When starting a new project/session, run `scripts/bootstrap_idse_session.sh <PROJECT> <SESSION>` to scaffold from templates, repoint `*/current/` links, run validators, and write the session `REPORTS_INDEX.json`.
+- Keep governance artifacts in `idse-governance/` and avoid writing governance files into protected application paths.
+- Store validator outputs in `reports/projects/<PROJECT>/sessions/<SESSION>/` and update the session index accordingly.

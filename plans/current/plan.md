@@ -1,17 +1,28 @@
-# Plan
+# Implementation Plan – Project_Status_Browser (current pointer)
 
-> Reference: use plan/test-plan templates in `docs/kb/templates/` and examples in `docs/kb/examples/`; lean on playbooks in `docs/kb/playbooks/` for execution patterns. Link back to spec instead of inlining.
+Canonical source: `plans/projects/Project_Status_Browser/sessions/session-1765832163/plan.md`. This file mirrors required sections for governance and references the session plan.
 
-## Scope
-- Summarize scope derived from spec.
+## Architecture Summary
+- JSON-backed status pages stored in `status_pages` with schema_version + data JSON.
+- View route `/status/:slug` and edit route `/status/:slug/edit` sharing `PageData`.
+- Loader/normalizer for legacy data; component registry + renderer/editor.
 
-## Milestones
-- Milestone 1: ...
-- Milestone 2: ...
+## Components
+- Repository, API handlers, JSON schema validation, renderer/editor, component registry, layout/block components.
 
-## Workstreams
-- Workstream A: ...
-- Workstream B: ...
+## Data Model
+- `PageData { id, slug, title, schemaVersion, root: ComponentData }`; slot arrays for layout props.
 
-## Source Spec
-- See `specs/current/spec.md`
+## API Contracts
+- `GET /api/status-pages/:slug`, `PUT /api/status-pages/:slug` (optional POST/DELETE); auth on mutations.
+
+## Test Strategy
+- Unit (schema, repo, helpers); contract (API); integration; E2E (view/edit parity, slug stability, legacy migration, Status Browser layout).
+
+## Phases
+- Phase 0: types/schema/storage/validation.
+- Phase 1: GET + renderer + view route.
+- Phase 2: PUT + editor + edit route (auth).
+- Phase 3: slot layouts + slot editing/reorder.
+- Phase 4: inline editing/overlay UX.
+- Phase 5: NFRs/hardening.

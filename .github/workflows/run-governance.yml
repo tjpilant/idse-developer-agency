@@ -1,0 +1,42 @@
+name: Run IDSE Governance
+
+on:
+  workflow_dispatch:
+    inputs:
+      project:
+        description: "Project name (e.g., Project_Status_Browser)"
+        required: true
+        default: "Project_Status_Browser"
+      session:
+        description: "Session name (e.g., session-YYYYMMDDhhmm)"
+        required: true
+        default: "session-1765832163"
+
+permissions:
+  contents: write
+
+jobs:
+  governance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Ensure bootstrap script is executable
+        run: chmod +x scripts/bootstrap_idse_session.sh
+
+      - name: Run IDSE governance bootstrap
+        run: |
+          scripts/bootstrap_idse_session.sh "${{ inputs.project }}" "${{ inputs.session }}"
+
+      - name: Upload reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: idse-reports-${{ inputs.project }}-${{ inputs.session }}
+          path: reports/projects/${{ inputs.project }}/sessions/${{ inputs.session }}/
+          if-no-files-found: warn

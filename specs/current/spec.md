@@ -1,35 +1,32 @@
-# Specification
+# Specification – Project_Status_Browser
 
-> KB: use templates/examples in `docs/kb/templates/spec-template.md` and `docs/kb/examples/`; playbooks in `docs/kb/playbooks/` for refining requirements and handling changes. Link back to intent/context instead of inlining.
-
-## Source References
-- Intent: `intents/current/intent.md`
-- Context: `contexts/current/context.md`
+Canonical source: `specs/projects/Project_Status_Browser/sessions/session-1765832163/spec.md`. This “current” pointer satisfies governance checks and summarizes the same content for active work.
 
 ## Overview
-- Summary and link back to intent/context.
+- JSON-backed status pages with a single `PageData` model (slots, schemaVersion, root).
+- View route `/status/:slug`; edit route `/status/:slug/edit` (auth required).
+- Component registry + renderer; editor operates on the same JSON as view.
 
 ## User Stories
-- As a ..., I want ..., so that ...
+- Create/edit status pages visually; save/reload reliably; nested layouts via slots.
+- Viewers consume `/status/:slug` read-only; admins ensure auth on edit/save.
 
 ## Functional Requirements
-- FR-1 ...
-- FR-2 ...
+- `PageData`/`ComponentData` tree with slot arrays; schema versioning.
+- APIs: `GET /api/status-pages/:slug`, `PUT /api/status-pages/:slug` (optional POST/DELETE).
+- Editor/view consistency; inline text editing; slot-based layouts (Dashboard/Grid/Column/etc.).
 
 ## Non-Functional Requirements
-- Performance (e.g., p95 latency, throughput)
-- Scale (e.g., concurrent users, data volume)
-- Compliance/security (e.g., residency, authz, logging)
-- Reliability/resilience targets
+- AuthN/Z on edit/save; validation via JSON schema; resilience to legacy data (zones → slots).
+- Performance reasonable for tens/low hundreds of components.
 
 ## Acceptance Criteria
-- AC-1 ...
-- AC-2 ...
+- Save/load round-trips preserve slug and do not duplicate records.
+- View/edit parity after save; legacy data normalized; Status Browser widget renders multi-column.
 
 ## Assumptions / Constraints / Dependencies
-- Assumptions:
-- Constraints:
-- Dependencies:
+- Backed by a `status_pages` store (JSON column), schema validation at the API boundary.
+- Component registry is authoritative for allowed types/props.
 
 ## Open Questions
-- [REQUIRES INPUT] ...
+- Extent of legacy migration coverage; optional POST/DELETE availability; auth policy details.

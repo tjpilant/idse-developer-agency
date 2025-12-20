@@ -1,0 +1,6 @@
+check-compliance: project=Project_Status_Browser session=session-1765832163
+report_dir: reports/projects/Project_Status_Browser/sessions/session-1765832163
+timestamp: 2025-12-20T18:38:49.933534Z
+
+Findings:
+OK: No compliance issues detected.

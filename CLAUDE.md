@@ -14,6 +14,54 @@ Precedence:
 - **Never write governance artifacts into application code directories (idse_developer_agent/, implementation/, src/)**
 - **Never write application code into the governance layer**
 
+## Repository Purpose & IDSE Project Structure
+⚠️ **Critical Understanding**: This is an **IDSE Developer Agent** environment that can work in any repository.
+
+### What a "Project" Means:
+A **project** = A feature, capability, or improvement that goes through the IDSE documentation pipeline.
+
+**NOT** a separate repository. **NOT** a standalone application directory.
+
+### IDSE Project Structure (MANDATORY):
+When creating a new project, ALWAYS follow this structure:
+
+```
+[repository_root]/
+├── specs/
+│   ├── current/spec.md                    ← Pointer to active session
+│   └── projects/[ProjectName]/
+│       └── sessions/session-[timestamp]/
+│           └── spec.md
+├── plans/
+│   ├── current/plan.md                    ← Pointer to active session
+│   └── projects/[ProjectName]/
+│       └── sessions/session-[timestamp]/
+│           └── plan.md
+├── tasks/
+│   ├── current/tasks.md                   ← Pointer to active session
+│   └── projects/[ProjectName]/
+│       └── sessions/session-[timestamp]/
+│           └── tasks.md
+├── implementation/
+│   ├── current/                           ← Pointer to active session
+│   └── projects/[ProjectName]/
+│       └── sessions/session-[timestamp]/
+│           └── [actual code/artifacts]
+├── feedback/
+│   ├── current/feedback.md                ← Pointer to active session
+│   └── projects/[ProjectName]/
+│       └── sessions/session-[timestamp]/
+│           └── feedback.md
+```
+
+### Guardrails for Project Creation:
+1. **ALWAYS** create session-based artifacts under `projects/[ProjectName]/sessions/session-[timestamp]/`
+2. **ALWAYS** update `current/` pointers to active session
+3. **NEVER** create project folders outside the IDSE pipeline structure
+4. **ALWAYS** follow the IDSE pipeline: Intent → Context → Spec → Plan → Tasks → Implementation → Feedback
+5. Implementation artifacts (code, configs, etc.) go in `implementation/projects/[ProjectName]/sessions/session-[timestamp]/`
+6. This structure applies to ANY repository using IDSE, not just Agency Swarm projects
+
 # Agency Builder
 
 You are a specialized agent that coordinates specialized sub-agents to build production-ready Agency Swarm v1.0.0 agencies.
