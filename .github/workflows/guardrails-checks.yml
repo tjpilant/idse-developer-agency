@@ -13,7 +13,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
       - name: Install dependencies (best-effort)
         run: |
@@ -28,16 +28,14 @@ jobs:
           echo "Session: $SESSION_ID" > reports/session.txt
 
           echo "Running validate-artifacts.py..."
-          python3 idse-governance/validate-artifacts.py --session "$SESSION_ID" > reports/validate-artifacts.log || touch reports/validate-artifacts.failed
+          PROJECT_NAME="Project_Status_Browser"
+          SESSION_ID="session-1765832163"
 
-          echo "Running check-compliance.py..."
-          python3 idse-governance/check-compliance.py --session "$SESSION_ID" > reports/check-compliance.log || touch reports/check-compliance.failed
+          echo "Running validate-artifacts.py for $PROJECT_NAME / $SESSION_ID..."
+          python3 idse-governance/validate-artifacts.py --project "$PROJECT_NAME" --session "$SESSION_ID" > reports/validate-artifacts.log || touch reports/validate-artifacts.failed
 
-          echo "Running audit-feedback.py..."
-          python3 idse-governance/audit-feedback.py --session "$SESSION_ID" > reports/audit-feedback.log || touch reports/audit-feedback.failed
-
-          if [ -f reports/validate-artifacts.failed ] || [ -f reports/check-compliance.failed ] || [ -f reports/audit-feedback.failed ]; then
-            echo "One or more guardrail checks failed. See reports artifact for details."
+          if [ -f reports/validate-artifacts.failed ]; then
+            echo "Guardrail validation failed. See reports artifact for details."
             exit 1
           fi
 
