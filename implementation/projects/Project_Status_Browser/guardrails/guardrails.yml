@@ -1,0 +1,33 @@
+project: Project_Status_Browser
+version: 1
+
+# List of checks the project requests be run. Enforcement is performed
+# by central governance tooling and CI. This file is declarative only.
+enforced_checks:
+  - validate-artifacts
+  - check-compliance
+  - audit-feedback
+
+local_precheck:
+  enabled: true
+  # Lightweight local validation command developers should run before commits
+  command: "scripts/validate-fast.sh"
+
+ci_integration:
+  enabled: true
+  workflow_name: "guardrails-checks"
+
+# Where to write per-session reports. The CI / tooling will substitute
+# the active session identifier when generating reports.
+report_path: "implementation/projects/Project_Status_Browser/sessions/<active>/reports/"
+
+owners:
+  - name: "<team-or-person>"
+    email: "<owner@example.com>"
+
+exception_policy:
+  allowed: false
+  process: "Request exception via the central governance feedback flow"
+
+notes:
+  - "This file declares project-level guardrail preferences. It does not override central governance."
