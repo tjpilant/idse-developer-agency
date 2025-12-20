@@ -171,3 +171,19 @@ Source plan: `/plans/projects/Project_Status_Browser/sessions/session-1765832163
   **Deps:** Phase 0 complete; knowledge of legacy format.  
   **Acceptance:**
   - Legacy pages can be converted and verified to render correctly under the new model.
+
+
+
+## Session Closeout — Verified Completed Items (recorded)
+- Agent/runtime config: idse_developer_agent.py now uses `gpt-5-mini` with `max_output_tokens=400`.
+- CLI safety: agency.py wraps LLM calls in a 60s timeout and truncates replies (~1200 chars).
+- Backend streaming guard: copilot_adapter.py streams chunked responses (~80-char chunks), caps response length, and times out at 60s.
+- Guardrail fix: instruction_protection.py handles list/dict inputs safely without crashing.
+- UI changes: StatusBrowserRowWidget.tsx made self-contained; removed external trigger variants from config.tsx.
+- Page storage: simplified page JSON (new.json) stored under `data/puck_pages`.
+- Routing: public pages available at `/<slug>`; editor copy-link uses `/<slug>`; homepage slug `index` mapped to `/`.
+- Styling: PuckEditor.tsx sidebar set to visible slate colors; Pagedone CSS imports applied in main.tsx.
+- Builds & smoke tests: frontend builds cleanly; backend served built pages were tested and verified locally.
+
+Notes:
+- These items are recorded as "Verified Completed" based on the developer's summary. If you want individual task checklist boxes updated in-place (phase/task level), I can propose an edit to mark those specific tasks done; confirm if you want me to modify the original checklist entries.

@@ -1,0 +1,81 @@
+{
+  "id": "6b427d98-ec84-4815-8035-b2bd83d7956b",
+  "slug": "new",
+  "title": "newtest",
+  "schemaVersion": 1,
+  "root": {
+    "props": {
+      "title": "newtest"
+    },
+    "title": "newtest"
+  },
+  "content": [
+    {
+      "type": "Hero",
+      "props": {
+        "heading": "Welcome to IDSE Developer Agency",
+        "subheading": "Build better software with intent-driven guidance and AI copilots.",
+        "ctaText": "Open the editor",
+        "ctaLink": "/editor",
+        "id": "Hero-bf95d386-4f28-4840-bd94-67eb16dbf9e6"
+      },
+      "id": "auto-0-1766109275016"
+    },
+    {
+      "type": "Card",
+      "props": {
+        "title": "Feature Title",
+        "description": "Describe what this feature unlocks for the user.",
+        "icon": "\ud83d\ude80",
+        "id": "Card-be57accd-03e6-4289-b66c-9cd9d7451fdb"
+      },
+      "id": "auto-1-1766109275016"
+    },
+    {
+      "type": "Card",
+      "props": {
+        "title": "Feature Title",
+        "description": "Describe what this feature unlocks for the user.",
+        "icon": "\ud83d\ude80",
+        "id": "Card-db68d80c-7a98-4e7a-a03b-a93a5155eac1"
+      },
+      "id": "auto-2-1766109275016"
+    },
+    {
+      "type": "FourColumnLayout",
+      "props": {
+        "col4": [
+          {
+            "type": "ChatWidget",
+            "props": {
+              "title": "Chat with IDSE Assistant",
+              "intro": "Ask about intent, specs, tasks, or publishing.",
+              "placeholder": "Type a message...",
+              "id": "ChatWidget-3fc44f92-8643-43e2-95ee-a6d0b94e6a9b"
+            }
+          }
+        ],
+        "col3": [],
+        "col2": [],
+        "col1": [
+          {
+            "type": "StatusBrowserRowWidget",
+            "props": {
+              "title": "Status Browser",
+              "projectId": "",
+              "sessionId": "",
+              "id": "StatusBrowserRowWidget-e49370e6-a35d-4bab-a2ce-d69701dcecb5"
+            }
+          }
+        ],
+        "col1Width": "15%",
+        "col2Width": "25%",
+        "col3Width": "30%",
+        "col4Width": "30%",
+        "gap": "16px",
+        "id": "FourColumnLayout-09202baa-f72d-4ba7-82f8-f5fb78ca4494"
+      }
+    }
+  ],
+  "zones": {}
+}

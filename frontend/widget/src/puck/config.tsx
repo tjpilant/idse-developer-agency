@@ -22,7 +22,12 @@ export const puckConfig: Config = {
       components: ["Hero", "Card"],
     },
     Widgets: {
-      components: ["ChatWidget", "ChatPopupWidget", "StatusBrowserWidget", "StatusBrowserRowWidget"],
+      components: [
+        "ChatWidget",
+        "ChatPopupWidget",
+        "StatusBrowserWidget",
+        "StatusBrowserRowWidget",
+      ],
     },
     Layouts: {
       components: ["FourColumnLayout"],

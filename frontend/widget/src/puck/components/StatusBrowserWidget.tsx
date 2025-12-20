@@ -7,6 +7,8 @@ interface StatusBrowserWidgetProps {
   sessionId?: string;
   title?: string;
   showValidation?: boolean;
+  startOpen?: boolean;
+  buttonLabel?: string;
 }
 
 const apiBase = (import.meta as any).env?.VITE_API_BASE ?? "http://localhost:8000";
@@ -20,20 +22,25 @@ export const StatusBrowserWidget: ComponentConfig<StatusBrowserWidgetProps> = {
     sessionId: { type: "text", label: "Session ID (optional)" },
     title: { type: "text", label: "Title" },
     showValidation: { type: "checkbox", label: "Show validation summary" },
+    startOpen: { type: "checkbox", label: "Start open" },
+    buttonLabel: { type: "text", label: "Toggle button label" },
   },
   defaultProps: {
     projectId: "",
     sessionId: "",
     title: "Project Status",
     showValidation: true,
+    startOpen: false,
+    buttonLabel: "Status Browser",
   },
-  render: ({ projectId, sessionId, title, showValidation }) => {
+  render: ({ projectId, sessionId, title, showValidation, startOpen, buttonLabel }) => {
     const baseUrl = useMemo(() => apiBase.replace(/\/$/, ""), []);
     const [projects, setProjects] = useState<string[]>([]);
     const [session, setSession] = useState<SessionStatus | null>(null);
     const [effectiveProjectId, setEffectiveProjectId] = useState<string | null>(projectId || null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [open, setOpen] = useState(Boolean(startOpen));
 
     // Load project list
     useEffect(() => {
@@ -101,26 +108,6 @@ export const StatusBrowserWidget: ComponentConfig<StatusBrowserWidgetProps> = {
       load();
     }, [baseUrl, projectId, effectiveProjectId, sessionId]);
 
-    if (!effectiveProjectId) {
-      return (
-        <div className="p-3 text-sm text-slate-500">
-          Project not set. Use the selector to choose a project.
-        </div>
-      );
-    }
-
-    if (loading) {
-      return <div className="p-3 text-sm text-slate-500">Loading status…</div>;
-    }
-
-    if (error) {
-      return <div className="p-3 text-sm text-red-600">Status error: {error}</div>;
-    }
-
-    if (!session) {
-      return <div className="p-3 text-sm text-slate-500">No session data available.</div>;
-    }
-
     const renderStage = (key: string, st?: StageStatus) => {
       const exists = st?.exists;
       const req = st?.requires_input_count ?? 0;
@@ -148,51 +135,80 @@ export const StatusBrowserWidget: ComponentConfig<StatusBrowserWidgetProps> = {
     };
 
     return (
-      <div className="w-full rounded-xl border border-slate-200 shadow-sm bg-white overflow-hidden">
-        <div className="px-4 py-3 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+      <div className="w-full rounded-2xl border border-slate-200/70 bg-white/90 shadow-[0_18px_50px_-35px_rgba(15,23,42,0.35)] overflow-hidden">
+        <div className="px-4 py-3 border-b border-slate-200/70 bg-gradient-to-r from-slate-50 to-white flex items-center justify-between">
           <div className="flex flex-col gap-1">
-            <div className="text-xs font-semibold uppercase text-slate-500">Project</div>
-            <div className="flex items-center gap-2">
-              <select
-                className="border border-slate-200 rounded px-2 py-1 text-sm"
-                value={effectiveProjectId ?? ""}
-                onChange={(e) => setEffectiveProjectId(e.target.value || null)}
-              >
-                {projects.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="text-xs text-slate-500">{session.name || session.session_id}</div>
+            <div className="text-xs font-semibold uppercase text-slate-500">Status Browser</div>
+            <div className="text-sm font-semibold text-slate-800">{title || "Project Status"}</div>
           </div>
-          <div className="text-sm font-semibold text-slate-800">{title || "Project Status"}</div>
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className="inline-flex items-center gap-2 rounded-full border border-slate-200/70 bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:shadow"
+          >
+            {open ? "Hide" : buttonLabel || "Status Browser"}
+          </button>
         </div>
-        <div className="p-4 space-y-3">
-          <div className="text-xs font-semibold uppercase text-slate-500">Stages</div>
-          <div className="border border-slate-200 rounded-lg divide-y divide-slate-200">
-            {StageOrder.map((s) => renderStage(s, (session.stages as any)?.[s]))}
-          </div>
+        {!open && <div className="p-4 text-sm text-slate-500">Click the button to view status.</div>}
 
-          {showValidation && session.validation && (
-            <div className="pt-2">
-              <div className="text-xs font-semibold uppercase text-slate-500 mb-1">Validation</div>
-              <div className="text-sm text-slate-800">
-                Status:{" "}
-                {session.validation.passed ? (
-                  <span className="text-emerald-700 font-semibold">Passed</span>
-                ) : (
-                  <span className="text-red-600 font-semibold">Failed</span>
+        {open && (
+          <div className="p-4 space-y-3">
+            {!effectiveProjectId && <div className="text-sm text-slate-500">Project not set. Choose one below.</div>}
+            {effectiveProjectId && loading && <div className="text-sm text-slate-500">Loading status…</div>}
+            {effectiveProjectId && error && <div className="text-sm text-red-600">Status error: {error}</div>}
+            {effectiveProjectId && !loading && !error && !session && (
+              <div className="text-sm text-slate-500">No session data available.</div>
+            )}
+
+            {session && (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <div className="text-xs font-semibold uppercase text-slate-500">Project</div>
+                    <select
+                      className="border border-slate-200/70 rounded-lg bg-white px-2 py-1 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 w-full"
+                      value={effectiveProjectId ?? ""}
+                      onChange={(e) => setEffectiveProjectId(e.target.value || null)}
+                    >
+                      {projects.map((p) => (
+                        <option key={p} value={p}>
+                          {p}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-xs font-semibold uppercase text-slate-500">Session</div>
+                    <div className="text-sm text-slate-800">{session.name || session.session_id}</div>
+                  </div>
+                </div>
+
+                <div className="text-xs font-semibold uppercase text-slate-500">Stages</div>
+                <div className="border border-slate-200/70 rounded-xl divide-y divide-slate-200/70 bg-white/80">
+                  {StageOrder.map((s) => renderStage(s, (session.stages as any)?.[s]))}
+                </div>
+
+                {showValidation && session.validation && (
+                  <div className="pt-2">
+                    <div className="text-xs font-semibold uppercase text-slate-500 mb-1">Validation</div>
+                    <div className="text-sm text-slate-800">
+                      Status:{" "}
+                      {session.validation.passed ? (
+                        <span className="text-emerald-700 font-semibold">Passed</span>
+                      ) : (
+                        <span className="text-red-600 font-semibold">Failed</span>
+                      )}
+                    </div>
+                    <div className="text-xs text-slate-600">
+                      Errors: {session.validation.errors} · Warnings: {session.validation.warnings}
+                      {session.validation.timestamp ? ` · ${session.validation.timestamp}` : ""}
+                    </div>
+                  </div>
                 )}
-              </div>
-              <div className="text-xs text-slate-600">
-                Errors: {session.validation.errors} · Warnings: {session.validation.warnings}
-                {session.validation.timestamp ? ` · ${session.validation.timestamp}` : ""}
-              </div>
-            </div>
-          )}
-        </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
     );
   },

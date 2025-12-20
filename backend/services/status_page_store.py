@@ -4,7 +4,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-DATA_ROOT = Path("data/status-pages")
+BASE_DIR = Path(__file__).resolve().parents[2]
+DATA_ROOT = BASE_DIR / "data" / "puck_pages"
 
 
 @dataclass

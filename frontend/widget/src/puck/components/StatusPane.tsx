@@ -33,10 +33,12 @@ export function StatusPane({ sessionData }: StatusPaneProps) {
         </div>
       </div>
 
-      <div className="border rounded-lg border-slate-200 overflow-hidden">
-        <div className="bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600 uppercase">Stages</div>
+      <div className="border rounded-2xl border-slate-200/70 overflow-hidden bg-white/90 shadow-[0_18px_50px_-35px_rgba(15,23,42,0.35)]">
+        <div className="bg-gradient-to-r from-slate-50 to-white px-3 py-2 text-xs font-semibold text-slate-600 uppercase">
+          Stages
+        </div>
         <table className="min-w-full text-sm">
-          <thead className="border-b border-slate-200 bg-white">
+          <thead className="border-b border-slate-200/70 bg-white">
             <tr>
               <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600">Stage</th>
               <th className="px-3 py-2 text-left text-xs font-semibold text-slate-600">Status</th>
@@ -49,7 +51,7 @@ export function StatusPane({ sessionData }: StatusPaneProps) {
               const exists = st?.exists;
               const reqCount = st?.requires_input_count ?? 0;
               return (
-                <tr key={key} className="border-b border-slate-100">
+                <tr key={key} className="border-b border-slate-100/70">
                   <td className="px-3 py-2 text-slate-800">{label}</td>
                   <td className="px-3 py-2">
                     {exists ? (
@@ -82,8 +84,10 @@ export function StatusPane({ sessionData }: StatusPaneProps) {
         </table>
       </div>
 
-      <div className="border rounded-lg border-slate-200 overflow-hidden">
-        <div className="bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600 uppercase">Validation</div>
+      <div className="border rounded-2xl border-slate-200/70 overflow-hidden bg-white/90 shadow-[0_18px_50px_-35px_rgba(15,23,42,0.35)]">
+        <div className="bg-gradient-to-r from-slate-50 to-white px-3 py-2 text-xs font-semibold text-slate-600 uppercase">
+          Validation
+        </div>
         {validation ? (
           <div className="p-3 space-y-1 text-sm">
             <div>

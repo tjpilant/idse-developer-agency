@@ -67,10 +67,20 @@ def run_simple_cli(agency: Agency) -> None:
 
         try:
             print("Agent is thinking…", flush=True)
-            response = agency.get_response_sync(user_msg)
+            from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeout
+
+            with ThreadPoolExecutor(max_workers=1) as pool:
+                future = pool.submit(agency.get_response_sync, user_msg)
+                try:
+                    response = future.result(timeout=60)
+                except FuturesTimeout:
+                    print("\n[Timeout] Response exceeded 60s. Try a shorter request.\n", flush=True)
+                    continue
             print("Agent finished.\n", flush=True)
             # Strip verbose RunResult/guardrail footers if present
             if isinstance(response, str):
+                if len(response) > 1200:
+                    response = response[:1200] + "…"
                 cleaned_lines = []
                 stop_markers = ("runresult", "raw response", "new item(s)", "guardrail result")
                 for line in response.splitlines():

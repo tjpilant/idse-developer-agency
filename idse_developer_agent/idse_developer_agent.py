@@ -34,8 +34,9 @@ idse_developer_agent = Agent(
     files_folder="./files",
     tools_folder="./tools",
     tools=[firecrawl_mcp],  # BaseTools are auto-adapted from tools_folder
-    model="gpt-5.1",
+    model="gpt-5-mini",
     model_settings=ModelSettings(
+        max_output_tokens=400,
         reasoning=Reasoning(effort="medium", summary="auto"),
     ),
     # Guardrails: Instruction protection and boundary enforcement

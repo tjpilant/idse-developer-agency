@@ -115,9 +115,9 @@ export function RightPanel() {
   };
 
   return (
-    <aside className="col-span-12 lg:col-span-3 bg-white border-l border-slate-200">
+    <aside className="col-span-12 lg:col-span-3 bg-white/90 border-l border-slate-200/70">
       <div className="h-full flex flex-col">
-        <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+        <div className="px-4 py-3 border-b border-slate-200/70 bg-gradient-to-r from-slate-50 to-white flex items-center justify-between">
           <div>
             <h3 className="font-semibold text-slate-900">AI Assistant</h3>
             <p className="text-xs text-slate-500">AG-UI stream {connected ? "connected" : "connecting…"}</p>
@@ -133,7 +133,7 @@ export function RightPanel() {
           {messages.map((msg, idx) => (
             <div
               key={idx}
-              className={`rounded-xl border px-3 py-2 text-sm ${
+              className={`rounded-2xl border px-3 py-2 text-sm shadow-sm ${
                 msg.role === "assistant"
                   ? "bg-slate-50 border-slate-200 text-slate-800"
                   : msg.role === "user"
@@ -150,19 +150,19 @@ export function RightPanel() {
           <div ref={bottomRef} />
         </div>
         {status && <div className="px-4 py-2 text-xs text-amber-700 bg-amber-50 border-t border-amber-100">{status}</div>}
-        <form onSubmit={handleSend} className="p-4 border-t border-slate-200 bg-white">
+        <form onSubmit={handleSend} className="p-4 border-t border-slate-200/70 bg-white/80">
           <div className="flex items-end gap-2">
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Type a message..."
-              className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              className="flex-1 rounded-2xl border border-slate-200/70 bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
               rows={2}
             />
             <button
               type="submit"
               disabled={sending}
-              className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-60"
+              className="px-4 py-2 rounded-full bg-indigo-600 text-white text-sm font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-indigo-700 disabled:opacity-60"
             >
               Send
             </button>

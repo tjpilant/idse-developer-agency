@@ -254,7 +254,7 @@ export function PuckEditor({ hideEmbeddedChat = false }: { hideEmbeddedChat?: bo
   const handleCopyLink = () => {
     const slug = (data as any).slug || slugInput;
     if (!slug) return;
-    const link = `${window.location.origin}/status/${slug}`;
+    const link = `${window.location.origin}/${slug}`;
     navigator.clipboard?.writeText(link).then(
       () => setStatus(`Copied link: ${link}`),
       () => setStatus(`Link: ${link}`)
@@ -311,7 +311,7 @@ export function PuckEditor({ hideEmbeddedChat = false }: { hideEmbeddedChat?: bo
                   ID
                 </div>
               </div>
-              <nav className="px-2 py-3 space-y-1 text-sm font-medium text-slate-600">
+              <nav className="px-2 py-3 space-y-1 text-sm font-medium text-slate-900">
                 {[
                   { key: "blocks", label: "Blocks", icon: "🧱" },
                   { key: "fields", label: "Fields", icon: "💬" },
@@ -321,13 +321,19 @@ export function PuckEditor({ hideEmbeddedChat = false }: { hideEmbeddedChat?: bo
                   <button
                     key={item.key}
                     className={`w-full flex items-center gap-2 rounded-lg px-2 py-2 hover:bg-slate-50 transition ${
-                      activeTab === item.key ? "bg-slate-100 text-indigo-700 border border-indigo-100" : "text-slate-700"
+                      activeTab === item.key
+                        ? "bg-slate-100 text-indigo-700 border border-indigo-100"
+                        : "text-slate-900"
                     }`}
                     onClick={() => setActiveTab(item.key as typeof activeTab)}
                     title={item.label}
                   >
-                    <span className="text-base">{item.icon}</span>
-                    <span className="hidden xl:inline">{item.label}</span>
+                    <span className="text-xl leading-none" style={{ color: "#0f172a" }}>
+                      {item.icon}
+                    </span>
+                    <span className="text-sm font-semibold" style={{ color: "#0f172a" }}>
+                      {item.label}
+                    </span>
                   </button>
                 ))}
               </nav>

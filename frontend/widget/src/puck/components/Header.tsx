@@ -22,14 +22,14 @@ export function ShellHeader({
   onCopyLink,
 }: ShellHeaderProps) {
   return (
-    <header className="px-6 py-4 border-b border-slate-200 bg-white flex items-center justify-between">
-      <div className="flex items-center gap-3">
+    <header className="px-6 py-4 border-b border-slate-200/70 bg-white/90 backdrop-blur flex items-center justify-between">
+      <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
           <label className="text-sm font-semibold text-slate-700">Title</label>
           <input
             value={title}
             onChange={(e) => onTitleChange(e.target.value)}
-            className="rounded border border-slate-200 px-3 py-2 text-sm w-56"
+            className="rounded-xl border border-slate-200/70 bg-white px-3 py-2 text-sm w-56 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
             placeholder="Page title"
           />
         </div>
@@ -38,7 +38,7 @@ export function ShellHeader({
           <input
             value={slug}
             onChange={(e) => onSlugChange(e.target.value)}
-            className="rounded border border-slate-200 px-3 py-2 text-sm w-44"
+            className="rounded-xl border border-slate-200/70 bg-white px-3 py-2 text-sm w-44 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
             placeholder="auto-generated"
           />
         </div>
@@ -46,20 +46,20 @@ export function ShellHeader({
       <div className="flex gap-3 items-center">
         <button
           onClick={onOpenPages}
-          className="inline-flex items-center rounded-lg bg-slate-100 text-slate-800 px-3 py-2 font-semibold hover:bg-slate-200"
+          className="inline-flex items-center rounded-full bg-slate-100 text-slate-800 px-4 py-2 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-200"
         >
           Load page
         </button>
         <button
           onClick={onPublish}
           disabled={saving}
-          className="inline-flex items-center rounded-lg bg-indigo-600 text-white px-4 py-2 font-semibold hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed"
+          className="inline-flex items-center rounded-full bg-indigo-600 text-white px-4 py-2 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {saving ? "Publishing..." : "Publish page"}
         </button>
         <button
           onClick={onCopyLink}
-          className="inline-flex items-center rounded-lg bg-slate-200 text-slate-800 px-3 py-2 font-semibold hover:bg-slate-300 disabled:opacity-60 disabled:cursor-not-allowed"
+          className="inline-flex items-center rounded-full bg-slate-200 text-slate-800 px-3 py-2 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-300 disabled:opacity-60 disabled:cursor-not-allowed"
         >
           Copy link
         </button>

@@ -59,11 +59,11 @@ export function SessionList({ onSelectSession, selectedSessionId, apiBase }: Ses
 
   return (
     <div className="h-full flex flex-col">
-      <div className="p-3 border-b border-slate-200">
+      <div className="p-3 border-b border-slate-200/70 bg-gradient-to-r from-slate-50 to-white">
         <div className="text-xs font-semibold text-slate-500 uppercase mb-2">Projects</div>
         {projects.length > 0 ? (
           <select
-            className="w-full rounded-md border border-slate-200 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full rounded-lg border border-slate-200/70 bg-white px-2 py-1 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
             value={selectedProject ?? ""}
             onChange={(e) => setSelectedProject(e.target.value)}
           >
@@ -79,7 +79,7 @@ export function SessionList({ onSelectSession, selectedSessionId, apiBase }: Ses
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        <div className="p-3 border-b border-slate-200 flex items-center justify-between">
+        <div className="p-3 border-b border-slate-200/70 flex items-center justify-between bg-white/80">
           <div className="text-xs font-semibold text-slate-500 uppercase">Sessions</div>
           {loading && <span className="text-xs text-indigo-600">Loading…</span>}
         </div>
@@ -87,12 +87,14 @@ export function SessionList({ onSelectSession, selectedSessionId, apiBase }: Ses
         {!error && sessions.length === 0 && !loading && (
           <div className="p-3 text-sm text-slate-500">No sessions</div>
         )}
-        <ul className="divide-y divide-slate-200">
+        <ul className="divide-y divide-slate-200/70">
           {sessions.map((s) => (
             <li key={s.session_id}>
               <button
                 className={`w-full text-left px-3 py-2 transition ${
-                  selectedSessionId === s.session_id ? "bg-indigo-50 text-indigo-700" : "hover:bg-slate-50"
+                  selectedSessionId === s.session_id
+                    ? "bg-indigo-50 text-indigo-700"
+                    : "hover:bg-slate-50/80"
                 }`}
                 onClick={() => onSelectSession(selectedProject ?? "", s)}
               >

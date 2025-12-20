@@ -112,8 +112,8 @@ export const ChatWidget: ComponentConfig<ChatWidgetProps> = {
     };
 
     return (
-      <div className="w-full h-full flex flex-col rounded-2xl border border-slate-200 shadow-sm bg-white overflow-hidden">
-        <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+      <div className="w-full h-full flex flex-col rounded-3xl border border-slate-200/70 shadow-[0_20px_60px_-40px_rgba(15,23,42,0.35)] bg-white/90 overflow-hidden">
+        <div className="px-4 py-3 border-b border-slate-200/70 bg-gradient-to-r from-slate-50 to-white flex items-center justify-between">
           <div>
             <h3 className="font-semibold text-slate-900">{title || "Chat"}</h3>
             <p className="text-xs text-slate-500">{connected ? "Connected" : "Connecting..."}</p>
@@ -130,7 +130,7 @@ export const ChatWidget: ComponentConfig<ChatWidgetProps> = {
           {messages.map((msg, idx) => (
             <div
               key={idx}
-              className={`rounded-xl border px-3 py-2 text-sm ${
+              className={`rounded-2xl border px-3 py-2 text-sm shadow-sm ${
                 msg.role === "assistant"
                   ? "bg-slate-50 border-slate-200 text-slate-800"
                   : msg.role === "user"
@@ -151,19 +151,19 @@ export const ChatWidget: ComponentConfig<ChatWidgetProps> = {
           <div className="px-4 py-2 text-xs text-amber-700 bg-amber-50 border-t border-amber-100">{status}</div>
         )}
 
-        <form onSubmit={handleSend} className="p-4 border-t border-slate-200 bg-white">
+        <form onSubmit={handleSend} className="p-4 border-t border-slate-200/70 bg-white/80">
           <div className="flex items-end gap-2">
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder={placeholder || "Type a message..."}
-              className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              className="flex-1 rounded-2xl border border-slate-200/70 bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
               rows={2}
             />
             <button
               type="submit"
               disabled={sending}
-              className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-60"
+              className="px-4 py-2 rounded-full bg-indigo-600 text-white text-sm font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-indigo-700 disabled:opacity-60"
             >
               Send
             </button>
