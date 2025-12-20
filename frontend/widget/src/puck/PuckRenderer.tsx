@@ -120,10 +120,10 @@ export function PuckRenderer({ pageSlug: propPageSlug, data: initialData }: Puck
       {/* Edit button bar */}
       <div className="fixed top-4 right-4 z-50 flex gap-2">
         <Link
-          to="/"
+          to="/pages"
           className="px-4 py-2 rounded-lg bg-slate-700 text-white font-semibold hover:bg-slate-800 shadow-lg transition-colors"
         >
-          ← Home
+          ← Pages
         </Link>
         {currentSlug && (
           <Link

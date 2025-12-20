@@ -36,7 +36,7 @@ function RendererLanding() {
           </p>
           <h1 className="text-3xl font-bold text-slate-900">View a published page</h1>
           <p className="mt-3 text-slate-600">
-            Click a page to open <code className="px-1 bg-slate-100 rounded">/status/&lt;slug&gt;</code>.
+            Click a page to open <code className="px-1 bg-slate-100 rounded">/&lt;slug&gt;</code>.
           </p>
         </header>
         {loading ? (
@@ -52,7 +52,7 @@ function RendererLanding() {
             {pages.map((p) => (
               <Link
                 key={p.slug}
-                to={`/status/${p.slug}`}
+                to={`/${p.slug}`}
                 className="block rounded-xl bg-white p-4 border border-slate-100 shadow-sm hover:shadow-md transition"
               >
                 <div className="text-indigo-600 font-semibold">{p.title || p.slug || "Untitled"}</div>
@@ -66,7 +66,7 @@ function RendererLanding() {
   );
 }
 
-function Home() {
+function Landing() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
       <div className="max-w-4xl mx-auto px-6 py-16">
@@ -99,7 +99,7 @@ function Home() {
           </Link>
 
           <Link
-            to="/status"
+            to="/pages"
             className="block rounded-2xl bg-white p-6 shadow-sm border border-slate-100 hover:shadow-md transition"
           >
             <div className="text-indigo-600 font-semibold">Renderer</div>
@@ -120,11 +120,12 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<PuckRenderer pageSlug="index" />} />
         <Route path="/editor" element={<PuckEditor />} />
         <Route path="/editor-shell" element={<PuckShellPage />} />
-        <Route path="/status" element={<RendererLanding />} />
-        <Route path="/status/:slug" element={<PuckRenderer />} />
+        <Route path="/pages" element={<RendererLanding />} />
+        <Route path="/:slug" element={<PuckRenderer />} />
+        <Route path="/landing" element={<Landing />} />
       </Routes>
     </BrowserRouter>
   );

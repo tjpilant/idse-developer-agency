@@ -24,14 +24,14 @@ export function PagesDialog({ isOpen, pages, onClose, onLoad, onCreateNew }: Pag
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl">
+      <div className="bg-white/95 rounded-2xl p-6 max-w-md w-full shadow-[0_30px_80px_-40px_rgba(15,23,42,0.6)] border border-slate-200/70">
         <h2 className="text-xl font-semibold mb-4">Load Page</h2>
 
         <div className="space-y-2 mb-4 max-h-96 overflow-y-auto">
           {pages.map((p) => (
             <label
               key={p.slug}
-              className="flex items-center gap-2 p-2 hover:bg-slate-50 cursor-pointer rounded"
+              className="flex items-center gap-2 p-2 hover:bg-slate-50/80 cursor-pointer rounded-lg"
             >
               <input
                 type="radio"
@@ -48,13 +48,13 @@ export function PagesDialog({ isOpen, pages, onClose, onLoad, onCreateNew }: Pag
         <div className="flex gap-2 justify-end">
           <button
             onClick={onCreateNew}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-indigo-300 hover:text-indigo-600"
+            className="rounded-full border border-slate-200/70 px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-300 hover:text-indigo-600"
           >
             + New Page
           </button>
           <button
             onClick={onClose}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-slate-300"
+            className="rounded-full border border-slate-200/70 px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300"
           >
             Cancel
           </button>
@@ -63,7 +63,7 @@ export function PagesDialog({ isOpen, pages, onClose, onLoad, onCreateNew }: Pag
               onLoad(selectedSlug);
             }}
             disabled={!selectedSlug}
-            className="rounded-lg bg-indigo-600 text-white px-4 py-2 text-sm font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
+            className="rounded-full bg-indigo-600 text-white px-4 py-2 text-sm font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             Load Selected
           </button>

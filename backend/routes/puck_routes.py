@@ -17,7 +17,8 @@ import re
 router = APIRouter()
 
 # File-based storage directory (created on import)
-PAGES_DIR = Path("data/puck_pages")
+BASE_DIR = Path(__file__).resolve().parents[2]
+PAGES_DIR = BASE_DIR / "data" / "puck_pages"
 PAGES_DIR.mkdir(parents=True, exist_ok=True)
 
 

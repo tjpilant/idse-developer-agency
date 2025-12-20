@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { ComponentConfig } from "@measured/puck";
 import type { ProjectSessionsResponse, SessionStatus, StageStatus } from "./types";
 
@@ -10,14 +11,11 @@ interface StatusBrowserRowProps {
 
 const apiBase = (import.meta as any).env?.VITE_API_BASE ?? "http://localhost:8000";
 const StageOrder = ["intent", "context", "spec", "plan", "testPlan", "tasks", "feedback"] as const;
+const TOGGLE_EVENT = "idse:status-browser-toggle";
 
 export const StatusBrowserRowWidget: ComponentConfig<StatusBrowserRowProps> = {
   label: "Status Browser (Row)",
-  fields: {
-    title: { type: "text", label: "Label", defaultValue: "Status Browser" },
-    projectId: { type: "text", label: "Project ID (optional)" },
-    sessionId: { type: "text", label: "Session ID (optional)" },
-  },
+  fields: {},
   defaultProps: {
     title: "Status Browser",
     projectId: "",
@@ -26,6 +24,14 @@ export const StatusBrowserRowWidget: ComponentConfig<StatusBrowserRowProps> = {
   render: ({ title, projectId, sessionId }) => {
     const baseUrl = useMemo(() => apiBase.replace(/\/$/, ""), []);
     const [open, setOpen] = useState(false);
+    const [anchorRect, setAnchorRect] = useState<{
+      top: number;
+      left: number;
+      right: number;
+      bottom: number;
+      width: number;
+      height: number;
+    } | null>(null);
     const [projects, setProjects] = useState<string[]>([]);
     const [selectedProject, setSelectedProject] = useState<string | null>(projectId || null);
     const [sessions, setSessions] = useState<SessionStatus[]>([]);
@@ -129,85 +135,125 @@ export const StatusBrowserRowWidget: ComponentConfig<StatusBrowserRowProps> = {
       );
     };
 
-    return (
-      <div
-        className="w-full"
-        style={{
-          display: "grid",
-          gridTemplateColumns: open ? "auto minmax(0, 1fr)" : "auto",
-          alignItems: "start",
-          gap: "12px",
-        }}
-      >
-        <button
-          className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50"
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-        >
-          {title || "Status Browser"}
-        </button>
+    const panelContent = (
+      <div className="rounded-2xl border border-slate-200/70 bg-white/90 shadow-[0_18px_50px_-35px_rgba(15,23,42,0.35)] p-4 w-full max-w-md">
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <div className="text-xs font-semibold uppercase text-slate-500">Status Browser</div>
+            <div className="text-sm font-semibold text-slate-900">{title || "Status Browser"}</div>
+          </div>
+          {loading && <div className="text-xs text-slate-500">Loading…</div>}
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200/70 bg-white text-slate-600 shadow-sm hover:bg-slate-50"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
 
-        {open && (
-          <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-3 w-full min-w-[420px]">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-sm font-semibold text-slate-900">{title || "Status Browser"}</div>
-              {loading && <div className="text-xs text-slate-500">Loading…</div>}
-            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+          <div>
+            <div className="text-xs font-semibold uppercase text-slate-500">Project</div>
+            <select
+              className="border border-slate-200/70 rounded-lg bg-white px-2 py-1 text-sm w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              value={selectedProject ?? ""}
+              onChange={(e) => setSelectedProject(e.target.value || null)}
+            >
+              {projects.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <div className="text-xs font-semibold uppercase text-slate-500">Session</div>
+            <select
+              className="border border-slate-200/70 rounded-lg bg-white px-2 py-1 text-sm w-full shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              value={selectedSession ?? ""}
+              onChange={(e) => setSelectedSession(e.target.value || null)}
+            >
+              {sessions.map((s) => (
+                <option key={s.session_id} value={s.session_id}>
+                  {s.name || s.session_id}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-              <div>
-                <div className="text-xs font-semibold uppercase text-slate-500">Project</div>
-                <select
-                  className="border border-slate-200 rounded px-2 py-1 text-sm w-full"
-                  value={selectedProject ?? ""}
-                  onChange={(e) => setSelectedProject(e.target.value || null)}
-                >
-                  {projects.map((p) => (
-                    <option key={p} value={p}>
-                      {p}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <div className="text-xs font-semibold uppercase text-slate-500">Session</div>
-                <select
-                  className="border border-slate-200 rounded px-2 py-1 text-sm w-full"
-                  value={selectedSession ?? ""}
-                  onChange={(e) => setSelectedSession(e.target.value || null)}
-                >
-                  {sessions.map((s) => (
-                    <option key={s.session_id} value={s.session_id}>
-                      {s.name || s.session_id}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+        {error && <div className="text-xs text-red-600 mb-2">{error}</div>}
 
-            {error && <div className="text-xs text-red-600 mb-2">{error}</div>}
-
-            <div className="text-xs font-semibold uppercase text-slate-500 mb-1">Status</div>
-            {!currentSession && <div className="text-sm text-slate-500">Select a project/session to view status.</div>}
-            {currentSession && (
-              <div className="border border-slate-200 rounded-lg divide-y divide-slate-200">
-                {StageOrder.map((s) => renderStage(s, (currentSession.stages as any)?.[s]))}
-                {currentSession.validation && (
-                  <div className="p-2 text-xs text-slate-700">
-                    Validation:{" "}
-                    {currentSession.validation.passed ? (
-                      <span className="text-emerald-700 font-semibold">Passed</span>
-                    ) : (
-                      <span className="text-red-600 font-semibold">Failed</span>
-                    )}
-                    {" · "}Errors {currentSession.validation.errors} · Warnings {currentSession.validation.warnings}
-                  </div>
+        <div className="text-xs font-semibold uppercase text-slate-500 mb-1">Status</div>
+        {!currentSession && (
+          <div className="text-sm text-slate-500">Select a project/session to view status.</div>
+        )}
+        {currentSession && (
+          <div className="border border-slate-200/70 rounded-xl divide-y divide-slate-200/70 bg-white/80">
+            {StageOrder.map((s) => renderStage(s, (currentSession.stages as any)?.[s]))}
+            {currentSession.validation && (
+              <div className="p-2 text-xs text-slate-700">
+                Validation:{" "}
+                {currentSession.validation.passed ? (
+                  <span className="text-emerald-700 font-semibold">Passed</span>
+                ) : (
+                  <span className="text-red-600 font-semibold">Failed</span>
                 )}
+                {" · "}Errors {currentSession.validation.errors} · Warnings {currentSession.validation.warnings}
               </div>
             )}
           </div>
         )}
       </div>
+    );
+
+    const drawer = open
+      ? createPortal(
+          <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setOpen(false)}>
+            <div
+              className="absolute bg-white/95 border border-slate-200/70 rounded-2xl shadow-[0_30px_80px_-40px_rgba(15,23,42,0.6)] p-4"
+              style={{
+                top: Math.max(12, anchorRect ? anchorRect.top : 80),
+                left: anchorRect ? Math.min(anchorRect.right + 12, window.innerWidth - 420) : undefined,
+                right: anchorRect ? undefined : 12,
+                width: 400,
+                maxWidth: "90vw",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {panelContent}
+            </div>
+          </div>,
+          document.body
+        )
+      : null;
+
+    return (
+      <>
+        <div className="w-full space-y-3">
+          <button
+            className="inline-flex items-center gap-2 rounded-full border border-slate-200/70 bg-white/90 px-4 py-2 text-sm font-semibold text-slate-800 shadow-[0_12px_30px_-20px_rgba(15,23,42,0.35)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-28px_rgba(15,23,42,0.45)]"
+            type="button"
+            onClick={(e) => {
+              const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
+              setAnchorRect({
+                top: rect.top,
+                left: rect.left,
+                right: rect.right,
+                bottom: rect.bottom,
+                width: rect.width,
+                height: rect.height,
+              });
+              setOpen((v) => !v);
+            }}
+          >
+            {title || "Status Browser"}
+          </button>
+        </div>
+        {drawer}
+      </>
     );
   },
 };

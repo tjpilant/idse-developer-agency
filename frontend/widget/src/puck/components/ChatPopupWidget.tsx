@@ -39,7 +39,7 @@ export const ChatPopupWidget: ComponentConfig<ChatPopupProps> = {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="fixed bottom-4 right-4 z-30 inline-flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          className="fixed bottom-4 right-4 z-30 inline-flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_-20px_rgba(15,23,42,0.5)] transition hover:-translate-y-0.5 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400"
         >
           💬 {props.buttonLabel || "Chat"}
         </button>
@@ -47,12 +47,12 @@ export const ChatPopupWidget: ComponentConfig<ChatPopupProps> = {
         {open && (
           <div className="fixed inset-0 z-40 flex justify-end bg-black/40 backdrop-blur-sm" onClick={() => setOpen(false)}>
             <div
-              className="relative h-full w-full max-w-[520px] bg-white shadow-2xl border-l border-slate-200"
+              className="relative h-full w-full max-w-[520px] bg-white/95 shadow-[0_30px_80px_-40px_rgba(15,23,42,0.6)] border-l border-slate-200/70"
               onClick={(e) => e.stopPropagation()}
             >
               <button
                 onClick={() => setOpen(false)}
-                className="absolute top-3 right-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white border border-slate-200 text-slate-600 shadow-sm hover:bg-slate-50"
+                className="absolute top-3 right-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white border border-slate-200/70 text-slate-600 shadow-sm hover:bg-slate-50"
                 aria-label="Close chat"
               >
                 ×

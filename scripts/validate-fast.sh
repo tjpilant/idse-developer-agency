@@ -1,19 +1,29 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Prefer project venv Python; fallback to system python3
+PY_BIN="${PY_BIN:-.venv/bin/python}"
+if [ ! -x "$PY_BIN" ]; then
+  PY_BIN="$(command -v python3 || true)"
+fi
+if [ -z "$PY_BIN" ]; then
+  echo "ERROR: No python3 found; set PY_BIN to your interpreter." >&2
+  exit 2
+fi
+
 PROJECT="${1:-}"
 SESSION="${2:-}"
 
 # Attempt to auto-detect project/session from .idse_active_session.json if not supplied
 if [ -z "$PROJECT" ] || [ -z "$SESSION" ]; then
   if [ -f ".idse_active_session.json" ]; then
-    PROJECT=$(python3 - <<'PY'
+    PROJECT=$("$PY_BIN" - <<'PY'
 import json
 s=json.load(open('.idse_active_session.json'))
 print(s.get('project',''))
 PY
 )
-    SESSION=$(python3 - <<'PY'
+    SESSION=$("$PY_BIN" - <<'PY'
 import json
 s=json.load(open('.idse_active_session.json'))
 print(s.get('session',''))
@@ -60,10 +70,10 @@ echo "Quick checks complete."
 # Run the canonical validate-artifacts script if present (fast/quick mode if supported)
 if [ -f "idse-governance/validate-artifacts.py" ]; then
   echo "Running idse-governance/validate-artifacts.py (fast mode if supported)..."
-  if python3 idse-governance/validate-artifacts.py --help 2>&1 | grep -q -- '--quick'; then
-    python3 idse-governance/validate-artifacts.py --session "$SESSION" --quick || { echo "validate-artifacts.py reported issues"; MISSING=1; }
+  if "$PY_BIN" idse-governance/validate-artifacts.py --help 2>&1 | grep -q -- '--quick'; then
+    "$PY_BIN" idse-governance/validate-artifacts.py --session "$SESSION" --quick || { echo "validate-artifacts.py reported issues"; MISSING=1; }
   else
-    python3 idse-governance/validate-artifacts.py --session "$SESSION" || { echo "validate-artifacts.py reported issues"; MISSING=1; }
+    "$PY_BIN" idse-governance/validate-artifacts.py --session "$SESSION" || { echo "validate-artifacts.py reported issues"; MISSING=1; }
   fi
 else
   echo "validate-artifacts.py not found; skipping full validation."

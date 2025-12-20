@@ -41,7 +41,7 @@ export function ApplicationShell({
   };
 
   return (
-    <div className="h-screen flex flex-col bg-slate-50">
+    <div className="h-screen flex flex-col bg-slate-50/80">
       <ShellHeader
         title={title}
         slug={slug}
@@ -54,9 +54,7 @@ export function ApplicationShell({
         onCopyLink={onCopyLink}
       />
 
-      <div className="flex-1 overflow-hidden">
-        {children}
-      </div>
+      <div className="flex-1 overflow-hidden">{children}</div>
 
       <PagesDialog
         isOpen={showPagesModal}

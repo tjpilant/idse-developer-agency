@@ -11,8 +11,13 @@ from typing import Dict, Any, AsyncGenerator
 import json
 import logging
 import asyncio
+from typing import Optional
 
 logger = logging.getLogger(__name__)
+
+MAX_RESPONSE_CHARS = 1200  # hard cap to avoid runaway rambles
+STREAM_CHUNK_SIZE = 80     # characters per streamed chunk
+RESPONSE_TIMEOUT_SEC = 60  # safety timeout per request
 
 
 class CopilotAdapter:
@@ -86,11 +91,7 @@ class CopilotAdapter:
         try:
             user_message = self.extract_user_message(message_data)
 
-            # Get response from agency (synchronous call in async context)
-            response = await asyncio.to_thread(
-                self.agency.get_response_sync,
-                user_message
-            )
+            response = await self._get_response_with_timeout(user_message)
 
             # Convert to CopilotKit format
             return self.format_copilot_response(response, message_data)
@@ -117,20 +118,15 @@ class CopilotAdapter:
             # Send typing indicator
             yield self.format_typing_indicator(True)
 
-            # Get response from agency
-            response = await asyncio.to_thread(
-                self.agency.get_response_sync,
-                user_message
-            )
+            response = await self._get_response_with_timeout(user_message)
 
             # Send response in chunks for streaming effect
             yield self.format_typing_indicator(False)
 
             # Split response into chunks for streaming
-            chunk_size = 50  # characters per chunk
-            for i in range(0, len(response), chunk_size):
-                chunk = response[i:i + chunk_size]
-                yield self.format_response_chunk(chunk, is_final=(i + chunk_size >= len(response)))
+            for i in range(0, len(response), STREAM_CHUNK_SIZE):
+                chunk = response[i:i + STREAM_CHUNK_SIZE]
+                yield self.format_response_chunk(chunk, is_final=(i + STREAM_CHUNK_SIZE >= len(response)))
                 await asyncio.sleep(0.05)  # Small delay for smooth streaming
 
         except Exception as e:
@@ -163,6 +159,26 @@ class CopilotAdapter:
 
         logger.warning(f"Could not extract message from: {message_data}")
         return ""
+
+    async def _get_response_with_timeout(self, user_message: str) -> str:
+        """
+        Fetch response from agency with timeout and truncation to avoid runaway output.
+        """
+        try:
+            raw = await asyncio.wait_for(
+                asyncio.to_thread(self.agency.get_response_sync, user_message),
+                timeout=RESPONSE_TIMEOUT_SEC,
+            )
+            text = str(raw) if raw is not None else ""
+            if len(text) > MAX_RESPONSE_CHARS:
+                text = text[:MAX_RESPONSE_CHARS] + "…"
+            return text
+        except asyncio.TimeoutError:
+            logger.error("Agency response timed out")
+            return "⏱️ Response timed out. Please try again with a shorter request."
+        except Exception as exc:
+            logger.error(f"Agency response error: {exc}")
+            return f"⚠️ Error: {exc}"
 
     def format_copilot_response(
         self, response: str, original_message: Dict[str, Any]

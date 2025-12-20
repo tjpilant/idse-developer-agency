@@ -85,7 +85,7 @@ export function PublishDialog({
 
   if (!isOpen) return null;
 
-  const previewUrl = `/status/${slug || slugify(title) || "untitled"}`;
+  const previewUrl = `/${slug || slugify(title) || "untitled"}`;
 
   return (
     <div className="fixed inset-0 z-50" onKeyDown={handleKeyDown}>
@@ -98,7 +98,7 @@ export function PublishDialog({
 
       {/* Dialog */}
       <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
-        <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 space-y-5">
+        <div className="bg-white/95 rounded-2xl shadow-[0_30px_80px_-40px_rgba(15,23,42,0.6)] max-w-md w-full p-6 space-y-5 border border-slate-200/70">
           {/* Header */}
           <div>
             <h2 className="text-2xl font-bold text-slate-900">Publish Page</h2>
@@ -118,7 +118,7 @@ export function PublishDialog({
                 type="text"
                 value={title}
                 onChange={(e) => handleTitleChange(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full rounded-2xl border border-slate-200/70 bg-white px-4 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-transparent"
                 placeholder="Enter page title..."
                 autoFocus
                 required
@@ -137,7 +137,7 @@ export function PublishDialog({
                 type="text"
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono"
+                className="w-full rounded-2xl border border-slate-200/70 bg-white px-4 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-transparent font-mono"
                 placeholder="auto-generated-from-title"
               />
               <p className="text-xs text-slate-500 mt-1">
@@ -146,7 +146,7 @@ export function PublishDialog({
             </div>
 
             {/* Preview URL */}
-            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
+            <div className="bg-slate-50/80 border border-slate-200/70 rounded-2xl p-3">
               <p className="text-xs font-semibold text-slate-600 mb-1">Preview URL</p>
               <code className="text-sm text-indigo-600 break-all">
                 {window.location.origin}{previewUrl}
@@ -155,14 +155,14 @@ export function PublishDialog({
 
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-3">
                 <p className="text-sm text-red-700">{error}</p>
               </div>
             )}
 
             {/* Success Message */}
             {saved && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2">
+              <div className="bg-green-50 border border-green-200 rounded-2xl p-3 flex items-center gap-2">
                 <span className="inline-block h-2 w-2 rounded-full bg-green-500 animate-ping" aria-hidden="true" />
                 <p className="text-sm font-semibold text-green-800">Saved</p>
               </div>
@@ -174,14 +174,14 @@ export function PublishDialog({
                 type="button"
                 onClick={onClose}
                 disabled={saving}
-                className="flex-1 px-4 py-2.5 rounded-lg border border-slate-300 bg-white text-slate-700 font-semibold hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex-1 px-4 py-2.5 rounded-full border border-slate-200/70 bg-white text-slate-700 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={saving || !title.trim()}
-                className="flex-1 px-4 py-2.5 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex-1 px-4 py-2.5 rounded-full bg-indigo-600 text-white font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {saving ? "Publishing..." : "Publish"}
               </button>

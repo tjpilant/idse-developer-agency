@@ -49,7 +49,7 @@ export const FourColumnLayout: ComponentConfig<FourColumnLayoutProps> = {
 
     return (
       <div
-        className="w-full"
+        className="w-full rounded-3xl border border-slate-200/70 bg-white/80 p-4 shadow-[0_20px_60px_-45px_rgba(15,23,42,0.2)]"
         style={{
           display: "grid",
           gridTemplateColumns: `${col1Width} ${col2Width} ${col3Width} ${col4Width}`,
@@ -57,16 +57,16 @@ export const FourColumnLayout: ComponentConfig<FourColumnLayoutProps> = {
           minHeight: "300px",
         }}
       >
-        <div className="min-h-[120px] border border-dashed border-slate-200 rounded-md p-2">
+        <div className="min-h-[120px] rounded-2xl border border-dashed border-slate-200/80 bg-white/80 p-3">
           {renderSlot(col1, "col1")}
         </div>
-        <div className="min-h-[120px] border border-dashed border-slate-200 rounded-md p-2">
+        <div className="min-h-[120px] rounded-2xl border border-dashed border-slate-200/80 bg-white/80 p-3">
           {renderSlot(col2, "col2")}
         </div>
-        <div className="min-h-[120px] border border-dashed border-slate-200 rounded-md p-2">
+        <div className="min-h-[120px] rounded-2xl border border-dashed border-slate-200/80 bg-white/80 p-3">
           {renderSlot(col3, "col3")}
         </div>
-        <div className="min-h-[120px] border border-dashed border-slate-200 rounded-md p-2">
+        <div className="min-h-[120px] rounded-2xl border border-dashed border-slate-200/80 bg-white/80 p-3">
           {renderSlot(col4, "col4")}
         </div>
       </div>
