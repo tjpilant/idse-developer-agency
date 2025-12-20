@@ -7,14 +7,13 @@ export interface ApplicationShellProps {
   slug: string;
   status: string | null;
   saving: boolean;
-  pages: Array<{ id: string; title: string; slug?: string }>;
+  pages: Array<{ slug: string; title?: string }>;
   onTitleChange: (value: string) => void;
   onSlugChange: (value: string) => void;
   onPublish: () => void;
-  onSave: () => void;
   onOpenPages: () => void;
   onCopyLink: () => void;
-  onLoadPage: (id: string) => void;
+  onLoadPage: (slug: string) => void;
   onCreateNewPage: () => void;
   children: ReactNode;
 }
@@ -28,7 +27,6 @@ export function ApplicationShell({
   onTitleChange,
   onSlugChange,
   onPublish,
-  onSave,
   onOpenPages,
   onCopyLink,
   onLoadPage,
@@ -52,7 +50,6 @@ export function ApplicationShell({
         onTitleChange={onTitleChange}
         onSlugChange={onSlugChange}
         onPublish={onPublish}
-        onSave={onSave}
         onOpenPages={handleOpenModal}
         onCopyLink={onCopyLink}
       />
@@ -65,8 +62,8 @@ export function ApplicationShell({
         isOpen={showPagesModal}
         pages={pages}
         onClose={() => setShowPagesModal(false)}
-        onLoad={(id) => {
-          onLoadPage(id);
+        onLoad={(slug) => {
+          onLoadPage(slug);
           setShowPagesModal(false);
         }}
         onCreateNew={() => {

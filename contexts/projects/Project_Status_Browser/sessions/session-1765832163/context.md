@@ -1,95 +1,79 @@
-# Context – Project Status Browser
+# Context – Project Status Browser Visual Editor
 
-Intent reference: intents/projects/Project_Status_Browser/sessions/<active>/intent.md
+## Technical Environment
+- Project: Project_Status_Browser.
+- Expected stack: React-based frontend, likely with routing similar to Next.js (e.g., `/status/:id`), and a backend/API capable of persisting JSON payloads to a database or filesystem.
+- Existing implementation: status browser for projects; current status page representation may be static or minimally structured. This increment introduces a JSON-backed page model and editor.
 
-## 1. Environment
+## External Research – Puck Editor Patterns
+We studied the Puck editor (https://puckeditor.com/blog and docs) as a reference implementation for a React-first, JSON-backed page editor. Key patterns to reuse or adapt:
 
-- **Product / Project:** Project Status Browser (IDSE Project/Session status board)
-- **Domain:** Developer tooling / IDSE pipeline observability
-- **Users / Actors:**
-  - Developers working with IDSE projects and sessions.
-  - Maintainers of the IDSE Developer Agent and governance stack.
-  - (Optionally) CI/CD or platform engineers who need to inspect project/session status.
+### 1. JSON Data Model for Pages
+- Puck represents each page as a JSON `data` tree composed of `ComponentData` nodes:
+  - Each node has a `type` (component key) and `props` (configuration).
+  - Nested content is stored inside props; for Slots, this is typically an array of `ComponentData`.
+- Pages are rendered by passing `config` + `data` into a `Render` component, decoupling editing from rendering.
 
-- **Usage Modes:**
-  - **Local use:** developers running the existing AG-UI + backend on their machines.
-  - **Online use:** deployed alongside the AG-UI backend for remote/internal access (exact deployment topology **[REQUIRES INPUT]**).
+**Implication for Project_Status_Browser:**
+- Represent each status page as a JSON document built from `ComponentData` nodes.
+- Use a single data model for both editor and renderer; no view-specific hacks.
 
-## 2. Stack
+### 2. Slots for Nested Components
+- Puck 0.19 introduced a Slots API (successor to DropZones) for nested components:
+  - Define slot fields in component config: e.g., `items: { type: "slot" }`.
+  - In `render`, slots are invoked as React components (e.g., `<Items />`), and their underlying value is an array of `ComponentData` stored on the parent’s props.
+  - Slots are portable and easy to traverse/transform (e.g., via `walkTree`).
 
-- **Frontend:**
-  - Existing Puck/React-based 4-column AG-UI shell.
-  - Right-hand column already hosts the AG-UI chat widget.
-  - Project Status Browser UI will reuse this shell:
-    - Columns 1–2: project and session list.
-    - Column 3: per-session stage status and validation summary.
-    - Column 4: existing AG-UI chat, scoped to selected project/session.
+**Implication:**
+- Layout and container components in Project_Status_Browser should expose slot-like fields (e.g., `header`, `body`, `footer`, `columns`, `items`) whose values are arrays of nested components.
+- Slot content must live in the status page JSON so nested layouts can be saved/loaded reliably.
 
-- **Backend / API:**
-  - **Existing Python backend** that already serves AG-UI SSE endpoints:
-    - `POST /inbound` – inbound events/messages from the Puck ChatWidget.
-    - `GET /stream` – SSE stream of agent responses and system events ("thinking" / "finished").
-  - New read-only API endpoint(s) will be added, e.g.:
-    - `GET /api/projects/:projectId/sessions` → returns `ProjectSessionsResponse` JSON.
-    - (Optionally) `GET /api/projects/:projectId/sessions/:sessionId` for detailed views. **[REQUIRES INPUT]**
+### 3. Editing UX – Inline Editing and Overlays
+- Inline editing (Puck 0.20): text/textarea/custom fields can be marked `contentEditable`, enabling direct on-canvas editing. Render-time values become React nodes rather than plain strings.
+- Overlays and portals: Puck uses an overlay for selection/hover; `registerOverlayPortal` allows marking specific elements as “interactive” so they are not blocked by the overlay (e.g., accordions, tabs).
 
-- **Storage:**
-  - Filesystem-based storage for IDSE artifacts:
-    - `intents/projects/<project>/sessions/<session>/intent.md`
-    - `contexts/projects/<project>/sessions/<session>/context.md`
-    - `specs/…/spec.md`, `plans/…/plan.md`, `plans/…/test-plan.md`, `tasks/…/tasks.md`, `implementation/…`, `feedback/…/feedback.md`.
-  - Session discovery is based on existing directory layout and SessionManager conventions.
-  - No additional database is required in v1; all status is derived from existing artifacts.
+**Implication:**
+- Project_Status_Browser should support inline editing for key textual props (titles, descriptions, labels), with a clear contract when values are no longer simple strings.
+- The editor should include a selection/overlay layer, with a mechanism to keep certain UI controls interactive when needed (e.g., expandable status sections).
 
-- **Validation & Governance Integration:**
-  - Existing validator script: `scripts/validate_artifacts.py` checks:
-    - Required sections per template.
-    - Presence and placement of `[REQUIRES INPUT]` markers.
-  - Governance scripts referenced in IDSE_Core docs (`validate-artifacts.py`, `check-compliance.py`, `audit-feedback.py`) have **[REQUIRES INPUT]** status and are not assumed to be configured for this project in v1.
+### 4. Save/Load Flow
+- Puck editor pattern:
+  - `Puck` component receives initial `data` and a `config` describing components.
+  - On save/publish, Puck calls `onPublish(data)` with the full page JSON; the hosting app decides how to persist it (filesystem, DB, etc.).
+  - `Render` consumes the stored `data` with the same `config` to display the page.
+- Next.js recipe: uses `/page` and `/page/edit` routes; `/edit` is open in dev and stores data to filesystem by default, with guidance to switch to DB + auth for production.
 
-## 3. Constraints
+**Implication:**
+- Status pages should have paired routes:
+  - `/status/:id` – read-only renderer.
+  - `/status/:id/edit` – editor view, protected with auth.
+- A backend API should accept and return the status page JSON; the editor should treat this API as a black box (no tight coupling to storage details).
 
-- **Scope:**
-  - v1 is strictly **read-only**:
-    - No editing or regenerating artifacts from the UI.
-    - No triggering of pipeline stages or governance scripts from the browser.
-  - The browser surfaces status derived from artifacts and (where available) validation summaries.
+### 5. Layout Patterns: Grid and Flex
+- Puck 0.18 introduced improved drag-and-drop for arbitrary CSS layouts, with documented patterns:
+  - **Grid container + Grid item:** grid defines track structure; items define how many rows/columns they span.
+  - **Grid container + any item:** any component can participate in grid via dynamic slot/field logic.
+  - **Flex container + Flex item:** flex container plus items with `flexGrow`, `flexShrink`, `flexBasis`.
+- Best practices include using `allow`/`disallow` for DropZones/slots, and adding editor-only padding for easier selection when editing.
 
-- **Guardrails & Governance:**
-  - Must not bypass IDSE constitutional guardrails:
-    - No implicit or hidden autopilot.
-    - No writes to project/session artifacts from this feature.
-  - Must respect SessionManager project/session scoping and `.owner` conventions.
-  - Must not introduce direct coupling between the application code and `idse-governance/` logic; governance information is surfaced via artifacts and existing scripts only.
+**Implication:**
+- For status dashboards and layout-heavy pages, Project_Status_Browser can adopt similar patterns:
+  - Components representing layouts (e.g., dashboard, grid, columns) should manage placement and sizing.
+  - Other components (cards, text blocks, status indicators) are content; they should plug into these layout slots without needing layout-specific logic.
 
-- **Deployment:**
-  - Runs in the same process and environment as the existing AG-UI backend for local development.
-  - For online/internal deployments, the Project Status Browser will be exposed through the same frontend/backend stack as the AG-UI. Details about ingress, auth, and network boundaries are **[REQUIRES INPUT]**.
+## Constraints
+- Must respect the IDSE constitution and pipeline: no skipping stages and no mixing governance logic into application code.
+- Project_Status_Browser is part of `idse_developer_agency/implementation`, so implementation artifacts should reside under:
+  - `implementation/projects/Project_Status_Browser/sessions/<active>/...`
+- Stateless and framework-agnostic data model: the JSON representation should not depend on specific React implementations beyond component type names and props.
 
-- **Performance:**
-  - Status lookups should feel responsive for typical usage:
-    - Up to roughly **50 sessions per project** as an initial design target (**tunable, [REQUIRES INPUT]**).
-    - Acceptable to compute status on demand by scanning the filesystem; no background indexing required in v1.
+## Risks and Open Questions
+- Data migration: if existing status pages are stored differently, we may need migration scripts to move them to the new JSON format.
+- Inline editing: treating field values as React nodes vs. strings may complicate serialization or downstream processing; constraints on what inline editing can produce may be required.
+- Security: `/status/:id/edit` and mutation APIs must be protected; misuse could lead to arbitrary component trees or layout abuse.
+- Performance: deeply nested or very large component trees could impact editor responsiveness; we may need profiling and limits.
 
-## 4. Risks & Unknowns
-
-- **Technical Risks:**
-  - Potential performance degradation if the number of sessions or projects grows substantially and status is always computed on-demand from the filesystem.
-  - Risk of diverging from SessionManager conventions if path resolution is duplicated rather than reused.
-  - Incomplete governance integration: validation summaries may be limited to `scripts/validate_artifacts.py` until broader governance scripts are configured.
-
-- **Operational Risks:**
-  - If validation is not run regularly (e.g., in CI), the browser may show stale validation status, giving a false sense of completeness.
-  - Online deployments without clear access controls may expose project/session names or statuses more broadly than intended.
-
-- **Security & Access:**
-  - v1 assumes the same trust boundary as the existing AG-UI:
-    - Local usage is limited to the developer’s environment.
-    - Online/internal usage is restricted based on existing frontend/backend deployment and network controls.
-  - Explicit authentication/authorization requirements for the browser view are **[REQUIRES INPUT]**.
-
-- **Unknowns / [REQUIRES INPUT]:**
-  - Exact deployment topology for online/internal hosting (single-node vs multi-node, behind reverse proxy, etc.).
-  - Default set of projects to show (e.g., all under `intents/projects/*` vs curated list).
-  - Frequency and ownership of running `scripts/validate_artifacts.py` and any future governance scripts for status to reflect.
-  - Long-term ownership of the Project Status Browser (who maintains UX, API shape, and tests).
+## Dependencies
+- Frontend framework (React assumed).
+- Backend storage mechanism for JSON documents (database, filesystem, or equivalent persistence layer) with compatible APIs.
+- Existing Project_Status_Browser routing and authentication mechanisms.

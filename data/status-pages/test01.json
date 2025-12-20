@@ -1,0 +1,69 @@
+{
+  "id": "d73798a0-ebd9-4552-b8c7-685cd07f8efa",
+  "slug": "test01",
+  "title": "test01",
+  "schemaVersion": 1,
+  "root": {
+    "props": {
+      "title": "Untitled"
+    },
+    "title": "test01"
+  },
+  "content": [
+    {
+      "type": "Hero",
+      "props": {
+        "heading": "Welcome to IDSE Developer Agency",
+        "subheading": "Build better software with intent-driven guidance and AI copilots.",
+        "ctaText": "Open the editor",
+        "ctaLink": "/editor",
+        "id": "Hero-849c3384-2323-4f3a-96e3-020dc6b245b6"
+      }
+    },
+    {
+      "type": "Card",
+      "props": {
+        "title": "Feature Title",
+        "description": "Describe what this feature unlocks for the user.",
+        "icon": "\ud83d\ude80",
+        "id": "Card-8a4469d1-4f1f-49a8-9ffc-0a9ec002f690"
+      }
+    },
+    {
+      "type": "FourColumnLayout",
+      "props": {
+        "col4": [
+          {
+            "type": "ChatWidget",
+            "props": {
+              "title": "Chat with IDSE Assistant",
+              "intro": "Ask about intent, specs, tasks, or publishing.",
+              "placeholder": "Type a message...",
+              "id": "ChatWidget-27d15fb5-aed6-4652-84a5-8e14a96f29a3"
+            }
+          }
+        ],
+        "col3": [],
+        "col2": [],
+        "col1": [
+          {
+            "type": "StatusBrowserRowWidget",
+            "props": {
+              "title": "Status Browser",
+              "projectId": "",
+              "sessionId": "",
+              "id": "StatusBrowserRowWidget-a179faf9-5e35-433d-896b-42a310a118fc"
+            }
+          }
+        ],
+        "col1Width": "15%",
+        "col2Width": "25%",
+        "col3Width": "30%",
+        "col4Width": "30%",
+        "gap": "16px",
+        "id": "FourColumnLayout-2c92a747-8389-4017-9bed-2b3e807b3f9c"
+      }
+    }
+  ],
+  "zones": {}
+}

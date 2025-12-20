@@ -13,6 +13,8 @@ class AnalyzeGitHubRepoTool(BaseTool):
     """
     Fetch and summarize a GitHub repo by reading its README and a shallow file tree.
     Useful for getting a quick sense of a project before acting on it.
+
+    Deprecated: prefer scraper_suite.GitHubRepoScraper for session-scoped, token-aware scraping.
     """
 
     repo_url: str = Field(..., description="GitHub repo URL, e.g. https://github.com/user/repo")

@@ -6,13 +6,14 @@ import { useParams, Link } from "react-router-dom";
 const apiBase = (import.meta as any).env?.VITE_API_BASE ?? "http://localhost:8000";
 
 interface PuckRendererProps {
-  pageId?: string;
+  pageSlug?: string;
   data?: Data;
 }
 
-export function PuckRenderer({ pageId: propPageId, data: initialData }: PuckRendererProps) {
+export function PuckRenderer({ pageSlug: propPageSlug, data: initialData }: PuckRendererProps) {
   const params = useParams();
-  const pageId = propPageId ?? params.pageId;
+  const rawSlug = propPageSlug ?? params.slug;
+  const pageSlug = rawSlug ? rawSlug.toLowerCase() : undefined;
   const migrateZones = (page: any) => {
     if (!page || typeof page !== "object" || !page.zones) return page;
     const newZones: Record<string, any> = {};
@@ -31,20 +32,59 @@ export function PuckRenderer({ pageId: propPageId, data: initialData }: PuckRend
     return { ...page, zones: newZones };
   };
 
-  const [data, setData] = useState<Data | undefined>(migrateZones(initialData));
+  /**
+   * Normalize legacy Puck data into the current schema:
+   * - move root.* into root.props.*
+   * - strip legacy zones (DropZone) to avoid drag crashes
+   * - ensure ids and props exist on all components
+   */
+  const sanitizeData = (raw: any): Data | undefined => {
+    if (!raw) return undefined;
+    const page = migrateZones(raw) || {};
+
+    // Normalize root
+    const rootProps = { ...(page.root?.props ?? {}) };
+    if (page.root) {
+      for (const [k, v] of Object.entries(page.root)) {
+        if (k !== "props") {
+          (rootProps as any)[k] = v;
+        }
+      }
+    }
+
+    const contentArray = Array.isArray(page.content) ? page.content : [];
+    const normalizedContent = contentArray.map((item: any, idx: number) => {
+      const id = item?.id ?? `auto-${idx}-${Date.now()}`;
+      const props = item?.props ?? {};
+      return { ...item, id, props };
+    });
+
+    return {
+      ...page,
+      zones: undefined, // drop legacy drop-zone payloads
+      content: normalizedContent,
+      root: { props: rootProps },
+      title: page.title ?? page.root?.title,
+      slug: page.slug,
+    } as Data;
+  };
+
+  const [data, setData] = useState<Data | undefined>(sanitizeData(initialData));
   const [status, setStatus] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!pageId || initialData) return;
+    if (!pageSlug || initialData) return;
 
     const load = async () => {
       try {
         setStatus("Loading...");
-        const res = await fetch(`${apiBase.replace(/\/$/, "")}/api/pages/${pageId}`);
+        const res = await fetch(`${apiBase.replace(/\/$/, "")}/api/status-pages/${pageSlug}`);
         if (!res.ok) {
           throw new Error(`Failed to load page (${res.status})`);
         }
-        const json = migrateZones(await res.json());
+        const raw = await res.json();
+        const page = (raw as any).page ?? raw;
+        const json = sanitizeData(page);
         setData(json as Data);
         setStatus(null);
       } catch (err) {
@@ -53,7 +93,7 @@ export function PuckRenderer({ pageId: propPageId, data: initialData }: PuckRend
     };
 
     load();
-  }, [pageId, initialData]);
+  }, [pageSlug, initialData]);
 
   if (status) {
     return (
@@ -72,7 +112,7 @@ export function PuckRenderer({ pageId: propPageId, data: initialData }: PuckRend
   }
 
   // Extract page ID from data if available
-  const currentPageId = (data as any)?.id || pageId;
+  const currentSlug = (data as any)?.slug || pageSlug;
   const pageTitle = (data as any)?.title || (data as any)?.root?.title || "Untitled";
 
   return (
@@ -85,9 +125,9 @@ export function PuckRenderer({ pageId: propPageId, data: initialData }: PuckRend
         >
           ← Home
         </Link>
-        {currentPageId && (
+        {currentSlug && (
           <Link
-            to={`/editor?load=${currentPageId}`}
+            to={`/editor?load=${currentSlug}`}
             className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 shadow-lg transition-colors"
           >
             ✏️ Edit "{pageTitle}"

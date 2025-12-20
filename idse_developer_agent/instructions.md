@@ -82,3 +82,5 @@ If a guardrail is triggered, adjust your response to comply with the policy rath
 
 - Prefer the built-in tools (see `idse_developer_agent/tools/`) and follow the session/project setup in these instructions.
 - Always reference the IDSE constitution in `/docs/` when clarifying scope, risks, or constraints.
+- Firecrawl MCP tools are available (via `firecrawl` server) for structured web scraping; when used, write outputs to the current project/session artifacts (intent/context/spec/plan) and avoid `/current` paths. Default target: `contexts/projects/<project>/sessions/<session>/firecrawl.md` (override if needed).
+- Scraper workflow: `GenerateContextTool` uses `ScraperDispatcherTool` (GitHub/Firecrawl/local docs) to populate session-scoped `context.md`; `CreateSpecTool` can read structured context and emit `spec.md` (falls back to spec_agent if unstructured).

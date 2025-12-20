@@ -6,7 +6,6 @@ interface ShellHeaderProps {
   onTitleChange: (value: string) => void;
   onSlugChange: (value: string) => void;
   onPublish: () => void;
-  onSave: () => void;
   onOpenPages: () => void;
   onCopyLink: () => void;
 }
@@ -19,7 +18,6 @@ export function ShellHeader({
   onTitleChange,
   onSlugChange,
   onPublish,
-  onSave,
   onOpenPages,
   onCopyLink,
 }: ShellHeaderProps) {
@@ -51,13 +49,6 @@ export function ShellHeader({
           className="inline-flex items-center rounded-lg bg-slate-100 text-slate-800 px-3 py-2 font-semibold hover:bg-slate-200"
         >
           Load page
-        </button>
-        <button
-          onClick={onSave}
-          disabled={saving}
-          className="inline-flex items-center rounded-lg bg-slate-200 text-slate-800 px-3 py-2 font-semibold hover:bg-slate-300 disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          Save
         </button>
         <button
           onClick={onPublish}

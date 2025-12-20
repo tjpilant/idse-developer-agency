@@ -1,229 +1,332 @@
-# Specification
+# Specification – Project_Status_Browser Visual Page Editor & Renderer
 
-Intent source: /home/tjpilant/projects/idse-developer-agency/intents/projects/Project_Status_Browser/sessions/session-1765832163/intent.md
-Context source: /home/tjpilant/projects/idse-developer-agency/contexts/projects/Project_Status_Browser/sessions/session-1765832163/context.md
+Intent source: `/intents/projects/Project_Status_Browser/sessions/session-1765832163/intent.md`  
+Context source: `/contexts/projects/Project_Status_Browser/sessions/session-1765832163/context.md`
 
-## Intent
-# Project: Project Status Browser
+---
 
-## Intent Summary
-Build a simple, visual **Project Status Browser** that shows the state of IDSE projects and sessions: which pipeline stages are complete, where `[REQUIRES INPUT]` remains, and whether validation has passed. It should integrate with the existing Puck-based AG-UI shell and SessionManager, and respect IDSE constitutional guardrails (no hidden autopilot, no unsafe writes).
+## 1. Overview & Background
 
-## Purpose
-Give developers and maintainers a **single place to see the status of IDSE sessions** without digging through folders or reading raw Markdown. The browser should answer at a glance:
+The Project_Status_Browser previously had difficulty **reliably saving and loading status pages**. Page representations were not clearly separated between the editing surface and the public view, which led to ad‑hoc formats and fragile mappings.
 
-- Which sessions exist for a project?
-- Which stages (Intent → Feedback) are present?
-- Where are unresolved `[REQUIRES INPUT]` markers?
-- Has validation (e.g., `scripts/validate_artifacts.py`) run and passed?
+This specification formalizes a new model based on:
 
-## Outcome
-A **read-only status board** embedded in the existing AG-UI Puck shell that:
+- A **single JSON page data model** as the source of truth.
+- A clear separation of routes:
+  - `/status/:slug` – read-only view route.
+  - `/status/:slug/edit` – authenticated edit route.
+- A **component-driven editor** that operates directly on the same JSON as the renderer.
+- **Slot-based layout components** (inspired by Puck’s Slots API) for nesting components.
+- Optional **inline text editing** and editor overlay behavior.
 
-- Lists sessions for a given project.
-- Shows per-stage completion and `[REQUIRES INPUT]` counts.
-- Surfaces the latest validation outcome per session (pass/fail, errors/warnings).
-- Keeps developers inside the governed IDSE workflow while making progress and gaps obvious.
+External research from the Puck editor (https://puckeditor.com/blog) strongly influenced this design, especially patterns for JSON-backed pages, slots, `/edit` routes, and save/publish flows.
 
-## Current State / Starting Point
-- The IDSE Developer Agent, SessionManager, and filesystem layout are already in place.
-- Artifacts are written to `<stage>/projects/<project>/sessions/<session>/<file>`.
-- A Puck-based 4-column frontend shell exists with a right-panel AG-UI chat widget wired via SSE (`/inbound`, `/stream`).
-- A validation script (`scripts/validate_artifacts.py`) checks required sections and `[REQUIRES INPUT]` markers.
-- There is **no visual status browser yet**; status is inferred manually from directories and Markdown files.
+This document defines **what** the system must do and **why**, without prescribing specific implementation details.
 
-## Objectives
-- Provide a **Session Status API** (e.g., `GET /api/projects/:projectId/sessions`) that:
-  - Discovers sessions for a project.
-  - For each session, reports per-stage:
-    - Whether the artifact exists.
-    - How many `[REQUIRES INPUT]` markers remain.
-  - Optionally includes a simple validation summary (ran/passed/errors/warnings/timestamp).
-- Integrate the status API into the existing Puck shell:
-  - Column 1–2: Project + session list.
-  - Column 3: Stage-by-stage status and validation summary for the selected session.
-  - Column 4: Existing AG-UI chat widget, scoped to the selected project/session.
-- Keep the browser **read-only** in v1: no artifact editing, no pipeline execution from the UI.
-- Ensure all behavior respects IDSE guardrails and session/project scoping.
+---
 
-## In Scope (v1)
-- Single-project support (e.g., `IDSE_Core`) with the ability to add others via config.
-- Backend endpoint(s) to compute and return `ProjectSessionsResponse` from the filesystem.
-- Basic frontend components to:
-  - List sessions.
-  - Show per-stage completion + `[REQUIRES INPUT]` counts.
-  - Display a simple validation summary.
-- Minimal error handling and empty-state UX (no sessions, missing artifacts, etc.).
+## 2. Users & User Stories
 
-## Out of Scope (v1)
-- Editing or regenerating artifacts from the UI.
-- Triggering pipeline stages or running governance scripts from the UI.
-- Multi-tenant / multi-user auth, complex permissions, or role-based views.
-- Advanced filtering, search, or historical trend views.
-- Rich dashboards or charts beyond a simple tabular/summary view.
+### 2.1 Primary Users
 
-## Constraints & Principles
-- Must **not** bypass IDSE guardrails:
-  - No autopilot; all pipeline runs remain explicit and separate from this browser.
-  - Read-only access to artifacts and validation summaries in v1.
-- Must respect **SessionManager** conventions for project/session discovery and paths.
-- Must be compatible with the existing Puck frontend and SSE backend.
-- No hidden network calls beyond the explicit status API; offline-safe by default.
-- Keep implementation small and testable; prefer simple filesystem scans + pure functions.
+1. **Status Editors / PMs** (non-technical users)
+   - Need to create and update project status pages without engineering support.
+2. **Viewers / Stakeholders**
+   - Need to quickly understand the state of a project via read-only status pages.
+3. **Developers**
+   - Need a clear, stable data model and APIs for building and maintaining the system.
 
-## Success Criteria
-- For at least one real project (e.g., `IDSE_Core`), a developer can:
-  - Open the AG-UI and see a list of sessions.
-  - Select a session and see:
-    - Which stages exist.
-    - Where `[REQUIRES INPUT]` remains.
-    - Whether validation has passed or failed (at least via `scripts/validate_artifacts.py`).
-- The browser strictly **reads** from existing artifacts; it never writes or mutates them.
-- The status API and UI can be exercised in tests (backend unit tests + minimal frontend checks).
-- The feature can be enabled/disabled cleanly (e.g., behind a config flag) without affecting the core agent.
+### 2.2 User Stories
 
-## Open Questions [REQUIRES INPUT]
-- Which projects should appear by default in the browser (e.g., only `IDSE_Core`, or all under `intents/projects/*`)?
-- How often should validation be run and reflected in the UI (on demand, on commit/CI, scheduled)?
-- Who owns the status browser long-term (maintenance, UX changes)?
-- Do we need authentication for this view in v1, or is it assumed local/internal only?
+**US-1 – Create a new status page**  
+As a status editor, I want to create a new status page composed of reusable components (headers, cards, grids, text blocks), so that I can communicate project health without writing code.
 
-## Context
-# Context – Project Status Browser
+**US-2 – Edit an existing status page visually**  
+As a status editor, I want to open an existing status page in an editor at `/status/:slug/edit` and visually add, remove, and rearrange components, so that I can keep the page up to date.
 
-Intent reference: intents/projects/Project_Status_Browser/sessions/<active>/intent.md
+**US-3 – Save and reload a page reliably**  
+As a status editor, when I save changes in the editor, I want those changes to persist and be visible the next time I open both `/status/:slug` and `/status/:slug/edit`, so that I trust the tool and do not lose work.
 
-## 1. Environment
+**US-4 – Use nested layouts (slots)**  
+As a status editor, I want to organize content into regions (e.g., header, body, footer, grid cells, columns), so that complex dashboards remain understandable.
 
-- **Product / Project:** Project Status Browser (IDSE Project/Session status board)
-- **Domain:** Developer tooling / IDSE pipeline observability
-- **Users / Actors:**
-  - Developers working with IDSE projects and sessions.
-  - Maintainers of the IDSE Developer Agent and governance stack.
-  - (Optionally) CI/CD or platform engineers who need to inspect project/session status.
+**US-5 – Inline edit important text**  
+As a status editor, I want to edit key text (titles, descriptions) directly on the page canvas, so that editing feels natural and I see changes in context.
 
-- **Usage Modes:**
-  - **Local use:** developers running the existing AG-UI + backend on their machines.
-  - **Online use:** deployed alongside the AG-UI backend for remote/internal access (exact deployment topology **[REQUIRES INPUT]**).
+**US-6 – View a status page**  
+As a viewer, I want to visit `/status/:slug` and see a rendered status page with its components and layout, without any editing UI, so that I can quickly understand project status.
 
-## 2. Stack
+**US-7 – Prevent unauthorized editing**  
+As an administrator, I want `/status/:slug/edit` and the save APIs to require authentication and authorization, so that only approved users can change status pages.
 
-- **Frontend:**
-  - Existing Puck/React-based 4-column AG-UI shell.
-  - Right-hand column already hosts the AG-UI chat widget.
-  - Project Status Browser UI will reuse this shell:
-    - Columns 1–2: project and session list.
-    - Column 3: per-session stage status and validation summary.
-    - Column 4: existing AG-UI chat, scoped to selected project/session.
+---
 
-- **Backend / API:**
-  - **Existing Python backend** that already serves AG-UI SSE endpoints:
-    - `POST /inbound` – inbound events/messages from the Puck ChatWidget.
-    - `GET /stream` – SSE stream of agent responses and system events ("thinking" / "finished").
-  - New read-only API endpoint(s) will be added, e.g.:
-    - `GET /api/projects/:projectId/sessions` → returns `ProjectSessionsResponse` JSON.
-    - (Optionally) `GET /api/projects/:projectId/sessions/:sessionId` for detailed views. **[REQUIRES INPUT]**
+## 3. Functional Requirements
 
-- **Storage:**
-  - Filesystem-based storage for IDSE artifacts:
-    - `intents/projects/<project>/sessions/<session>/intent.md`
-    - `contexts/projects/<project>/sessions/<session>/context.md`
-    - `specs/…/spec.md`, `plans/…/plan.md`, `plans/…/test-plan.md`, `tasks/…/tasks.md`, `implementation/…`, `feedback/…/feedback.md`.
-  - Session discovery is based on existing directory layout and SessionManager conventions.
-  - No additional database is required in v1; all status is derived from existing artifacts.
+### 3.1 Page Data Model
 
-- **Validation & Governance Integration:**
-  - Existing validator script: `scripts/validate_artifacts.py` checks:
-    - Required sections per template.
-    - Presence and placement of `[REQUIRES INPUT]` markers.
-  - Governance scripts referenced in IDSE_Core docs (`validate-artifacts.py`, `check-compliance.py`, `audit-feedback.py`) have **[REQUIRES INPUT]** status and are not assumed to be configured for this project in v1.
+**FR-1 – Single JSON source of truth**  
+The system SHALL represent each status page as a JSON document (`PageData`) that is the single source of truth for both the editor and the renderer.
 
-## 3. Constraints
+**FR-2 – Component tree structure**  
+The page JSON SHALL contain a tree of components, where each node has:
 
-- **Scope:**
-  - v1 is strictly **read-only**:
-    - No editing or regenerating artifacts from the UI.
-    - No triggering of pipeline stages or governance scripts from the browser.
-  - The browser surfaces status derived from artifacts and (where available) validation summaries.
+- `id: string` – unique within the page.
+- `type: string` – the component type key (e.g., `DashboardLayout`, `StatusCard`).
+- `props: object` – component props, including any nested slots.
 
-- **Guardrails & Governance:**
-  - Must not bypass IDSE constitutional guardrails:
-    - No implicit or hidden autopilot.
-    - No writes to project/session artifacts from this feature.
-  - Must respect SessionManager project/session scoping and `.owner` conventions.
-  - Must not introduce direct coupling between the application code and `idse-governance/` logic; governance information is surfaced via artifacts and existing scripts only.
+**FR-3 – Slot fields as arrays**  
+Any field in `props` that represents a layout region or slot (e.g., `header`, `body`, `footer`, `items`, `columns`, `left`, `right`) SHALL be an array of `ComponentData` (0 or more elements).
 
-- **Deployment:**
-  - Runs in the same process and environment as the existing AG-UI backend for local development.
-  - For online/internal deployments, the Project Status Browser will be exposed through the same frontend/backend stack as the AG-UI. Details about ingress, auth, and network boundaries are **[REQUIRES INPUT]**.
+**FR-4 – Schema versioning**  
+The page JSON SHALL include a `schemaVersion: number` field to allow future migrations.
 
-- **Performance:**
-  - Status lookups should feel responsive for typical usage:
-    - Up to roughly **50 sessions per project** as an initial design target (**tunable, [REQUIRES INPUT]**).
-    - Acceptable to compute status on demand by scanning the filesystem; no background indexing required in v1.
+### 3.2 Routing & Save/Load Behavior
 
-## 4. Risks & Unknowns
+**FR-5 – View route**  
+The system SHALL provide a read-only view route:
 
-- **Technical Risks:**
-  - Potential performance degradation if the number of sessions or projects grows substantially and status is always computed on-demand from the filesystem.
-  - Risk of diverging from SessionManager conventions if path resolution is duplicated rather than reused.
-  - Incomplete governance integration: validation summaries may be limited to `scripts/validate_artifacts.py` until broader governance scripts are configured.
+- Path: `/status/:slug`
+- Behavior:
+  - Fetches the page’s `PageData` JSON from the backend via `GET /api/status-pages/:slug`.
+  - Renders the page using a shared component registry and a renderer.
+  - Does not expose any editing controls and does not mutate data.
 
-- **Operational Risks:**
-  - If validation is not run regularly (e.g., in CI), the browser may show stale validation status, giving a false sense of completeness.
-  - Online deployments without clear access controls may expose project/session names or statuses more broadly than intended.
+**FR-6 – Edit route**  
+The system SHALL provide an edit route:
 
-- **Security & Access:**
-  - v1 assumes the same trust boundary as the existing AG-UI:
-    - Local usage is limited to the developer’s environment.
-    - Online/internal usage is restricted based on existing frontend/backend deployment and network controls.
-  - Explicit authentication/authorization requirements for the browser view are **[REQUIRES INPUT]**.
+- Path: `/status/:slug/edit`
+- Behavior:
+  - Requires authentication and proper authorization.
+  - Fetches the same `PageData` JSON via `GET /api/status-pages/:slug`.
+  - Displays a visual editor that:
+    - Shows the component tree as a page preview.
+    - Allows adding/removing/reordering components and modifying props.
+  - On Save/Publish:
+    - Sends the full, updated `PageData` document to `PUT /api/status-pages/:slug`.
 
-- **Unknowns / [REQUIRES INPUT]:**
-  - Exact deployment topology for online/internal hosting (single-node vs multi-node, behind reverse proxy, etc.).
-  - Default set of projects to show (e.g., all under `intents/projects/*` vs curated list).
-  - Frequency and ownership of running `scripts/validate_artifacts.py` and any future governance scripts for status to reflect.
-  - Long-term ownership of the Project Status Browser (who maintains UX, API shape, and tests).
+**FR-7 – Editor/view consistency**  
+Changes made in `/status/:slug/edit` and saved via the API SHALL be reflected exactly in `/status/:slug` after persistence, with no additional transformations required.
 
+### 3.3 Component & Slot Behavior
 
-## Overview
-- Summary and link back to intent/context.
+**FR-8 – Supported component types (initial set)**  
+The system SHALL support at least the following component types in v1:
 
-## User Stories
-- As a developer, I want to see all sessions for a project and their stage status so I can spot gaps quickly.
-- As a maintainer, I want to see counts of `[REQUIRES INPUT]` per stage so I know where to focus input gathering.
-- As a developer/maintainer, I want to see the latest validation outcome so I know if artifacts passed structural checks.
-- As a security-minded user, I want the view to be read-only so we don’t accidentally mutate artifacts from the browser.
+- `DashboardLayout` – root-level layout with `header`, `body`, and `footer` slots.
+- `GridLayout` – grid layout with `columns`, `gap`, and `items` slot.
+- `ColumnLayout` – two-column layout with `left` and `right` slots.
+- `StatusHeader` – non-slot component showing title and optional subtitle.
+- `StatusCard` – non-slot component representing a status block (title, status, description).
+- `TextBlock` – non-slot text component.
 
-## Functional Requirements
-- FR-1: Status API – `GET /api/projects/:projectId/sessions` returns sessions and per-stage status (exists flag, `[REQUIRES INPUT]` count).
-- FR-2: Optional detail endpoint – `GET /api/projects/:projectId/sessions/:sessionId` returns stage status + validation summary (if available).
-- FR-3: Session discovery uses SessionManager conventions (paths under `<stage>/projects/<project>/sessions/<session>`).
-- FR-4: UI lists sessions (columns 1–2), shows per-stage status/REQUIRES INPUT counts + validation summary (column 3).
-- FR-5: UI is read-only; no artifact edits or pipeline triggers; respects guardrails (no autopilot).
-- FR-6: Config flag to enable/disable the status browser without affecting core agent.
+**FR-9 – DashboardLayout slots**  
+`DashboardLayout.props` SHALL support:
 
-## Non-Functional Requirements
-- Performance: p95 status fetch for ≤50 sessions per project ≤500ms (filesystem scan acceptable).
-- Scale: Target up to ~50 sessions/project; beyond that, acceptable degradation with a note.
-- Security: Read-only; no writes; trust boundary same as AG-UI; auth optional v1 (local/internal). No hidden network calls.
-- Reliability: Graceful handling of missing artifacts; clear empty states.
-- Logging: Log errors for missing/unreadable artifacts and API failures.
+- `header: ComponentData[]`
+- `body: ComponentData[]`
+- `footer: ComponentData[]`
 
-## Acceptance Criteria
-- AC-1: For a real project (e.g., IDSE_Core), API returns sessions with per-stage exists + REQUIRES INPUT counts.
-- AC-2: UI shows sessions list, per-stage status, and validation summary (when available) in the Puck shell.
-- AC-3: Feature is read-only; no writes observed during interaction.
-- AC-4: Feature can be toggled off via config without breaking AG-UI.
-- AC-5: Missing artifacts or no sessions display friendly empty states.
+**FR-10 – GridLayout slots and props**  
+`GridLayout.props` SHALL support:
 
-## Assumptions / Constraints / Dependencies
-- Assumptions: SessionManager is the source of truth for project/session layout; validation summaries come from existing scripts (when run).
-- Constraints: No DB in v1; filesystem only. Must not bypass guardrails or introduce autopilot triggers.
-- Dependencies: SessionManager, AG-UI backend/frontend, `scripts/validate_artifacts.py` (optional for summaries).
+- `columns: number` – the number of columns.
+- `gap: number` – spacing between grid items.
+- `items: ComponentData[]` – child components rendered inside the grid.
 
-## Open Questions
-- [REQUIRES INPUT] Default project list (all vs curated like IDSE_Core).
-- [REQUIRES INPUT] Validation refresh cadence (on-demand vs CI vs scheduled) and where to read cached results.
-- [REQUIRES INPUT] Auth for online/internal deployments (none vs reuse existing boundary).
-- [REQUIRES INPUT] Who owns ongoing maintenance of the status browser.
+**FR-11 – ColumnLayout slots and props**  
+`ColumnLayout.props` SHALL support:
+
+- `left: ComponentData[]`
+- `right: ComponentData[]`
+- `ratio: [number, number]` (optional) – relative column widths.
+
+**FR-12 – Non-slot components**  
+`StatusHeader`, `StatusCard`, and `TextBlock` SHALL not define slots in v1; they SHALL use only scalar props:
+
+- `StatusHeader.props`: `title: string`, `subtitle?: string`.
+- `StatusCard.props`: `title: string`, `status: string`, `description?: string`.
+- `TextBlock.props`: `text: string`.
+
+### 3.4 Editing UX
+
+**FR-13 – Visual editor operations**  
+The visual editor at `/status/:slug/edit` SHALL support at least:
+
+- Adding a new component of any supported type to an allowed slot.
+- Removing an existing component.
+- Reordering components within a slot (drag & drop or move buttons).
+- Selecting a component to edit its props.
+
+**FR-14 – Inline editing for text**  
+For text-based props (e.g., `StatusHeader.title`, `StatusCard.description`, `TextBlock.text`), the editor SHOULD support inline editing directly on the canvas. When inline editing is enabled for a field, the system SHALL ensure that the stored JSON remains a string (i.e., no React nodes in serialized data).
+
+**FR-15 – Editor overlay and interaction**  
+The editor SHALL use some form of overlay or visual selection mechanism to indicate the currently selected component. Where interactive child elements are present (e.g., expandable sections), the editor SHALL provide a way to keep those elements clickable while still tracking selection (e.g., by exempting their DOM nodes from overlay hit-testing).
+
+### 3.5 Persistence & API
+
+**FR-16 – Get status page API**  
+The backend SHALL expose:
+
+- `GET /api/status-pages/:slug`
+- Response: `{ page: PageData }`.
+- Behavior: returns HTTP 404 if the page does not exist.
+
+**FR-17 – Update status page API**  
+The backend SHALL expose:
+
+- `PUT /api/status-pages/:slug`
+- Request body: `{ page: PageData }`.
+- Behavior:
+  - Validates that the incoming JSON conforms to the `PageData` schema.
+  - Replaces the stored JSON for that `slug` atomically.
+  - Returns `{ page: PageData }` with the persisted value.
+
+**FR-18 – Create/delete status pages (optional in v1)**  
+The backend MAY expose `POST /api/status-pages` and `DELETE /api/status-pages/:slug` for page lifecycle management. If present, they SHALL follow analogous JSON contracts.
+
+---
+
+## 4. Data Model Specification (JSON Schema Level)
+
+This section describes the logical schema. Implementation MAY use JSON Schema (e.g., Ajv) or equivalent validation.
+
+### 4.1 PageData
+
+```jsonc
+{
+  "id": "<uuid>",
+  "slug": "project-foo-status",
+  "title": "Project Foo – Status",
+  "schemaVersion": 1,
+  "root": { /* ComponentData */ }
+}
+```
+
+Constraints:
+
+- `id`: required, UUID string.
+- `slug`: required, URL-safe, pattern `^[a-z0-9-]+$`.
+- `title`: required, non-empty string.
+- `schemaVersion`: required, integer ≥ 1.
+- `root`: required, valid `ComponentData` node.
+
+### 4.2 ComponentData
+
+```jsonc
+{
+  "id": "StatusCard-1",
+  "type": "StatusCard",
+  "props": {
+    "title": "Backend",
+    "status": "OK",
+    "description": "All systems operational"
+  }
+}
+```
+
+Constraints:
+
+- `id`: required, unique within the page.
+- `type`: required, MUST be one of the known component type keys for this version.
+- `props`: required object.
+  - Slot fields: MUST be arrays of `ComponentData`.
+  - Non-slot fields: MUST be serializable JSON values (string, number, boolean, null, or shallow object/array of these).
+
+### 4.3 Slot Conventions
+
+- ANY slot field is represented as:
+
+  ```jsonc
+  "slotName": [ /* ComponentData[] */ ]
+  ```
+
+- Common slot names and meanings:
+
+  - `header`: components rendered at the top of a dashboard/page.
+  - `body`: main content region.
+  - `footer`: bottom region.
+  - `items`: generic list items (e.g., grid cells).
+  - `columns`: list of column layouts.
+  - `left` / `right`: content in left/right columns.
+
+- There are no “single element” slots; even if a slot typically has one child, it is always an array in JSON.
+
+---
+
+## 5. Non-Functional Requirements
+
+**NFR-1 – Performance**  
+- Typical pages (tens to low-hundreds of components) SHOULD load and render in < 2s p95 on the view route under expected network conditions.
+- Editor operations (add/remove/reorder, text edits) SHOULD feel responsive, with UI updates in < 200ms for direct interactions.
+
+**NFR-2 – Reliability & Integrity**  
+- Save operations MUST be atomic at the page level (either the entire JSON is persisted or not at all).
+- The system MUST never persist partially invalid JSON (schema validation fails the request with 4xx).
+
+**NFR-3 – Security**  
+- `/status/:slug` MAY be public (read-only), depending on organization policy.
+- `/status/:slug/edit` and all mutation endpoints (`PUT`, `POST`, `DELETE`) MUST require authentication and appropriate authorization.
+- Input data MUST be validated server-side before persistence.
+
+**NFR-4 – Evolvability**  
+- `schemaVersion` MUST be stored with each page, and migrations MUST be defined when schema semantics change.
+- Component types and props SHOULD be versioned in a way that allows gradual deprecation.
+
+---
+
+## 6. Acceptance Criteria
+
+**AC-1 – Basic create/edit/view**  
+Given a new status page is created and saved via the editor at `/status/new-page/edit`,  
+when the user visits `/status/new-page`,  
+then the content and layout SHALL match the last saved state exactly.
+
+**AC-2 – Nested layout round-trip**  
+Given a page with a `DashboardLayout` root and a `GridLayout` with two `StatusCard` children nested under `body`,  
+when the user saves the page, reloads `/status/:slug/edit`, and then visits `/status/:slug`,  
+then the JSON representation SHALL contain a `root.props.body[0]` of type `GridLayout` whose `props.items` array lists the same two cards in order, and the rendered output SHALL reflect that layout.
+
+**AC-3 – Editor/view consistency**  
+Given a user edits the text of a `StatusHeader.title` inline in the editor and clicks Save,  
+when the user reloads `/status/:slug` and `/status/:slug/edit`,  
+then both routes SHALL show the updated title.
+
+**AC-4 – Invalid data rejection**  
+Given a client attempts to `PUT /api/status-pages/:slug` with JSON that does not conform to the `PageData` schema (e.g., missing `root`, invalid `schemaVersion`),  
+then the server SHALL respond with an appropriate 4xx error and SHALL NOT modify the stored page.
+
+**AC-5 – Unauthorized edit protection**  
+Given an unauthenticated or unauthorized user attempts to access `/status/:slug/edit` or call `PUT /api/status-pages/:slug`,  
+then the request SHALL be rejected with an appropriate 4xx/5xx error code and no changes SHALL be made.
+
+---
+
+## 7. Assumptions, Constraints, Dependencies
+
+**Assumptions**
+
+- The host application uses React or a similar component-based UI framework.
+- A database or equivalent storage exists (e.g., Postgres with JSONB, or a document store) to persist `PageData` payloads.
+- Client-side routing and server-side APIs can be updated to add `/status/:slug` and `/status/:slug/edit` routes.
+
+**Constraints**
+
+- Must remain self-hosted; no external SaaS page-builder dependencies.
+- Must conform to the IDSE constitution: stages Intent → Context → Spec → Plan → Tasks → Implementation → Feedback are followed, and governance logic is kept separate from application code.
+- The JSON model must be serializable and not embed runtime-specific constructs (e.g., React components) in persisted data.
+
+**Dependencies**
+
+- Authn/authz system to guard `/edit` routes and mutation APIs.
+- Logging/monitoring to detect failures in save/load operations.
+
+---
+
+## 8. Open Questions
+
+- **OQ-1 – Page lifecycle:** Should this iteration include UI for creating/deleting status pages, or are pages provisioned by another system?
+- **OQ-2 – Draft vs published:** Do we need separate draft/published states per page now, or can we treat every save as immediately published?
+- **OQ-3 – Version history:** Is version history required in the near term (e.g., revert to previous versions), or can this be deferred?
+- **OQ-4 – Component catalog:** Is the initial set of components (`DashboardLayout`, `GridLayout`, `ColumnLayout`, `StatusHeader`, `StatusCard`, `TextBlock`) sufficient for the team’s expected use cases, or are additional specialized blocks needed (e.g., timelines, incident lists)?

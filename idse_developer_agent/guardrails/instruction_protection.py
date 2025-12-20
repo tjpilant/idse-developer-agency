@@ -56,6 +56,23 @@ BOUNDARY_VIOLATION_PATTERNS = [
     r"edit.*handoff_protocol\.md",
 ]
 
+def _normalize_user_message(user_message) -> str:
+    if isinstance(user_message, str):
+        return user_message
+    if isinstance(user_message, dict):
+        content = user_message.get("content") or user_message.get("text") or user_message.get("message")
+        if isinstance(content, str):
+            return content
+        if isinstance(content, list):
+            return " ".join(str(part) for part in content if part is not None)
+        return str(content) if content is not None else str(user_message)
+    if isinstance(user_message, list):
+        parts = []
+        for item in user_message:
+            parts.append(_normalize_user_message(item))
+        return " ".join(part for part in parts if part)
+    return str(user_message)
+
 
 @input_guardrail()
 def instruction_extraction_guardrail(context, agent, user_message: str) -> GuardrailFunctionOutput:
@@ -72,7 +89,8 @@ def instruction_extraction_guardrail(context, agent, user_message: str) -> Guard
     Returns:
         GuardrailFunctionOutput with tripwire_triggered=True if injection detected
     """
-    message_lower = user_message.lower()
+    message_text = _normalize_user_message(user_message)
+    message_lower = message_text.lower()
 
     # Check for prompt injection patterns
     for pattern in INJECTION_PATTERNS:
@@ -87,7 +105,7 @@ def instruction_extraction_guardrail(context, agent, user_message: str) -> Guard
             )
 
     # Check for attempts to manipulate urgency
-    if re.search(r"\b(STOP|HALT|EMERGENCY|URGENT)\b.*(list|show|reveal)", user_message, re.IGNORECASE):
+    if re.search(r"\b(STOP|HALT|EMERGENCY|URGENT)\b.*(list|show|reveal)", message_text, re.IGNORECASE):
         return GuardrailFunctionOutput(
             output_info="Your prompt injections won't work here. How can I help with your IDSE development task?",
             tripwire_triggered=True
@@ -164,7 +182,8 @@ def idse_boundary_guardrail(context, agent, user_message: str) -> GuardrailFunct
     Returns:
         GuardrailFunctionOutput with tripwire_triggered=True if boundary violation detected
     """
-    message_lower = user_message.lower()
+    message_text = _normalize_user_message(user_message)
+    message_lower = message_text.lower()
 
     # Check for boundary violation attempts
     for pattern in BOUNDARY_VIOLATION_PATTERNS:

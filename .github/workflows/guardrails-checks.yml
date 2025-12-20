@@ -1,0 +1,46 @@
+name: Guardrails Checks
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+jobs:
+  guardrails:
+    name: Run guardrail validations
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies (best-effort)
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt || true; fi
+
+      - name: Run validation scripts
+        run: |
+          set -e
+          mkdir -p reports
+          SESSION_ID="${{ github.run_id }}"
+          echo "Session: $SESSION_ID" > reports/session.txt
+
+          echo "Running validate-artifacts.py..."
+          PROJECT_NAME="Project_Status_Browser"
+          SESSION_ID="session-1765832163"
+
+          echo "Running validate-artifacts.py for $PROJECT_NAME / $SESSION_ID..."
+          python3 idse-governance/validate-artifacts.py --project "$PROJECT_NAME" --session "$SESSION_ID" > reports/validate-artifacts.log || touch reports/validate-artifacts.failed
+
+          if [ -f reports/validate-artifacts.failed ]; then
+            echo "Guardrail validation failed. See reports artifact for details."
+            exit 1
+          fi
+
+      - name: Upload guardrail reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: guardrails-reports-${{ github.run_id }}
+          path: reports/
