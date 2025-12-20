@@ -6,11 +6,11 @@ on:
       project:
         description: "Project name (e.g., Project_Status_Browser)"
         required: true
-        default: "Project_Status_Browser"
+        default: 
       session:
         description: "Session name (e.g., session-YYYYMMDDhhmm)"
         required: true
-        default: "session-1765832163"
+        default:
 
 permissions:
   contents: write
