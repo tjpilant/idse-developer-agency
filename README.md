@@ -32,6 +32,7 @@ Full philosophy: see [`/docs/`](./docs/).
 | `docs/` | IDSE Constitution, pipeline, prompting guide, and patterns. |
 | `.cursor/` | Cursor IDE automation and task scripts. |
 | `idse-governance/` | **IDE Governance Layer** – Claude ↔ Codex coordination system. |
+| `backend/services/git_service.py` | GitHub commit + repository_dispatch integration (Phase 0). |
 | `.vscode/` | Tasks integrating governance commands. |
 | `.env` | Environment keys. |
 | `requirements.txt` | Dependencies for Agency Swarm + IDSE tools. |

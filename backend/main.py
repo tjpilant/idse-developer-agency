@@ -73,6 +73,7 @@ def register_routes():
             agui_routes,
             copilot_routes,
             puck_routes,
+            git_routes,
             status_routes,
             status_pages,
         )
@@ -89,6 +90,9 @@ def register_routes():
         )
         app.include_router(
             puck_routes.router, prefix="/api/pages", tags=["Puck Pages"]
+        )
+        app.include_router(
+            git_routes.router, prefix="/api", tags=["Git Integration"]
         )
         app.include_router(agui_realtime.router, tags=["AG-UI Realtime"])
 

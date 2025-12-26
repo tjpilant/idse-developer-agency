@@ -1,543 +1,332 @@
-# Specification
+# Specification – Project_Status_Browser Visual Page Editor & Renderer
 
-Intent source: /home/tjpilant/projects/idse-developer-agency/intents/projects/IDSE_Core/sessions/session-1765806980/intent.md
-Context source: /home/tjpilant/projects/idse-developer-agency/contexts/projects/IDSE_Core/sessions/session-1765806980/context.md
+Intent source: `/intents/projects/Project_Status_Browser/sessions/session-1765832163/intent.md`  
+Context source: `/contexts/projects/Project_Status_Browser/sessions/session-1765832163/context.md`
 
-## Intent
-# Project: IDSE_Core
+---
 
-## Purpose
-Build the **core engine and artifact schemas** that orchestrate the full IDSE pipeline from intent through feedback.
-It acts as the validator and enforcement layer for the broader IDSE ecosystem, ensuring that all derivative agents and projects conform to the IDSE constitution.
+## 1. Overview & Background
 
-## Outcome
-A **reusable, verifiable foundation** for AI-driven engineering workflows — translating
-`intent → context → specification → plan → tasks → implementation → feedback` — with **constitutional guardrails baked in** and enforceable via the governance stack.
+The Project_Status_Browser previously had difficulty **reliably saving and loading status pages**. Page representations were not clearly separated between the editing surface and the public view, which led to ad‑hoc formats and fragile mappings.
 
-## High-Level Intent
-Design and implement the **IDSE_Core** engine that orchestrates the full IDSE pipeline
-`Intent → Context → Spec → Plan → Tasks → Implementation → Feedback` for software projects. IDSE_Core should provide reusable abstractions, tooling adapters, and MCP/IDE endpoints while strictly honoring the IDSE constitution and governance separation.
+This specification formalizes a new model based on:
 
-## Current State / Starting Point
-- We are **not starting from scratch**.
-- The **philosophy, constitution, agent roles, and pipeline definitions** already exist in Markdown documentation (the `docs/` set, including `/docs/01–08-idse-docs/`).
-- There is **no executable or structured core yet** — no schema, data model, or automation that enforces or validates IDSE stages.
-- Status of existing **governance scripts and automation** (e.g., `validate_artifacts.py`, `check_root_artifacts.py`, planned `check-compliance` and `audit-feedback` tools): Governance validation is currently provided by prototype guardrail scripts. `scripts/validate_artifacts.py` (invoked via `python3 scripts/validate_artifacts.py`) checks the current project's core artifacts (`intent.md`, `context.md`, `spec.md`, `plan.md`, `test-plan.md`, `tasks.md`, `implementation/README.md`, `feedback.md`) for required sections and `[REQUIRES INPUT]` markers and exits non-zero on failure while printing human-readable diagnostics to stdout. `scripts/check_root_artifacts.py` enforces allowed root-level artifacts. Dedicated `check-compliance` and `audit-feedback` governance CLIs are planned but not yet implemented; structured JSON report outputs and per-stage governance wiring remain to be added.
+- A **single JSON page data model** as the source of truth.
+- A clear separation of routes:
+  - `/status/:slug` – read-only view route.
+  - `/status/:slug/edit` – authenticated edit route.
+- A **component-driven editor** that operates directly on the same JSON as the renderer.
+- **Slot-based layout components** (inspired by Puck’s Slots API) for nesting components.
+- Optional **inline text editing** and editor overlay behavior.
 
-## Objectives
-- **Codify what is currently in the IDSE docs into functional modules**:
-  - **Validators** that check artifacts and pipelines against the IDSE constitution and rules.
-  - **Artifact generators** that produce intent, context, specs, plans, tasks, implementation scaffolding, and feedback structures.
-  - **Orchestrators** that enforce stage ordering and coordinate tools, governance checks, and external integrations.
-- Define a clear, extensible architecture for the IDSE pipeline stages and artifact schemas.
-- Implement core orchestration logic that can:
-  - Ingest and store intent and context artifacts.
-  - Generate specification, plans, tasks, and implementation scaffolding.
-  - Capture and integrate feedback in a repeatable loop.
-- Integrate with the governance stack (validate-artifacts, compliance checks, feedback audit) without embedding governance logic directly into application code.
-- Expose capabilities via MCP/IDE endpoints so external tools can:
-  - Query current status and artifacts.
-  - Trigger pipeline execution (full or partial).
-  - Supply feedback and updated intent/context.
-- Establish IDSE_Core as the single source of truth for IDSE artifact schemas, pipeline semantics, and constitutional validation behavior.
+External research from the Puck editor (https://puckeditor.com/blog) strongly influenced this design, especially patterns for JSON-backed pages, slots, `/edit` routes, and save/publish flows.
 
-## Scope (Initial Version)
+This document defines **what** the system must do and **why**, without prescribing specific implementation details.
 
-### In Scope (v1)
-- **Core schemas and data models** for all IDSE artifacts:
-  - intent, context, specification, plan, tasks, implementation notes, feedback, and validation/audit reports.
-- **Functional modules** that codify the docs into working components:
-  - **Artifact generators** for each stage, wrapping the existing IDSE tools where appropriate.
-  - **Validators** that enforce:
-    - Stage ordering and completeness.
-    - Basic structural and constitutional rules derived from the docs.
-  - **Orchestrators** that:
-    - Execute the pipeline in strict order (`Intent → Context → Spec → Plan → Tasks → Implementation → Feedback`).
-    - Coordinate calls to the existing tools and governance scripts.
-- **Artifact storage and retrieval** mechanisms aligned with the current project/session path conventions.
-- **Minimal MCP/IDE-facing API surface** to:
-  - Trigger full or partial pipeline runs.
-  - Query pipeline status and artifact locations.
-  - Submit updated intent, context, or feedback.
-- **Hooks for governance integration** that:
-  - Invoke existing governance scripts (e.g., validate/compliance/audit).
-  - Collect and surface their results without re-implementing governance logic.
+---
 
-### Out of Scope (Initial Version)
-- Rich UI/front-end dashboards.
-- Non-essential third-party integrations beyond what is needed for core MCP/IDE workflows.
-- Custom governance logic (must remain in the separate governance layer, not inside IDSE_Core).
-- Advanced concerns such as multi-tenant orchestration, distributed execution, or heavy performance optimization.
+## 2. Users & User Stories
 
-## Constraints & Principles
-- Respect strict separation between governance layer (e.g., idse-governance/) and application code (e.g., idse_developer_agent/, src/).
-- Follow the IDSE Constitution as the authoritative guide for pipeline behavior and artifact quality.
-- Design for testability and extensibility: clear interfaces, minimal coupling, and support for future stages/tools.
-- IDSE_Core may invoke governance scripts and consume their outputs, but must not duplicate, alter, or embed governance decision logic; it only routes and surfaces findings from the governance layer.
+### 2.1 Primary Users
 
-## Non-Functional Requirements (Draft)
+1. **Status Editors / PMs** (non-technical users)
+   - Need to create and update project status pages without engineering support.
+2. **Viewers / Stakeholders**
+   - Need to quickly understand the state of a project via read-only status pages.
+3. **Developers**
+   - Need a clear, stable data model and APIs for building and maintaining the system.
 
-> These NFRs are intentionally minimal and may contain `[REQUIRES INPUT]` placeholders to be refined later.
+### 2.2 User Stories
 
-### Performance
+**US-1 – Create a new status page**  
+As a status editor, I want to create a new status page composed of reusable components (headers, cards, grids, text blocks), so that I can communicate project health without writing code.
 
-- **NFR-PERF-1**: For a single-project, single-session pipeline run from Intent through Plan using local tools, the total wall-clock time on a reference developer machine (specification **[REQUIRES INPUT]**) should be ≤ **[REQUIRES INPUT]** seconds under normal conditions.
-- **NFR-PERF-2**: Orchestrator overhead per stage transition (excluding the time taken by external tools or governance scripts) should be ≤ **[REQUIRES INPUT]** milliseconds on the reference machine.
-- **NFR-PERF-3**: For governance CLI validation runs per stage (e.g., `validate-artifacts.py`, `check-compliance.py`), the total wall-clock time on a reference developer machine should be ≤ **3 seconds per stage** under normal load.
+**US-2 – Edit an existing status page visually**  
+As a status editor, I want to open an existing status page in an editor at `/status/:slug/edit` and visually add, remove, and rearrange components, so that I can keep the page up to date.
 
-### Reliability & Failure Handling
+**US-3 – Save and reload a page reliably**  
+As a status editor, when I save changes in the editor, I want those changes to persist and be visible the next time I open both `/status/:slug` and `/status/:slug/edit`, so that I trust the tool and do not lose work.
 
-- **NFR-REL-1**: 100% of orchestrated operations must either complete successfully or return a structured error; silent failures are not allowed.
-- **NFR-REL-2**: On tool or governance failure (non-zero exit, timeout, or malformed output), the orchestrator must:
-  - Avoid writing partial downstream artifacts for the affected stage.
-  - Record a validation/feedback artifact describing the failure.
-  - Surface a machine-readable error to callers.
-- **NFR-REL-3**: The orchestrator must recover gracefully from partial runs: on restart, it should detect existing artifacts and validation reports, determine the last consistent stage, and allow safe re-execution or continuation from that stage without corrupting artifacts.
+**US-4 – Use nested layouts (slots)**  
+As a status editor, I want to organize content into regions (e.g., header, body, footer, grid cells, columns), so that complex dashboards remain understandable.
 
-### Observability & Traceability
+**US-5 – Inline edit important text**  
+As a status editor, I want to edit key text (titles, descriptions) directly on the page canvas, so that editing feels natural and I see changes in context.
 
-- **NFR-OBS-1**: Each pipeline execution must have a unique run identifier and a structured trace that includes at minimum: projectId, sessionId, runId, stages executed, tools/governance scripts invoked, and artifact IDs read/written.
-- **NFR-OBS-2**: Traces/logs must be available in a human-readable form (e.g., text logs) and a machine-readable form (e.g., JSON lines or structured events). Exact log storage location and retention policy are **[REQUIRES INPUT]**.
-- **NFR-OBS-3**: All orchestrator and governance operations must log to human-readable audit trails, including at least timestamp, operation type, target project/session, stage, and outcome. Exact audit trail format and storage location are **[REQUIRES INPUT]**.
+**US-6 – View a status page**  
+As a viewer, I want to visit `/status/:slug` and see a rendered status page with its components and layout, without any editing UI, so that I can quickly understand project status.
 
-### Security & Isolation
+**US-7 – Prevent unauthorized editing**  
+As an administrator, I want `/status/:slug/edit` and the save APIs to require authentication and authorization, so that only approved users can change status pages.
 
-- **NFR-SEC-1**: By default, IDSE_Core must operate in an offline-safe mode: no network calls are made unless explicitly configured via governance or integration settings.
-- **NFR-SEC-2**: Governance tools invoked via CLI must be executed with paths and environment restricted to the current project/session and governance layer. Any sandboxing mechanism (e.g., containers, venvs) is **[REQUIRES INPUT]**.
+---
 
-### Extensibility & Compatibility
+## 3. Functional Requirements
 
-- **NFR-EXT-1**: Adding a new governance tool or integration should not require changes to the core orchestrator code; it should be achievable via configuration (`GovernanceIntegrationConfig`) and, if needed, small adapter modules.
-- **NFR-EXT-2**: All artifacts should carry an `engineVersion` that matches the IDSE_Core engine version at creation time to support compatibility tracking and future migrations.
-- **NFR-EXT-3**: New artifact kinds should be addable without changing the core artifact base schema; extension should be achieved via new `kind` values and derived interfaces that preserve compatibility with `ArtifactBase`.
+### 3.1 Page Data Model
 
-## Success Criteria (Initial Milestone)
-- A developer or orchestrator can:
-  - Provide project intent and minimal context.
-  - Trigger the IDSE pipeline and obtain generated spec, plan, tasks, and implementation scaffolding.
-  - Run governance validation scripts against produced artifacts.
-- The system can be invoked programmatically (e.g., via MCP/IDE integrations) with clear status reporting and error handling.
-- For any pipeline execution, a consumer can reconstruct which artifacts were read and written, which tools and governance scripts ran, and why each stage advanced or failed, using stored traces and validation/feedback artifacts.
+**FR-1 – Single JSON source of truth**  
+The system SHALL represent each status page as a JSON document (`PageData`) that is the single source of truth for both the editor and the renderer.
 
-### Engine Acceptance Criteria
+**FR-2 – Component tree structure**  
+The page JSON SHALL contain a tree of components, where each node has:
 
-1. **Stage ordering enforcement**
-   - The engine must prevent execution of any downstream stage (e.g., Plan, Tasks, Implementation) when required upstream artifacts (Intent, Context, Spec) are missing or invalid, and must return a structured error without writing partial artifacts for that stage.
+- `id: string` – unique within the page.
+- `type: string` – the component type key (e.g., `DashboardLayout`, `StatusCard`).
+- `props: object` – component props, including any nested slots.
 
-2. **Constitutional and structural validation**
-   - For each stage transition, the engine must validate artifacts against constitutional rules and basic structural schemas, and must refuse to advance the pipeline when violations are present, surfacing clear, machine-readable findings.
+**FR-3 – Slot fields as arrays**  
+Any field in `props` that represents a layout region or slot (e.g., `header`, `body`, `footer`, `items`, `columns`, `left`, `right`) SHALL be an array of `ComponentData` (0 or more elements).
 
-3. **Deterministic behavior for a given input set**
-   - Given the same project, session, inputs, configuration, and tool versions, the engine must produce the same artifacts and validation outcomes, or explicitly record any non-deterministic factors in metadata.
+**FR-4 – Schema versioning**  
+The page JSON SHALL include a `schemaVersion: number` field to allow future migrations.
 
-4. **Governance integration and reporting**
-   - When configured, the engine must be able to invoke governance scripts (e.g., `validate-artifacts.py`, `check-compliance.py`, `audit-feedback.py`) and persist their outputs as validation/feedback artifacts linked to the relevant pipeline artifacts.
+### 3.2 Routing & Save/Load Behavior
 
-5. **Traceable execution**
-   - Each pipeline run must produce a trace (log or structured report) that records which stages executed, which tools/governance scripts were invoked, which artifacts were read/written, and the reasons for any failures or blocked transitions.
+**FR-5 – View route**  
+The system SHALL provide a read-only view route:
 
-### Example Success Tests (Scenarios)
+- Path: `/status/:slug`
+- Behavior:
+  - Fetches the page’s `PageData` JSON from the backend via `GET /api/status-pages/:slug`.
+  - Renders the page using a shared component registry and a renderer.
+  - Does not expose any editing controls and does not mutate data.
 
-1. **Happy-path pipeline execution**
-   - Given a valid `intent.md` and `context.md` for a project/session, when the orchestrator is asked to run through Specification and Planning, then within **2 seconds**:
-     - A valid `spec.md` and `plan.md` are generated at the correct project/session paths.
-     - All generated artifacts pass structural validation and constitutional checks.
-     - No governance findings of level `error` are produced for these stages.
+**FR-6 – Edit route**  
+The system SHALL provide an edit route:
 
-2. **Missing context blocks downstream stages**
-   - Given a valid `intent.md` but no `context.md` for a project/session, when the orchestrator is asked to proceed beyond Context, then:
-     - No `spec.md` or `plan.md` artifacts are written.
-     - The orchestrator returns a structured error indicating that Context is missing.
-     - A feedback/validation artifact is recorded marking the pipeline as blocked at the Context stage.
+- Path: `/status/:slug/edit`
+- Behavior:
+  - Requires authentication and proper authorization.
+  - Fetches the same `PageData` JSON via `GET /api/status-pages/:slug`.
+  - Displays a visual editor that:
+    - Shows the component tree as a page preview.
+    - Allows adding/removing/reordering components and modifying props.
+  - On Save/Publish:
+    - Sends the full, updated `PageData` document to `PUT /api/status-pages/:slug`.
 
-3. **Governance violation stops the pipeline**
-   - Given intent, context, and spec artifacts where the spec violates a constitutional rule, when the orchestrator attempts to advance to Planning and runs the configured governance scripts, then:
-     - No new `plan.md` is written.
-     - At least one `validationReport` artifact is created with `passed = false` and a level `error` finding.
-     - The orchestrator surfaces this failure to the caller in a machine-readable form.
+**FR-7 – Editor/view consistency**  
+Changes made in `/status/:slug/edit` and saved via the API SHALL be reflected exactly in `/status/:slug` after persistence, with no additional transformations required.
 
-4. **Deterministic repeated runs**
-   - Given the same project/session, inputs (intent/context), configuration, and tool versions, when the orchestrator is run twice for the same stages, then:
-     - The resulting artifacts (e.g., `spec.md`, `plan.md`, `tasks.md`) are byte-identical or differ only in allowed metadata fields (timestamps, run IDs).
-     - Any differences are explicitly tracked in metadata fields rather than silent content drift.
+### 3.3 Component & Slot Behavior
 
-5. **IDE/MCP client interaction**
-   - Given an IDE or MCP client connected to IDSE_Core for a project/session with valid intent and context, when the client repeatedly requests "next valid stage" and triggers it, then:
-     - The pipeline advances in order through Spec → Plan → Tasks → Implementation scaffolding.
-     - At each step, the client can query and retrieve the latest artifact paths and any outstanding `[REQUIRES INPUT]` markers.
-     - The pipeline halts automatically at the first stage that requires additional human input or has failing governance checks.
+**FR-8 – Supported component types (initial set)**  
+The system SHALL support at least the following component types in v1:
 
-## Open Questions [REQUIRES INPUT]
-- Preferred implementation language and runtime environment for IDSE_Core.
-- Target deployment context for initial integrations (e.g., specific IDEs, CLIs, or orchestrators).
-- Any non-functional requirements (performance, security, multi-user support) that must be considered from day one.
-- Status of existing **governance scripts and automation** once clarified.
+- `DashboardLayout` – root-level layout with `header`, `body`, and `footer` slots.
+- `GridLayout` – grid layout with `columns`, `gap`, and `items` slot.
+- `ColumnLayout` – two-column layout with `left` and `right` slots.
+- `StatusHeader` – non-slot component showing title and optional subtitle.
+- `StatusCard` – non-slot component representing a status block (title, status, description).
+- `TextBlock` – non-slot text component.
 
-## Core Data Model (v1 Draft)
+**FR-9 – DashboardLayout slots**  
+`DashboardLayout.props` SHALL support:
 
-> Note: This is language-agnostic. Think of these as interfaces or JSON schemas that can be mapped to your chosen stack.
+- `header: ComponentData[]`
+- `body: ComponentData[]`
+- `footer: ComponentData[]`
 
-### Common Base Type
+**FR-10 – GridLayout slots and props**  
+`GridLayout.props` SHALL support:
 
-All artifacts share common metadata:
+- `columns: number` – the number of columns.
+- `gap: number` – spacing between grid items.
+- `items: ComponentData[]` – child components rendered inside the grid.
 
-- `id`: unique identifier
-- `projectId`: project key (e.g., `IDSE_Core`)
-- `sessionId`: IDSE session identifier
-- `kind`: one of `intent | context | specification | plan | task | feedback | validationReport`
-- `engineVersion`: IDSE_Core engine semver that produced this artifact
-- `version`: artifact version, incremented when content changes
-- `status`: lifecycle state (e.g., `draft` | `active` | `superseded` | `archived`)
-- `createdAt`, `updatedAt`: timestamps
-- `sourcePath`: backing file path, where applicable
-- `metadata`: free-form key/value map (author, tool versions, etc.)
+**FR-11 – ColumnLayout slots and props**  
+`ColumnLayout.props` SHALL support:
 
-```ts
-type ArtifactKind =
-  | 'intent'
-  | 'context'
-  | 'specification'
-  | 'plan'
-  | 'task'
-  | 'feedback'
-  | 'validationReport';
+- `left: ComponentData[]`
+- `right: ComponentData[]`
+- `ratio: [number, number]` (optional) – relative column widths.
 
-interface ArtifactBase {
-  id: string;
-  projectId: string;
-  sessionId: string;
-  kind: ArtifactKind;
-  version: string; // artifact version, incremented when content changes
-  engineVersion: string; // IDSE_Core engine semver that produced this artifact
-  status: 'draft' | 'active' | 'superseded' | 'archived';
-  createdAt: string; // ISO timestamp
-  updatedAt: string; // ISO timestamp
-  sourcePath?: string;
-  metadata?: Record<string, unknown>;
+**FR-12 – Non-slot components**  
+`StatusHeader`, `StatusCard`, and `TextBlock` SHALL not define slots in v1; they SHALL use only scalar props:
+
+- `StatusHeader.props`: `title: string`, `subtitle?: string`.
+- `StatusCard.props`: `title: string`, `status: string`, `description?: string`.
+- `TextBlock.props`: `text: string`.
+
+### 3.4 Editing UX
+
+**FR-13 – Visual editor operations**  
+The visual editor at `/status/:slug/edit` SHALL support at least:
+
+- Adding a new component of any supported type to an allowed slot.
+- Removing an existing component.
+- Reordering components within a slot (drag & drop or move buttons).
+- Selecting a component to edit its props.
+
+**FR-14 – Inline editing for text**  
+For text-based props (e.g., `StatusHeader.title`, `StatusCard.description`, `TextBlock.text`), the editor SHOULD support inline editing directly on the canvas. When inline editing is enabled for a field, the system SHALL ensure that the stored JSON remains a string (i.e., no React nodes in serialized data).
+
+**FR-15 – Editor overlay and interaction**  
+The editor SHALL use some form of overlay or visual selection mechanism to indicate the currently selected component. Where interactive child elements are present (e.g., expandable sections), the editor SHALL provide a way to keep those elements clickable while still tracking selection (e.g., by exempting their DOM nodes from overlay hit-testing).
+
+### 3.5 Persistence & API
+
+**FR-16 – Get status page API**  
+The backend SHALL expose:
+
+- `GET /api/status-pages/:slug`
+- Response: `{ page: PageData }`.
+- Behavior: returns HTTP 404 if the page does not exist.
+
+**FR-17 – Update status page API**  
+The backend SHALL expose:
+
+- `PUT /api/status-pages/:slug`
+- Request body: `{ page: PageData }`.
+- Behavior:
+  - Validates that the incoming JSON conforms to the `PageData` schema.
+  - Replaces the stored JSON for that `slug` atomically.
+  - Returns `{ page: PageData }` with the persisted value.
+
+**FR-18 – Create/delete status pages (optional in v1)**  
+The backend MAY expose `POST /api/status-pages` and `DELETE /api/status-pages/:slug` for page lifecycle management. If present, they SHALL follow analogous JSON contracts.
+
+---
+
+## 4. Data Model Specification (JSON Schema Level)
+
+This section describes the logical schema. Implementation MAY use JSON Schema (e.g., Ajv) or equivalent validation.
+
+### 4.1 PageData
+
+```jsonc
+{
+  "id": "<uuid>",
+  "slug": "project-foo-status",
+  "title": "Project Foo – Status",
+  "schemaVersion": 1,
+  "root": { /* ComponentData */ }
 }
 ```
 
-### Intent
+Constraints:
 
-Captures purpose, outcome, high-level goals, scope, and open questions.
+- `id`: required, UUID string.
+- `slug`: required, URL-safe, pattern `^[a-z0-9-]+$`.
+- `title`: required, non-empty string.
+- `schemaVersion`: required, integer ≥ 1.
+- `root`: required, valid `ComponentData` node.
 
-```ts
-interface IntentArtifact extends ArtifactBase {
-  kind: 'intent';
-  title: string;
-  purpose: string;
-  outcome?: string;
-  highLevelIntent: string;
-  objectives: string[];
-  inScope: string[];
-  outOfScope: string[];
-  constraints: string[];
-  successCriteria: string[];
-  openQuestions: string[]; // '[REQUIRES INPUT]' items live here
+### 4.2 ComponentData
+
+```jsonc
+{
+  "id": "StatusCard-1",
+  "type": "StatusCard",
+  "props": {
+    "title": "Backend",
+    "status": "OK",
+    "description": "All systems operational"
+  }
 }
 ```
 
-### Context
-
-Describes environment, stack, constraints, and risks that shape the solution.
-
-```ts
-interface ContextArtifact extends ArtifactBase {
-  kind: 'context';
-  intentId: string; // FK → IntentArtifact.id
-
-  environment: {
-    product?: string;
-    domain?: string;
-    users?: string[]; // roles / personas
-  };
-
-  stack: {
-    frontend?: string;
-    backend?: string;
-    database?: string;
-    infrastructure?: string;
-    integrations?: string[];
-  };
-
-  constraints: {
-    scale?: string;
-    performance?: string;
-    complianceSecurity?: string;
-    teamCapabilities?: string;
-    deadlines?: string;
-    legacy?: string;
-  };
-
-  risks: string[];
-  unknowns: string[];
-}
-```
-
-### Specification
-
-Formalizes requirements derived from intent + context.
-
-```ts
-interface SpecificationArtifact extends ArtifactBase {
-  kind: 'specification';
-  intentId: string;
-  contextId: string;
-
-  overview: string;
-
-  userStories: {
-    id: string;
-    role: string;
-    goal: string;
-    benefit: string;
-  }[];
-
-  functionalRequirements: {
-    id: string; // e.g., 'FR-1'
-    description: string;
-    priority?: 'must' | 'should' | 'could';
-  }[];
-
-  nonFunctionalRequirements: {
-    id: string; // e.g., 'NFR-1'
-    category: string; // performance, security, etc.
-    description: string;
-  }[];
-
-  acceptanceCriteria: {
-    id: string; // e.g., 'AC-1'
-    description: string;
-    relatedRequirementIds?: string[];
-  }[];
-
-  assumptions: string[];
-  constraints: string[];
-  dependencies: string[];
-  openQuestions: string[];
-}
-```
-
-### Plan
-
-Breaks the spec into epics/milestones and links back to requirements.
-
-```ts
-interface PlanArtifact extends ArtifactBase {
-  kind: 'plan';
-  specificationId: string;
-
-  epics: {
-    id: string;
-    title: string;
-    description: string;
-    relatedRequirementIds?: string[]; // FR/NFR ids
-  }[];
-
-  milestones: {
-    id: string;
-    title: string;
-    description?: string;
-    targetDate?: string; // ISO
-    epicIds?: string[];
-  }[];
-}
-```
-
-### Task
-
-Atomic units of work derived from the plan.
-
-```ts
-interface TaskArtifact extends ArtifactBase {
-  kind: 'task';
-  planId: string;
-
-  title: string;
-  description: string;
-  status:
-    | 'todo'
-    | 'in_progress'
-    | 'blocked'
-    | 'in_review'
-    | 'done';
-
-  priority?: 'low' | 'medium' | 'high';
-  assignee?: string;
-
-  relatedEpicId?: string;
-  relatedRequirementIds?: string[];
-
-  dependsOnTaskIds?: string[];
-  estimate?: number; // story points or hours
-}
-```
-
-### Feedback
-
-Captures feedback from users, governance scripts, or tools and links it to artifacts.
-
-```ts
-interface FeedbackArtifact extends ArtifactBase {
-  kind: 'feedback';
-
-  target: {
-    artifactKind: ArtifactKind;
-    artifactId: string;
-  };
-
-  source: {
-    type: 'user' | 'governance' | 'tool' | 'test';
-    name?: string; // e.g., 'validate-artifacts.py'
-  };
-
-  category:
-    | 'bug'
-    | 'change_request'
-    | 'improvement'
-    | 'question'
-    | 'governance_violation';
-
-  severity?: 'low' | 'medium' | 'high' | 'critical';
-
-  summary: string;
-  details?: string;
-
-  resolutionStatus:
-    | 'untriaged'
-    | 'acknowledged'
-    | 'in_progress'
-    | 'resolved'
-    | 'rejected';
-
-  linkedArtifactIds?: string[]; // e.g., tasks created to address the feedback
-
-  /** Optional governance linkage for constitutional traceability */
-  constitutionalArticleIds?: string[];
-  governancePolicyIds?: string[];
-}
-```
-
-### Validation Report (Optional but Recommended)
-
-Represents outputs from governance scripts and validators.
-
-```ts
-interface ValidationReportArtifact extends ArtifactBase {
-  kind: 'validationReport';
-
-  target: {
-    artifactKind: ArtifactKind;
-    artifactId: string;
-  };
-
-  validatorName: string; // e.g., 'check-compliance.py'
-  passed: boolean;
-
-  findings: {
-    id: string;
-    level: 'info' | 'warning' | 'error';
-    message: string;
-    relatedFieldPath?: string; // e.g., 'functionalRequirements[2].description'
-  }[];
-
-  /** Optional governance linkage for constitutional traceability */
-  relatedConstitutionalArticles?: string[];
-  relatedGovernancePolicies?: string[];
-}
-```
-
-This core data model keeps each artifact type focused but linked, enabling:
-- Strict stage ordering and traceability (intent → context → spec → plan → tasks → feedback/validation).
-- Governance scripts to attach structured findings to specific artifacts.
-- IDE/MCP integrations to reason about and manipulate artifacts in a type-safe way.
-
-### Governance Integration Config
-
-```ts
-type PipelineStage =
-  | 'intent'
-  | 'context'
-  | 'specification'
-  | 'plan'
-  | 'tasks'
-  | 'implementation'
-  | 'feedback';
-
-type GovernanceOutputFormat = 'json' | 'yaml' | 'text';
-
-interface GovernanceToolConfig {
-  /** Logical name, e.g. 'check-compliance' or 'validate-artifacts' */
-  name: string;
-
-  /** Script file or entry point name within the governance layer */
-  scriptName: string; // e.g. 'validate-artifacts.py'
-
-  /** How this tool is invoked: local CLI vs remote/local API */
-  invocationMode: 'cli' | 'api';
-
-  /**
-   * Executable/command to invoke (for 'cli' mode),
-   * may wrap or locate scriptName.
-   * Example: 'python3 idse-governance/validate-artifacts.py'
-   */
-  command?: string;
-
-  /**
-   * API endpoint to call (for 'api' mode),
-   * e.g. 'http://localhost:8080/governance/validate'.
-   */
-  apiEndpoint?: string;
-
-  /** Stages at which this tool should be invoked */
-  stages: PipelineStage[];
-
-  /** Artifact kinds this tool expects as inputs (for routing + validation) */
-  inputTypes: ArtifactKind[]; // e.g. ['specification', 'plan']
-
-  /**
-   * What kind of artifact this tool primarily emits.
-   * For v1 we assume 'validationReport', but this keeps it extensible.
-   */
-  outputKind: 'validationReport';
-
-  /** Optional extra CLI args, if needed (cli mode) */
-  args?: string[];
-
-  /** Environment variables to set when invoking the tool (cli mode) */
-  env?: Record<string, string>;
-
-  /** Max time in seconds before the run is treated as a failure */
-  timeoutSeconds?: number;
-
-  /** Expected output format for parsing into ValidationReport/Feedback artifacts */
-  outputFormat: GovernanceOutputFormat;
-
-  /**
-   * Which finding levels should block stage advancement.
-   * e.g. ['error'] or ['error', 'warning']
-   */
-  blockingLevels?: Array<'error' | 'warning' | 'info'>;
-
-  /** Whether a tool crash/timeout should block the pipeline (default: true) */
-  blockOnFailure?: boolean;
-}
-
-interface GovernanceIntegrationConfig {
-  /** Master switch for governance integration */
-  enabled: boolean;
-
-  /** Per-tool configuration */
-  tools: GovernanceToolConfig[];
-
-  /** Default blocking levels if not overridden per tool */
-  defaultBlockingLevels?: Array<'error' | 'warning' | 'info'>;
-
-  /** Optional global timeout, overridden by per-tool timeouts */
-  defaultTimeoutSeconds?: number;
-}
-```
-
-#### Versioning Note
-
-Changes to `GovernanceIntegrationConfig` and `GovernanceToolConfig` should be backward compatible within a major version. New fields should be added as optional whenever possible. Removing fields or changing their semantics requires a coordinated schema/config version bump and migration strategy, and downstream tools must treat unknown fields as non-fatal. All artifacts should carry an `engineVersion` matching the IDSE_Core engine version for compatibility tracking, while the artifact `version` field tracks the artifact's own revision within that schema. Each artifact must record both its own version (artifact lifecycle) and the producing `engineVersion` (IDSE_Core semver) to support validation, backward compatibility, and audit traceability.
+Constraints:
+
+- `id`: required, unique within the page.
+- `type`: required, MUST be one of the known component type keys for this version.
+- `props`: required object.
+  - Slot fields: MUST be arrays of `ComponentData`.
+  - Non-slot fields: MUST be serializable JSON values (string, number, boolean, null, or shallow object/array of these).
+
+### 4.3 Slot Conventions
+
+- ANY slot field is represented as:
+
+  ```jsonc
+  "slotName": [ /* ComponentData[] */ ]
+  ```
+
+- Common slot names and meanings:
+
+  - `header`: components rendered at the top of a dashboard/page.
+  - `body`: main content region.
+  - `footer`: bottom region.
+  - `items`: generic list items (e.g., grid cells).
+  - `columns`: list of column layouts.
+  - `left` / `right`: content in left/right columns.
+
+- There are no “single element” slots; even if a slot typically has one child, it is always an array in JSON.
+
+---
+
+## 5. Non-Functional Requirements
+
+**NFR-1 – Performance**  
+- Typical pages (tens to low-hundreds of components) SHOULD load and render in < 2s p95 on the view route under expected network conditions.
+- Editor operations (add/remove/reorder, text edits) SHOULD feel responsive, with UI updates in < 200ms for direct interactions.
+
+**NFR-2 – Reliability & Integrity**  
+- Save operations MUST be atomic at the page level (either the entire JSON is persisted or not at all).
+- The system MUST never persist partially invalid JSON (schema validation fails the request with 4xx).
+
+**NFR-3 – Security**  
+- `/status/:slug` MAY be public (read-only), depending on organization policy.
+- `/status/:slug/edit` and all mutation endpoints (`PUT`, `POST`, `DELETE`) MUST require authentication and appropriate authorization.
+- Input data MUST be validated server-side before persistence.
+
+**NFR-4 – Evolvability**  
+- `schemaVersion` MUST be stored with each page, and migrations MUST be defined when schema semantics change.
+- Component types and props SHOULD be versioned in a way that allows gradual deprecation.
+
+---
+
+## 6. Acceptance Criteria
+
+**AC-1 – Basic create/edit/view**  
+Given a new status page is created and saved via the editor at `/status/new-page/edit`,  
+when the user visits `/status/new-page`,  
+then the content and layout SHALL match the last saved state exactly.
+
+**AC-2 – Nested layout round-trip**  
+Given a page with a `DashboardLayout` root and a `GridLayout` with two `StatusCard` children nested under `body`,  
+when the user saves the page, reloads `/status/:slug/edit`, and then visits `/status/:slug`,  
+then the JSON representation SHALL contain a `root.props.body[0]` of type `GridLayout` whose `props.items` array lists the same two cards in order, and the rendered output SHALL reflect that layout.
+
+**AC-3 – Editor/view consistency**  
+Given a user edits the text of a `StatusHeader.title` inline in the editor and clicks Save,  
+when the user reloads `/status/:slug` and `/status/:slug/edit`,  
+then both routes SHALL show the updated title.
+
+**AC-4 – Invalid data rejection**  
+Given a client attempts to `PUT /api/status-pages/:slug` with JSON that does not conform to the `PageData` schema (e.g., missing `root`, invalid `schemaVersion`),  
+then the server SHALL respond with an appropriate 4xx error and SHALL NOT modify the stored page.
+
+**AC-5 – Unauthorized edit protection**  
+Given an unauthenticated or unauthorized user attempts to access `/status/:slug/edit` or call `PUT /api/status-pages/:slug`,  
+then the request SHALL be rejected with an appropriate 4xx/5xx error code and no changes SHALL be made.
+
+---
+
+## 7. Assumptions, Constraints, Dependencies
+
+**Assumptions**
+
+- The host application uses React or a similar component-based UI framework.
+- A database or equivalent storage exists (e.g., Postgres with JSONB, or a document store) to persist `PageData` payloads.
+- Client-side routing and server-side APIs can be updated to add `/status/:slug` and `/status/:slug/edit` routes.
+
+**Constraints**
+
+- Must remain self-hosted; no external SaaS page-builder dependencies.
+- Must conform to the IDSE constitution: stages Intent → Context → Spec → Plan → Tasks → Implementation → Feedback are followed, and governance logic is kept separate from application code.
+- The JSON model must be serializable and not embed runtime-specific constructs (e.g., React components) in persisted data.
+
+**Dependencies**
+
+- Authn/authz system to guard `/edit` routes and mutation APIs.
+- Logging/monitoring to detect failures in save/load operations.
+
+---
+
+## 8. Open Questions
+
+- **OQ-1 – Page lifecycle:** Should this iteration include UI for creating/deleting status pages, or are pages provisioned by another system?
+- **OQ-2 – Draft vs published:** Do we need separate draft/published states per page now, or can we treat every save as immediately published?
+- **OQ-3 – Version history:** Is version history required in the near term (e.g., revert to previous versions), or can this be deferred?
+- **OQ-4 – Component catalog:** Is the initial set of components (`DashboardLayout`, `GridLayout`, `ColumnLayout`, `StatusHeader`, `StatusCard`, `TextBlock`) sufficient for the team’s expected use cases, or are additional specialized blocks needed (e.g., timelines, incident lists)?

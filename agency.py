@@ -1,5 +1,6 @@
 #!/home/tjpilant/projects/idse-developer-agency/.venv/bin/python
 import sys
+import os
 import argparse
 
 # Force unbuffered output for better CLI experience
@@ -31,6 +32,13 @@ MENU = """Commands:
   /quit       Exit
 (Free-form requests are also accepted.)
 """
+
+# Default: tracing OFF to avoid retry spam when collectors are down.
+# To enable tracing explicitly, set ENABLE_TRACING=1 in your environment.
+if os.getenv("ENABLE_TRACING", "").lower() not in {"1", "true", "yes"}:
+    os.environ.setdefault("OTEL_TRACES_EXPORTER", "none")
+    os.environ.pop("OTEL_EXPORTER_OTLP_ENDPOINT", None)
+    os.environ.pop("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", None)
 
 load_dotenv()
 

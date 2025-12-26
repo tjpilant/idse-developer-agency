@@ -47,7 +47,7 @@ idse_developer_agent = Agent(
     output_guardrails=[
         instruction_leakage_guardrail,
     ],
-    validation_attempts=2,  # Allow one retry on output guardrail failure
+    validation_attempts=1,  # No retry: fail fast on guardrail violations
     throw_input_guardrail_error=True,  # Strict mode: fail fast on input violations
 )
 

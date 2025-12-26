@@ -6,3 +6,4 @@ pytest
 ag-ui-protocol>=0.1.0
 python-multipart
 websockets
+PyGithub

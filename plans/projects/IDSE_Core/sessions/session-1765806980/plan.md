@@ -1,224 +1,292 @@
-# Plan – IDSE_Core
+# Implementation Plan – Project_Status_Browser Visual Page Editor & Renderer
 
-Intent: intents/projects/IDSE_Core/sessions/session-1765806980/intent.md  
-Context: contexts/projects/IDSE_Core/sessions/session-1765806980/context.md  
-Spec: specs/projects/IDSE_Core/sessions/session-1765806980/spec.md  
+Source spec: `/specs/projects/Project_Status_Browser/sessions/session-1765832163/spec.md`
 
-## 1. Purpose of this Plan
-
-This plan translates the IDSE_Core specification into a phased implementation strategy. It defines core components, epics, and phases so new contributors can understand how the engine will be built, how governance is integrated, and how determinism and root guardrails are enforced.
-
-## 2. Architecture Overview
-
-The IDSE_Core engine will consist of the following high-level components:
-
-- **Artifact Manager** — Handles schema registration, serialization, and versioned storage.  
-- **Pipeline Orchestrator** — Coordinates stage transitions, enforces canonical ordering, and invokes governance hooks at the appropriate points.  
-- **Governance Adapter** — Loads `GovernanceIntegrationConfig`, invokes governance scripts, and parses results into validation/feedback artifacts with appropriate blocking behavior.  
-- **CLI & MCP Interface Layer** — Provides human and machine control surfaces via local CLI commands and lightweight MCP endpoints for IDEs, CI, and other tools.  
-- **Trace & Validation Subsystem** — Logs deterministic run traces and validation artifacts, enabling reproducibility, auditability, and clear visibility in IDEs and CI.
-
-These components correspond to the artifact, orchestration, governance, interface, and tracing responsibilities defined in the specification.
-
-## 3. Epics
-
-Each epic corresponds to a major capability in the IDSE_Core lifecycle and can be developed, validated, and integrated independently under constitutional guardrails.
-
-### Epic P1 – Schema + Storage Foundation
-
-Establish the core artifact model and deterministic filesystem storage.
-
-**Goals**
-
-- Define and finalize schemas for all IDSE artifacts:
-  - `intent`, `context`, `specification`, `plan`, `task`, `feedback`, `validationReport`.
-- Implement an **Artifact Manager** that:
-  - Registers schemas and enforces basic structural validation.
-  - Reads/writes artifacts as Markdown/YAML under project/session-scoped paths.
-  - Includes metadata such as `engineVersion`, artifact `version`, timestamps, and source paths.
-- Ensure serialization is stable so that identical inputs and configuration produce byte-identical artifacts (excluding allowed metadata fields like timestamps).
-
-**Key Deliverables**
-
-- `ArtifactBase` plus concrete artifact models.
-- Filesystem IO utilities respecting the current directory conventions.
-- Initial unit tests for round-trip serialization and deterministic formatting.
+This plan translates the specification into a concrete, phased implementation approach. It integrates the research findings around JSON-backed pages, slot-based layouts, and the `/status/:slug` vs `/status/:slug/edit` route pattern.
 
 ---
 
-### Epic P2 – Orchestrator Core (Local Runs)
+## 1. Architecture Summary
 
-Build the core **Pipeline Orchestrator** for local, single-process runs.
+### 1.1 High-Level Components
 
-**Goals**
+1. **Status Page API Layer**
+   - REST endpoints for status pages:
+     - `GET /api/status-pages/:slug` → returns `{ page: PageData }`.
+     - `PUT /api/status-pages/:slug` → accepts `{ page: PageData }` and persists it.
+     - (Optional) `POST /api/status-pages`, `DELETE /api/status-pages/:slug`.
+   - Responsible for validation, persistence, and enforcing auth.
 
-- Enforce canonical stage order:
+2. **Persistence Layer**
+   - `status_pages` storage (e.g., DB table):
+     - `id`, `slug`, `title`, `schema_version`, `data` (JSON), timestamps.
+   - Repository abstraction used by the API layer.
 
-  > `Intent → Context → Spec → Plan → Tasks → Implementation → Feedback`
+3. **StatusPageRenderer (View-only)**
+   - Frontend component that:
+     - Accepts `PageData`.
+     - Walks the `ComponentData` tree.
+     - Uses a **component registry** to render each node type.
+   - Used in the `/status/:slug` route.
 
-- Validate that required upstream artifacts exist and pass structural checks before each stage.
-- Provide a simple **stage/run state model** (e.g., `not_started | pending | complete | blocked | failed`) stored in a lightweight run-metadata artifact per project/session.
-- Ensure that:
-  - Downstream stages do **not** run when prerequisites are missing or invalid.
-  - Orchestrator never mutates upstream artifacts when executing downstream stages.
-  - Errors are structured and machine-readable.
-  - Every orchestrator decision (advance or block) emits a structured event captured in the trace log so runs can be replayed deterministically.
-- Couple orchestrator behavior explicitly to tests by defining clear contracts for ordering, blocking, and error semantics that map directly to the "Orchestrator & Ordering" and "Determinism" sections of the test plan.
+4. **StatusPageEditor (Visual Editor)**
+   - Frontend component used at `/status/:slug/edit`.
+   - Responsibilities:
+     - Load `PageData` via API on mount.
+     - Maintain an in-memory representation of the component tree.
+     - Support add/remove/reorder of components and props editing.
+     - On Save: PUT the updated `PageData` back to the API.
+   - Optionally provides inline text editing and a preview using the renderer.
 
-**Key Deliverables**
+5. **Component Registry & Layout/Block Components**
+   - A central registry mapping `type: string` → React component.
+   - Layout components (`DashboardLayout`, `GridLayout`, `ColumnLayout`) implement slots.
+   - Block components (`StatusHeader`, `StatusCard`, `TextBlock`) implement leaf nodes.
 
-- Orchestration engine with stage registry and prerequisite checks.
-- Run-metadata artifact capturing stage states and last-executed run ID.
-- Local driver to run up through at least `spec` and `plan` deterministically.
-- Documented contracts (inputs, preconditions, expected states) referenced from the test plan so new tests can be added without reverse-engineering orchestrator behavior.
-
----
-
-### Epic P3 – Governance Integration + Blocking
-
-Establish a configurable, visible governance layer that can block unsafe progression.
-
-**Goals**
-
-- Define a `GovernanceIntegrationConfig` that declares:
-  - Which governance tools run at which stages.
-  - Blocking levels (e.g., `error` vs `warning`).
-  - Timeouts, environment, and expected output formats.
-- Implement a **Governance Adapter** that:
-  - Loads `GovernanceIntegrationConfig`.
-  - Invokes `validate-artifacts.py`, `check-compliance.py`, `audit-feedback.py` via local CLI.
-  - Parses outputs into `validationReport` (and, where appropriate, `feedback`) artifacts.
-- Ensure governance results:
-  - Are always recorded (no silent passes/failures).
-  - Are surfaced through `status` (CLI and MCP) with clear reasons when a stage is blocked.
-- Treat tool failures (timeouts, malformed output, missing executables) as **blocking errors** that prevent downstream stages until resolved.
-- **Governance adapters must fail-fast deterministically**: given the same artifacts, configuration, and governance tool behavior, they must produce identical failures and validation artifacts on identical inputs.
-- **Blocking behavior must be deterministic**: for the same inputs and governance outputs, the engine must make the same block/advance decision and emit identical validation artifacts.
-
-**Key Deliverables**
-
-- Governance config schema and loader.
-- CLI invocation wrapper with timeout handling and structured parsing.
-- ValidationReport and Feedback artifact creation logic.
-- Status fields exposing governance findings and blocking reasons.
+6. **Routing Layer**
+   - View route: `/status/:slug` → fetch via API → `StatusPageRenderer`.
+   - Edit route: `/status/:slug/edit` → auth → fetch via API → `StatusPageEditor`.
 
 ---
 
-### Epic P4 – CLI + MCP Exposure
+## 2. Components
 
-Expose IDSE_Core capabilities to humans and tools.
-
-**Goals**
-
-- Implement a **CLI** for local, human-driven workflows:
-  - `idse-core status` — report project/session, current and next stage, artifacts, blockers.
-  - `idse-core run-stage` — run a specific stage under ordering and governance rules.
-  - `idse-core run-pipeline` — run multiple stages sequentially with an explicit confirmation flag.
-- Implement a **lightweight MCP interface** (no persistent service required):
-  - `status` tool (e.g., `/mcp/status`) — read-only, returns:
-    - Project/session, current stage, next valid stage.
-    - Artifact paths.
-    - Governance and validation blockers.
-  - `execute` tool (e.g., `/mcp/execute`) — side-effecting:
-    - Executes one or more stages.
-    - Enforces canonical ordering and governance blocking.
-- Keep semantics consistent between CLI and MCP responses.
-- Design CLI commands and MCP handlers so they can be exercised in automation and tests (without a long-lived service), mapping directly to the "CLI & MCP Interface Tests" section of the test plan.
-- Ensure CLI and MCP responses conform to a shared JSON schema validated in automated test harnesses.
-
-**Key Deliverables**
-
-- CLI entry points mapped to orchestrator operations.
-- MCP tool definitions and handler implementations.
-- Shared response schemas for status and execute.
-- Test harnesses or fixtures that invoke CLI/MCP interfaces programmatically to support automated regression and contract testing.
+| Component / Module                             | Responsibility                                                                                  | Interfaces / Dependencies                                      |
+|-----------------------------------------------|--------------------------------------------------------------------------------------------------|-----------------------------------------------------------------|
+| `StatusPageRepository`                        | CRUD operations for `status_pages` storage                                                      | DB client/ORM, JSON serialization                              |
+| `StatusPageApiController` / handlers          | HTTP handlers for `GET/PUT(/POST/DELETE) /api/status-pages`                                     | Repository, JSON schema validation, auth middleware            |
+| `PageData` / `ComponentData` types           | Type and schema definitions for page and components                                             | Used by API, editor, renderer                                  |
+| `StatusPageRenderer`                          | Walks `PageData` tree and renders via registry                                                  | Component registry, React                                      |
+| `StatusPageEditor`                            | Visual editor; manages in-memory tree and save operations                                      | API client, `PageData` types, editor subcomponents             |
+| `componentRegistry`                           | Maps `type` to React component renderers                                                       | Layout and block components                                    |
+| `DashboardLayout`, `GridLayout`, `ColumnLayout` | Layout components that expose slots via props                                                  | Renderer, editor, `ComponentData`                             |
+| `StatusHeader`, `StatusCard`, `TextBlock`     | Leaf components containing display data                                                         | Renderer, editor (property editing), inline text field         |
+| `EditorCanvas`                                | Visual tree / canvas for arranging components                                                   | `StatusPageEditor`, drag-and-drop library (if used)            |
+| `ComponentPalette`                            | UI listing available component types for insertion                                              | `StatusPageEditor`                                             |
+| `PropertyPanel`                               | Sidebar for editing selected component props                                                    | `StatusPageEditor`, `ComponentData`                            |
 
 ---
 
-### Epic P5 – Determinism + Root Guardrail Validation
+## 3. Data Model
 
-Guarantee deterministic behavior, tracing, and self-hosted guardrails.
+### 3.1 Database Schema (example)
 
-**Goals**
+SQL-style table (adapt as needed):
 
-- Implement the **Trace & Validation Subsystem**:
-  - Per-run traces capturing stages executed, artifacts read/written, governance tools invoked, and outcomes.
-  - Stable, normalized trace format suitable for hashing (excluding allowed volatile fields like timestamps).
-- Enforce deterministic behavior:
-  - Identical inputs/configuration produce identical artifacts and validation reports.
-  - Introduce a "determinism harness" (e.g., a helper or CLI mode) to:
-    - Run the same pipeline twice.
-    - Compare artifacts and trace hashes.
-- Implement the **Root Guardrail Self-Test**:
-  - Run IDSE_Core against its own repository (docs + pipeline).
-  - All constitutional guardrails must pass.
-  - No `[REQUIRES INPUT]` markers remain for in-scope v1 behavior.
-- Add **meta-validation** for the plan and test-plan:
-  - Governance and validation tools run against IDSE_Core's own spec/plan/test-plan artifacts to ensure:
-    - No unresolved `[REQUIRES INPUT]` in v1 scope.
-    - Epics, phases, and milestones are internally consistent.
-    - Determinism and governance-related NFRs have corresponding tests.
-
-**Key Deliverables**
-
-- Trace artifact schema and hashing logic.
-- CLI or script to perform determinism checks (artifacts + trace hashes).
-- Root Guardrail Self-Test scenario and automation.
-- Meta-validation job or script for spec/plan/test-plan consistency.
-
-## 4. Test Strategy Summary
-
-Testing for IDSE_Core is defined in a dedicated test plan and is tightly coupled to the epics above. At a high level, tests focus on:
-
-- **Schema & storage correctness** – validating artifact schemas, round-trip serialization, and filesystem path conventions.
-- **Orchestrator behavior** – enforcing stage ordering, blocking rules, and structured error/trace emission.
-- **Governance integration** – ensuring governance tools block or advance stages deterministically and always produce visible validation artifacts.
-- **CLI & MCP contracts** – verifying that human and machine interfaces share a JSON response schema and behave consistently across CLI and MCP.
-- **Determinism & root guardrails** – checking that repeated runs produce identical artifacts and traces, and that IDSE_Core can successfully run its own pipeline with no unresolved `[REQUIRES INPUT]` for in-scope v1 behavior.
-
-Each epic will deliver its own test harness and validation artifacts. Governance adapters and deterministic behavior will be continuously verified via CI, using the determinism harness and root guardrail self-tests on changes to IDSE_Core, culminating in the Root Guardrail self-test in Phase 5. See `plans/projects/IDSE_Core/sessions/session-1765806980/test-plan.md` for detailed test cases aligned to each epic.
-
-## 5. Milestones
-
-Each milestone groups a set of epics into a coherent, shippable slice.
-
-- **M1 – Schemas + IO Baseline (P1)**  
-  - Artifact models defined and IO working with deterministic formatting.
-- **M2 – Orchestrator Core (P2)**  
-  - Pipeline Orchestrator can run local stages (through at least Spec/Plan) with enforced ordering.
-- **M3 – Governance Integration (P3)**  
-  - GovernanceAdapter wired with blocking behavior and surfaced findings.
-- **M4 – Interfaces Exposed (P4)**  
-  - CLI and MCP endpoints usable in local dev and basic IDE integration.
-- **M5 – Determinism & Root Guardrail (P5)**  
-  - Determinism harness, trace hashing, root guardrail self-test, and meta-validation green.
-
-## 6. Phase Mapping
-
-To clarify sequential execution and dependencies, milestones and epics are grouped into phases:
-
-```markdown
-Phase   | Epic | Focus
-------- | ---- | ------------------------------------------
-Phase 1 | P1   | Schema + Storage foundation
-Phase 2 | P2   | Orchestrator core (local runs)
-Phase 3 | P3   | Governance integration + blocking
-Phase 4 | P4   | CLI + MCP exposure
-Phase 5 | P5   | Determinism + Root Guardrail validation
+```sql
+CREATE TABLE status_pages (
+  id            UUID PRIMARY KEY,
+  slug          TEXT UNIQUE NOT NULL,
+  title         TEXT NOT NULL,
+  schema_version INT NOT NULL DEFAULT 1,
+  data          JSONB NOT NULL,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 ```
 
-This phase ordering reflects core dependencies: earlier phases establish schemas, IO, and orchestration that later phases extend with governance, interfaces, and guardrails. Later phases assume earlier ones are stable so they can lock in determinism, documentation, and self-hosting checks without reworking foundations.
+- `data` stores the `PageData` JSON (as specified in spec.md).
+- `schema_version` mirrors `schemaVersion` in JSON and supports migrations.
 
-## 7. Validation Mapping
+### 3.2 JSON Model Recap
 
-This section maps IDSE_Core’s specification areas to their corresponding plan epics, test-plan sections, and task phases to support governance and CI validation.
+- `PageData`:
+  - `id: string` (UUID)
+  - `slug: string`
+  - `title: string`
+  - `schemaVersion: number`
+  - `root: ComponentData`
 
-| Spec Area                          | Plan Epic / Section                            | Test Plan Section                                      | Tasks Phase / Notes                           |
-| ---------------------------------- | ---------------------------------------------- | ------------------------------------------------------ | --------------------------------------------- |
-| Core Data Model (ArtifactBase, …)  | Epic P1 – Schema + Storage Foundation          | §1 – Schema & Storage Tests                            | Phase 1 – Schema + Storage Foundation (P1)    |
-| Orchestration Semantics            | Epic P2 – Orchestrator Core (Local Runs)       | §2 – Orchestrator & Ordering; §5 – Determinism Tests   | Phase 2 – Orchestrator Core (P2)             |
-| Governance Integration & Blocking  | Epic P3 – Governance Integration + Blocking    | §3 – Governance Integration & Blocking Tests           | Phase 3 – Governance Integration (P3)        |
-| Interfaces & MCP                   | Epic P4 – CLI + MCP Exposure                   | §4 – CLI & MCP Interface Tests                         | Phase 4 – CLI + MCP Exposure (P4)            |
-| Determinism & Root Guardrails      | Epic P5 – Determinism + Root Guardrail         | §5 – Determinism; §6 – Root Guardrail & Meta-Validation | Phase 5 – Determinism + Root Guardrail (P5) |
+- `ComponentData`:
+  - `id: string`
+  - `type: string` (e.g., `DashboardLayout`, `StatusCard`)
+  - `props: object`
 
-Each task in `tasks.md` must map to at least one explicit acceptance test in `test-plan.md`, ensuring there are no orphan tasks without executable validation. Governance validators (`validate-artifacts.py`, `check-compliance.py`) must pass on every merge to `main`, enforcing that the implemented artifacts, plan, and tests remain aligned with the IDSE_Core specification and governance layer.
+- Slot conventions (all arrays of `ComponentData`):
+  - `DashboardLayout.props`: `header`, `body`, `footer`
+  - `GridLayout.props`: `items`, plus scalar `columns`, `gap`
+  - `ColumnLayout.props`: `left`, `right`, plus scalar `ratio`
+
+---
+
+## 4. API Contracts
+
+### 4.1 GET /api/status-pages/:slug
+
+- **Description:** Fetch a status page by slug.
+- **Method:** GET
+- **Path:** `/api/status-pages/:slug`
+- **Request:**
+  - URL params: `slug` (string)
+  - Auth: optional for read, depending on environment/policy.
+- **Responses:**
+  - `200 OK` – `{"page": PageData}`
+  - `404 Not Found` – page does not exist.
+  - `401/403` – if reads require auth and the caller is unauthorized.
+
+### 4.2 PUT /api/status-pages/:slug
+
+- **Description:** Replace the JSON definition of a status page.
+- **Method:** PUT
+- **Path:** `/api/status-pages/:slug`
+- **Request:**
+  - URL params: `slug` (string)
+  - Body: `{ "page": PageData }`
+  - Auth: required; only authorized editors may update.
+- **Behavior:**
+  - Validate request body against `PageData` schema.
+  - Ensure `page.slug` matches `:slug` or normalize appropriately.
+  - Persist the new JSON atomically.
+- **Responses:**
+  - `200 OK` – `{"page": PageData}` with persisted data.
+  - `400 Bad Request` – invalid JSON or schema violation.
+  - `401/403` – unauthorized.
+  - `409 Conflict` – optional, if optimistic locking is introduced later.
+
+### 4.3 (Optional) POST /api/status-pages
+
+- **Description:** Create a new status page.
+- **Method:** POST
+- **Path:** `/api/status-pages`
+- **Request:**
+  - Body: `{ "page": Omit<PageData, "id"> }` OR `{ title, slug, initialPage }`.
+- **Responses:**
+  - `201 Created` – `{"page": PageData}` with assigned `id`.
+
+### 4.4 (Optional) DELETE /api/status-pages/:slug
+
+- **Description:** Delete a status page.
+- **Method:** DELETE
+- **Path:** `/api/status-pages/:slug`
+- **Responses:**
+  - `200 OK` – `{ "deleted": true }`.
+  - `404 Not Found` – page not found.
+
+---
+
+## 5. Test Strategy
+
+The test strategy is designed to ensure the new JSON-backed editor and save/load mechanisms are reliable and regressions are caught early.
+
+### 5.1 Unit Tests
+
+- **Targets:**
+  - JSON schema validation helpers.
+  - Repository functions for `status_pages` table.
+  - Component registry lookups.
+  - Small utilities used by the editor (e.g., tree manipulation helpers for add/remove/reorder).
+
+- **Tools:** Jest / Vitest / similar.
+
+### 5.2 Contract Tests (API)
+
+- Validate `GET /api/status-pages/:slug` and `PUT /api/status-pages/:slug` against example payloads.
+- Test:
+  - Successful round-trips with valid `PageData`.
+  - Rejection of invalid JSON (missing `root`, invalid `schemaVersion`, incorrect slot types).
+  - Auth behavior for edit endpoints.
+
+### 5.3 Integration Tests
+
+- Stand up the API with a test DB.
+- Exercise flows:
+  - Create a page (if `POST` is implemented) → fetch → update → fetch.
+  - Migration handling if schemaVersion changes (future work).
+
+### 5.4 End-to-End (E2E) Tests
+
+- Use Cypress/Playwright or equivalent to verify:
+  - Visiting `/status/:slug` renders the correct components and layout.
+  - Visiting `/status/:slug/edit`, performing edits, saving, and then reloading `/status/:slug` reflects changes.
+  - Unauthorized users cannot access `/status/:slug/edit` or mutate via API.
+
+### 5.5 Performance & Resilience
+
+- Benchmarks for typical page sizes (e.g., 20, 50, 100 components) to validate:
+  - View route render times.
+  - Editor responsiveness for add/remove/reorder operations.
+
+---
+
+## 6. Phases & Milestones
+
+### Phase 0 – Foundations (Data Model & Storage)
+
+1. **Define TypeScript types and JSON schema** for `PageData` and `ComponentData`.
+2. **Add `status_pages` storage**:
+   - Migrations for DB table (or equivalent for chosen storage).
+   - Implement `StatusPageRepository` with basic CRUD.
+3. **Establish validation pipeline**:
+   - Integrate a JSON schema validator (e.g., Ajv) for incoming `PageData`.
+
+**Exit criteria:**
+
+- A simple `PageData` can be validated and saved/loaded through the repository layer in tests.
+
+### Phase 1 – Core Behavior (View Route & Renderer)
+
+1. Implement `GET /api/status-pages/:slug` using `StatusPageRepository`.
+2. Implement `StatusPageRenderer` and `componentRegistry` with at least:
+   - `DashboardLayout`, `StatusHeader`, `StatusCard`, `TextBlock`.
+3. Implement `/status/:slug` view route in the frontend that:
+   - Fetches `PageData` from the API.
+   - Renders it via `StatusPageRenderer`.
+
+**Exit criteria:**
+
+- A sample page defined in JSON can be manually inserted into storage and rendered correctly at `/status/sample-slug`.
+
+### Phase 2 – Editor & Save/Load
+
+1. Implement `PUT /api/status-pages/:slug` with full validation.
+2. Build `StatusPageEditor` component:
+   - Load `PageData` via GET.
+   - Maintain in-memory tree state.
+   - Provide basic UI for selecting a component and editing its scalar props.
+   - Provide a Save button that PUTs updated `PageData`.
+3. Implement `/status/:slug/edit` route (with auth guard) wired to `StatusPageEditor`.
+
+**Exit criteria:**
+
+- A user can:
+  - Open `/status/:slug/edit`,
+  - Change a header/title and a card description,
+  - Save,
+  - See the changes at `/status/:slug` and after reloading `/status/:slug/edit`.
+
+### Phase 3 – Layout & Slots
+
+1. Extend `componentRegistry` and renderer to support:
+   - `GridLayout` with `columns`, `gap`, and `items` slot.
+   - `ColumnLayout` with `left`, `right`, and `ratio` props.
+2. Extend the editor to support:
+   - Adding/removing child components within specific slots.
+   - Reordering within a slot (drag & drop or controls).
+3. Ensure JSON round-tripping for nested layouts.
+
+**Exit criteria:**
+
+- A nested layout page (DashboardLayout → GridLayout → StatusCards) can be created/edited via the editor and rendered correctly.
+
+### Phase 4 – Inline Editing & UX Polishing
+
+1. Introduce inline text editing for `StatusHeader`, `StatusCard`, and `TextBlock` text props.
+2. Implement an overlay/selection layer with a mechanism to keep specific subtrees interactive.
+3. Polish editor UX (undo/redo optional, but at least basic confirmation on navigation away with unsaved changes).
+
+**Exit criteria:**
+
+- Editing text directly on the page works reliably and persists.
+- No regressions in view vs edit behavior.
+
+### Phase 5 – NFRs & Hardening
+
+1. Add more exhaustive tests (load, security, failure modes).
+2. Instrument logging and monitoring for save/load operations.
+3. Address performance hotspots identified in profiling.
+4. Prepare migration strategy for existing status pages, if applicable.
+
+**Exit criteria:**
+
+- API and editor meet agreed performance and reliability targets.
+- The system is ready for broader adoption within the project portfolio.

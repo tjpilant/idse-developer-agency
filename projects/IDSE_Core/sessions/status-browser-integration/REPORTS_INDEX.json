@@ -1,0 +1,14 @@
+{
+  "project": "IDSE_Core",
+  "session": "status-browser-integration",
+  "last_updated": "2025-12-20T22:39:09Z",
+  "status": "CLOSED",
+  "reports": {
+    "governance_summary": null,
+    "validate_artifacts": "reports/projects/IDSE_Core/sessions/status-browser-integration/validate-artifacts-report.txt",
+    "check_compliance": "reports/projects/IDSE_Core/sessions/status-browser-integration/check-compliance-report.txt",
+    "audit_feedback": "reports/projects/IDSE_Core/sessions/status-browser-integration/audit-feedback-report.txt",
+    "scripts_validate": null
+  },
+  "notes": "Auto-generated after governance validators for this session."
+}
