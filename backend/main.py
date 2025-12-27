@@ -92,7 +92,7 @@ def register_routes():
             puck_routes.router, prefix="/api/pages", tags=["Puck Pages"]
         )
         app.include_router(
-            git_routes.router, prefix="/api", tags=["Git Integration"]
+            git_routes.router, tags=["Git Integration"]
         )
         app.include_router(agui_realtime.router, tags=["AG-UI Realtime"])
 

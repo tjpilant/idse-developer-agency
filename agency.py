@@ -49,7 +49,8 @@ def run_simple_cli(agency: Agency) -> None:
     try:
         session = SessionManager.get_active_session()
         project_name = getattr(session, "project", "Unknown")
-        session_name = getattr(session, "session", "Unknown")
+        # Prefer session_id; fallback to name to display something meaningful
+        session_name = getattr(session, "session_id", None) or getattr(session, "name", "Unknown")
     except Exception:
         project_name = "Unknown"
         session_name = "Unknown"
