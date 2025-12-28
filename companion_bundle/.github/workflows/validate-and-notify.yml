@@ -1,0 +1,52 @@
+name: Validate and Notify Agency
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'specs/**'
+      - 'plans/**'
+      - 'tasks/**'
+      - 'feedback/**'
+      - 'src/**'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Validate artifacts (session-aware)
+        run: python integrations/claude-skill/scripts/validate_artifacts.py . --json
+
+      - name: Pre-commit checks (spec/security/boundary)
+        run: python scripts/pre_commit_check.py
+
+      - name: Notify Agency (optional)
+        if: always()
+        env:
+          AGENCY_WEBHOOK_URL: ${{ secrets.AGENCY_WEBHOOK_URL }}
+        run: |
+          if [ -z "$AGENCY_WEBHOOK_URL" ]; then
+            echo "AGENCY_WEBHOOK_URL not set; skipping notification."
+            exit 0
+          fi
+          PAYLOAD=$(cat <<'EOF'
+{
+  "status": "${{ job.status }}",
+  "commit": "${{ github.sha }}",
+  "repository": "${{ github.repository }}",
+  "run_id": "${{ github.run_id }}",
+  "workflow": "${{ github.workflow }}"
+}
+EOF
+)
+          curl -X POST "$AGENCY_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD"

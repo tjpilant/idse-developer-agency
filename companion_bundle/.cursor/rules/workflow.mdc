@@ -1,0 +1,53 @@
+<!-- IDSE Governance Header (Companion) -->
+# IDSE Companion Workflow
+This workflow operates under the **Intent-Driven Systems Engineering (IDSE)** Constitution.
+Priority:
+1. `AGENTS.md` (IDE Companion instructions)
+2. `docs/session-integration.md`, `docs/hybrid-mode.md`, `docs/feedback-loop.md`
+3. `guardrails/instruction_protection.py`
+4. `.cursor/config/idse-governance.json`
+
+---
+description: IDE Companion workflow
+alwaysApply: true
+---
+
+## Environment
+- Use Python 3.11+ (venv optional). Validators live under `integrations/claude-skill/scripts/`.
+
+## Standard Flow
+1) Pull and Sync  
+   - `git pull`  
+   - `python utils/sync_detector.py --show-changes` (or VS Code task “IDSE: Sync from Agency”)
+
+2) Validate Artifacts (session-aware, draft-aware)  
+   - `python integrations/claude-skill/scripts/validate_artifacts.py . --json`
+
+3) Guardrails / Boundary  
+   - Apply `instruction_extraction_guardrail` before sending user input to LLMs.  
+   - Apply `instruction_leakage_guardrail` on LLM outputs.  
+   - Apply `idse_boundary_guardrail` before file writes.
+
+4) Hybrid Drafts (offline)  
+   - Use `utils/template_writer.py` to create drafts with `[DRAFT - PENDING AGENCY REVIEW]`.  
+   - Drafts are warnings, not failures; resolve with Agency later.
+
+5) Feedback & Pre-commit  
+   - Write feedback: `utils/feedback_writer.py` → `feedback/.../feedback.md`.  
+   - Run pre-push: `python scripts/pre_commit_check.py` (spec compliance, simple secret scan, boundary).
+
+6) CI Hooks  
+   - `agency-dispatch-validate.yml` on `agency-update` dispatch.  
+   - `guardrails-checks.yml` for guardrail self-test.  
+   - `validate-and-notify.yml` optional Agency webhook (`AGENCY_WEBHOOK_URL` secret).
+
+## Boundaries
+- Do not write governance artifacts into protected paths: `idse-governance/`, `.cursor/config/idse-governance.json`, `.idse-layer`.
+- Follow `session_reader.py` resolution order; do not create/switch sessions here.
+
+## Quick Commands
+- Session status: `python .cursor/tasks/governance.py`
+- Sync check: `python utils/sync_detector.py --show-changes`
+- Validate: `python integrations/claude-skill/scripts/validate_artifacts.py . --json`
+- Pre-commit: `python scripts/pre_commit_check.py`
+- Draft intent/spec: use `TemplateWriter` in `utils/template_writer.py`

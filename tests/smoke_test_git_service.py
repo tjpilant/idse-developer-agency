@@ -30,6 +30,18 @@ API_URL = os.getenv("AGENCY_API_URL", "http://localhost:8000")
 TEST_BRANCH = "main"  # Using main branch for smoke test
 TEST_SESSION = "Puck_Components"
 TEST_PROJECT = "IDSE_Core"
+GITHUB_TOKEN = (
+    os.getenv("GITHUB_PAT")
+    or os.getenv("GITHUB_ACCESS_TOKEN")
+    or os.getenv("GITHUB_INSTALLATION_TOKEN")
+)
+
+
+def _headers():
+    headers = {}
+    if GITHUB_TOKEN:
+        headers["Authorization"] = f"Bearer {GITHUB_TOKEN}"
+    return headers
 
 # Test artifact content
 TEST_SPEC_CONTENT = """# Puck Components Specification (SMOKE TEST)
@@ -80,7 +92,7 @@ def test_git_auth():
     """Test 2: Verify GitHub authentication."""
     print("\n🧪 Test 2: GitHub Authentication")
     try:
-        response = requests.get(f"{API_URL}/api/git/status", timeout=5)
+        response = requests.get(f"{API_URL}/api/git/status", headers=_headers(), timeout=5)
         if response.status_code == 200:
             data = response.json()
             if data.get("success"):
@@ -125,6 +137,7 @@ def test_commit_artifact():
         response = requests.post(
             f"{API_URL}/api/git/commit",
             json=payload,
+            headers=_headers(),
             timeout=30
         )
 
@@ -167,10 +180,12 @@ def run_smoke_tests():
     print("=" * 60)
 
     # Check environment
-    if not os.getenv("GITHUB_PAT"):
-        print("\n❌ GITHUB_PAT not set in .env file")
-        print("💡 Add your GitHub Personal Access Token to .env:")
+    if not GITHUB_TOKEN:
+        print("\n❌ No GitHub token found in environment")
+        print("💡 Provide a one-time token in env before running the smoke test:")
         print("   GITHUB_PAT=ghp_your_token_here")
+        print("   # or")
+        print("   GITHUB_ACCESS_TOKEN=ghp_your_token_here")
         return False
 
     # Run tests

@@ -1,0 +1,17 @@
+{
+  "idse_layer_root": "idse-governance/",
+  "protected_paths": [],
+  "governance_paths": [
+    "idse-governance/",
+    ".idse-layer",
+    ".cursor/config/idse-governance.json"
+  ],
+  "allowed_agents": ["claude_code", "codex_gpt"],
+  "layer_mode": "governance",
+  "on_violation": "warn_and_abort",
+  "rules": {
+    "boundary": "Keep governance artifacts separate from application code; customize protected_paths per repo."
+  },
+  "version": "1.0.0",
+  "last_updated": "template"
+}

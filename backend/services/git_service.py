@@ -8,31 +8,96 @@ repository_dispatch webhooks for CI/CD integration.
 import os
 from pathlib import Path
 from typing import Optional, List, Dict, Any
-from github import Github, GithubException, Auth
+from github import Github, GithubException, Auth, GithubIntegration
 from SessionManager import SessionManager
 
 
 class GitService:
     """GitHub API wrapper for IDSE artifact management."""
 
-    def __init__(self):
-        """Initialize GitHub client from environment variables."""
-        self.auth_mode = os.getenv("GITHUB_AUTH_MODE", "pat")
+    def __init__(
+        self,
+        token: Optional[str] = None,
+        auth_mode: Optional[str] = None,
+        owner: Optional[str] = None,
+        repo_name: Optional[str] = None,
+        app_id: Optional[str] = None,
+        app_private_key_path: Optional[str] = None,
+        app_installation_id: Optional[str] = None,
+    ):
+        """Initialize GitHub client from environment variables or per-request token."""
+        self.auth_mode = auth_mode or os.getenv("GITHUB_AUTH_MODE", "pat")
+        self.owner = owner or os.getenv("GITHUB_OWNER", "tjpilant")
+        self.repo_name = repo_name or os.getenv("GITHUB_REPO", "idse-developer-agency")
 
         if self.auth_mode == "pat":
-            token = os.getenv("GITHUB_PAT")
-            if not token:
-                raise ValueError("GITHUB_PAT environment variable not set")
+            resolved_token = token or os.getenv("GITHUB_PAT")
+            if not resolved_token:
+                raise ValueError(
+                    "GitHub token not provided. Supply one-time token in request or set GITHUB_PAT."
+                )
             # Use newer Auth.Token API
-            auth = Auth.Token(token)
+            auth = Auth.Token(resolved_token)
             self.github = Github(auth=auth)
+        elif self.auth_mode == "app":
+            self.github = self._init_app_client(
+                token=token,
+                app_id=app_id or os.getenv("GITHUB_APP_ID"),
+                private_key_path=app_private_key_path or os.getenv("GITHUB_APP_PRIVATE_KEY_PATH"),
+                installation_id=app_installation_id or os.getenv("GITHUB_APP_INSTALLATION_ID"),
+            )
         else:
-            # GitHub App authentication (future enhancement)
-            raise NotImplementedError("GitHub App authentication not yet implemented")
+            raise ValueError(f"Unsupported GITHUB_AUTH_MODE: {self.auth_mode}")
 
-        self.owner = os.getenv("GITHUB_OWNER", "tjpilant")
-        self.repo_name = os.getenv("GITHUB_REPO", "idse-developer-agency")
         self.repo = self.github.get_repo(f"{self.owner}/{self.repo_name}")
+
+    def _init_app_client(
+        self,
+        token: Optional[str],
+        app_id: Optional[str],
+        private_key_path: Optional[str],
+        installation_id: Optional[str],
+    ) -> Github:
+        """
+        Initialize a GitHub client using App authentication.
+
+        If a one-time installation token is provided, use it directly; otherwise,
+        derive an installation token from the App credentials on disk.
+        """
+        if token:
+            return Github(auth=Auth.Token(token))
+
+        missing = []
+        if not app_id:
+            missing.append("GITHUB_APP_ID")
+        if not private_key_path:
+            missing.append("GITHUB_APP_PRIVATE_KEY_PATH")
+        if not installation_id:
+            missing.append("GITHUB_APP_INSTALLATION_ID")
+
+        if missing:
+            raise ValueError(f"Missing GitHub App config: {', '.join(missing)}")
+
+        key_path = Path(private_key_path)
+        if not key_path.exists():
+            raise ValueError(f"GitHub App private key not found: {private_key_path}")
+
+        private_key = key_path.read_text()
+        # Newer PyGithub supports Auth.AppAuth; fall back to GithubIntegration for older versions.
+        try:
+            app_auth = Auth.AppAuth(int(app_id), private_key)
+            app_client = Github(auth=app_auth)
+            try:
+                installation = app_client.get_app_installation(int(installation_id))
+            except AttributeError:
+                installation = app_client.get_installation(int(installation_id))
+            access_token = installation.get_access_token()
+            return Github(auth=Auth.Token(access_token.token))
+        except Exception:
+            # Fallback for environments lacking AppAuth APIs
+            integration = GithubIntegration(int(app_id), private_key)
+            access_token = integration.get_access_token(int(installation_id)).token
+            return Github(auth=Auth.Token(access_token))
 
     def commit_artifacts(
         self,
@@ -40,7 +105,9 @@ class GitService:
         project: str,
         files: List[Dict[str, str]],
         message: Optional[str] = None,
-        branch: Optional[str] = None
+        branch: Optional[str] = None,
+        owner: Optional[str] = None,
+        repo_name: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Commit session artifacts to repository.
@@ -51,22 +118,48 @@ class GitService:
             files: List of {'path': str, 'content': str} dicts
             message: Commit message (auto-generated if None)
             branch: Target branch (defaults to current branch)
+            owner: Optional GitHub owner override
+            repo_name: Optional repository name override
 
         Returns:
             Dict with commit_sha, commit_url, files_committed
         """
+        target_repo = self.repo
+        target_owner = self.owner
+        target_repo_name = self.repo_name
+
+        if owner and repo_name:
+            target_repo = self.github.get_repo(f"{owner}/{repo_name}")
+            target_owner = owner
+            target_repo_name = repo_name
+        elif owner or repo_name:
+            return {
+                "success": False,
+                "error": "Both owner and repo must be provided to override target repository",
+                "session_id": session_id,
+                "project": project,
+            }
+
         if not branch:
-            branch = self.repo.default_branch
+            branch = target_repo.default_branch
 
         # Auto-generate commit message if not provided
         if not message:
             message = self._generate_commit_message(session_id, project, files)
 
         try:
-            # Get the current commit SHA for the branch
-            ref = self.repo.get_git_ref(f"heads/{branch}")
+            # Get the current commit SHA for the branch, creating it from the default branch if missing
+            try:
+                ref = target_repo.get_git_ref(f"heads/{branch}")
+            except GithubException as e:
+                if getattr(e, "status", None) == 404:
+                    source_ref = target_repo.get_git_ref(f"heads/{target_repo.default_branch}")
+                    ref = target_repo.create_git_ref(ref=f"refs/heads/{branch}", sha=source_ref.object.sha)
+                else:
+                    raise
+
             base_sha = ref.object.sha
-            base_tree = self.repo.get_git_tree(base_sha)
+            base_tree = target_repo.get_git_tree(base_sha)
 
             # Create blobs for each file
             tree_elements = []
@@ -74,7 +167,7 @@ class GitService:
                 file_path = file_info['path']
                 file_content = file_info['content']
 
-                blob = self.repo.create_git_blob(file_content, "utf-8")
+                blob = target_repo.create_git_blob(file_content, "utf-8")
                 # PyGithub expects InputGitTreeElement objects
                 from github import InputGitTreeElement
                 tree_elements.append(
@@ -87,13 +180,13 @@ class GitService:
                 )
 
             # Create new tree
-            new_tree = self.repo.create_git_tree(tree_elements, base_tree)
+            new_tree = target_repo.create_git_tree(tree_elements, base_tree)
 
             # Create commit
-            commit = self.repo.create_git_commit(
+            commit = target_repo.create_git_commit(
                 message=message,
                 tree=new_tree,
-                parents=[self.repo.get_git_commit(base_sha)]
+                parents=[target_repo.get_git_commit(base_sha)]
             )
 
             # Update branch reference
@@ -102,7 +195,7 @@ class GitService:
             return {
                 "success": True,
                 "commit_sha": commit.sha,
-                "commit_url": f"https://github.com/{self.owner}/{self.repo_name}/commit/{commit.sha}",
+                "commit_url": f"https://github.com/{target_owner}/{target_repo_name}/commit/{commit.sha}",
                 "files_committed": len(files),
                 "branch": branch,
                 "session_id": session_id,
@@ -171,12 +264,29 @@ class GitService:
             Dict with repo info and user permissions
         """
         try:
+            authenticated_as = None
+            has_write = False
+
+            try:
+                authenticated_as = self.github.get_user().login
+                has_write = self.repo.permissions.push
+            except GithubException:
+                # App installation tokens cannot fetch /user
+                authenticated_as = "app-installation (user not exposed)"
+                if self.auth_mode == "app":
+                    # If we can read repo details, assume installation has the configured write scope
+                    try:
+                        _ = self.repo.default_branch
+                        has_write = True
+                    except GithubException:
+                        has_write = False
+
             return {
                 "success": True,
                 "repo": f"{self.owner}/{self.repo_name}",
                 "default_branch": self.repo.default_branch,
-                "has_write_access": self.repo.permissions.push,
-                "authenticated_user": self.github.get_user().login
+                "has_write_access": has_write,
+                "authenticated_user": authenticated_as,
             }
 
         except GithubException as e:
@@ -191,7 +301,7 @@ class GitService:
         session_id: str,
         project: str,
         commit_sha: Optional[str] = None,
-        additional_payload: Optional[Dict[str, Any]] = None
+        additional_payload: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Trigger repository_dispatch event for GitHub Actions.

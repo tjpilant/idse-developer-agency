@@ -1,0 +1,20 @@
+name: Validate IDSE Artifacts (Agency Dispatch)
+
+on:
+  repository_dispatch:
+    types: [agency-update]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Validate artifacts (session-aware)
+        run: python integrations/claude-skill/scripts/validate_artifacts.py . --json

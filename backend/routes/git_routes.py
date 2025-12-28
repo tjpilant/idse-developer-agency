@@ -5,8 +5,8 @@ Provides HTTP endpoints for committing artifacts, creating PRs, and triggering
 repository_dispatch events for GitHub Actions integration.
 """
 
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException, Header
+from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 import sys
 from pathlib import Path
@@ -33,6 +33,16 @@ class CommitRequest(BaseModel):
     message: Optional[str] = None
     branch: Optional[str] = None
     trigger_dispatch: bool = True
+    owner: Optional[str] = None  # Optional override of GitHub owner
+    repo: Optional[str] = None   # Optional override of GitHub repo name
+    token: Optional[str] = Field(
+        default=None,
+        description="One-time GitHub token (PAT or installation token). Prefer passing via Authorization header.",
+    )
+    auth_mode: Optional[str] = Field(
+        default=None,
+        description="Override auth mode ('pat' or 'app'). Defaults to backend env.",
+    )
 
 
 class PRRequest(BaseModel):
@@ -41,6 +51,14 @@ class PRRequest(BaseModel):
     base_branch: str = "main"
     title: str
     body: str
+    token: Optional[str] = Field(
+        default=None,
+        description="One-time GitHub token (PAT or installation token). Prefer passing via Authorization header.",
+    )
+    auth_mode: Optional[str] = Field(
+        default=None,
+        description="Override auth mode ('pat' or 'app'). Defaults to backend env.",
+    )
 
 
 class DispatchRequest(BaseModel):
@@ -50,23 +68,49 @@ class DispatchRequest(BaseModel):
     project: str
     commit_sha: Optional[str] = None
     additional_payload: Optional[Dict[str, Any]] = None
+    token: Optional[str] = Field(
+        default=None,
+        description="One-time GitHub token (PAT or installation token). Prefer passing via Authorization header.",
+    )
+    auth_mode: Optional[str] = Field(
+        default=None,
+        description="Override auth mode ('pat' or 'app'). Defaults to backend env.",
+    )
 
 
 class BranchRequest(BaseModel):
     """Request body for branch creation."""
     branch_name: str
     from_branch: Optional[str] = None
+    token: Optional[str] = Field(
+        default=None,
+        description="One-time GitHub token (PAT or installation token). Prefer passing via Authorization header.",
+    )
+    auth_mode: Optional[str] = Field(
+        default=None,
+        description="Override auth mode ('pat' or 'app'). Defaults to backend env.",
+    )
+
+
+def _extract_token(request_token: Optional[str], authorization: Optional[str]) -> Optional[str]:
+    """Prefer Authorization header Bearer token, fall back to request field."""
+    if request_token:
+        return request_token.strip()
+    if authorization and authorization.lower().startswith("bearer "):
+        return authorization.split(" ", 1)[1].strip()
+    return None
 
 
 @router.post("/commit")
-async def commit_artifacts(request: CommitRequest):
+async def commit_artifacts(request: CommitRequest, authorization: Optional[str] = Header(default=None)):
     """
     Commit session artifacts to repository.
 
     Automatically triggers repository_dispatch event unless disabled.
     """
     try:
-        git_service = GitService()
+        token = _extract_token(request.token, authorization)
+        git_service = GitService(token=token, auth_mode=request.auth_mode)
 
         # Convert Pydantic models to dicts
         files = [{"path": f.path, "content": f.content} for f in request.files]
@@ -77,7 +121,9 @@ async def commit_artifacts(request: CommitRequest):
             project=request.project,
             files=files,
             message=request.message,
-            branch=request.branch
+            branch=request.branch,
+            owner=request.owner,
+            repo_name=request.repo
         )
 
         if not result.get("success"):
@@ -103,10 +149,11 @@ async def commit_artifacts(request: CommitRequest):
 
 
 @router.post("/pr")
-async def create_pull_request(request: PRRequest):
+async def create_pull_request(request: PRRequest, authorization: Optional[str] = Header(default=None)):
     """Create a pull request."""
     try:
-        git_service = GitService()
+        token = _extract_token(request.token, authorization)
+        git_service = GitService(token=token, auth_mode=request.auth_mode)
         result = git_service.create_pr(
             head_branch=request.head_branch,
             base_branch=request.base_branch,
@@ -119,15 +166,18 @@ async def create_pull_request(request: PRRequest):
 
         return result
 
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"PR creation failed: {str(e)}")
 
 
 @router.get("/status")
-async def check_status():
+async def check_status(authorization: Optional[str] = Header(default=None)):
     """Check repository status and authentication."""
     try:
-        git_service = GitService()
+        token = _extract_token(None, authorization)
+        git_service = GitService(token=token)
         result = git_service.check_repo_status()
 
         if not result.get("success"):
@@ -142,10 +192,11 @@ async def check_status():
 
 
 @router.post("/dispatch")
-async def trigger_dispatch(request: DispatchRequest):
+async def trigger_dispatch(request: DispatchRequest, authorization: Optional[str] = Header(default=None)):
     """Manually trigger repository_dispatch event."""
     try:
-        git_service = GitService()
+        token = _extract_token(request.token, authorization)
+        git_service = GitService(token=token, auth_mode=request.auth_mode)
         result = git_service.trigger_repository_dispatch(
             event_type=request.event_type,
             session_id=request.session_id,
@@ -159,15 +210,18 @@ async def trigger_dispatch(request: DispatchRequest):
 
         return result
 
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Dispatch failed: {str(e)}")
 
 
 @router.post("/branch")
-async def create_branch(request: BranchRequest):
+async def create_branch(request: BranchRequest, authorization: Optional[str] = Header(default=None)):
     """Create a new branch."""
     try:
-        git_service = GitService()
+        token = _extract_token(request.token, authorization)
+        git_service = GitService(token=token, auth_mode=request.auth_mode)
         result = git_service.create_branch(
             branch_name=request.branch_name,
             from_branch=request.from_branch
@@ -178,5 +232,7 @@ async def create_branch(request: BranchRequest):
 
         return result
 
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Branch creation failed: {str(e)}")

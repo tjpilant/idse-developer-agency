@@ -59,6 +59,14 @@ class CommitArtifactsTool(BaseTool):
         default=True,
         description="Whether to trigger repository_dispatch event for CI validation"
     )
+    auth_token: Optional[str] = Field(
+        default=None,
+        description="One-time GitHub token (PAT or installation token). The tool does not store or echo this value."
+    )
+    auth_mode: Optional[str] = Field(
+        default=None,
+        description="Override auth mode ('pat' or 'app'). Defaults to backend env configuration."
+    )
 
     def run(self) -> str:
         """Execute git commit via backend API."""
@@ -79,16 +87,24 @@ class CommitArtifactsTool(BaseTool):
 
             # Call backend git API
             api_url = os.getenv("AGENCY_API_URL", "http://localhost:8000")
+            headers = {}
+            if self.auth_token:
+                headers["Authorization"] = f"Bearer {self.auth_token}"
+
+            payload = {
+                "session_id": self.session_id,
+                "project": self.project,
+                "files": files,
+                "message": self.commit_message,
+                "branch": self.branch,
+                "trigger_dispatch": self.trigger_dispatch,
+                "auth_mode": self.auth_mode,
+            }
+
             response = requests.post(
                 f"{api_url}/api/git/commit",
-                json={
-                    "session_id": self.session_id,
-                    "project": self.project,
-                    "files": files,
-                    "message": self.commit_message,
-                    "branch": self.branch,
-                    "trigger_dispatch": self.trigger_dispatch
-                },
+                json=payload,
+                headers=headers,
                 timeout=30
             )
 

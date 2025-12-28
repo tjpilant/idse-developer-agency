@@ -33,10 +33,13 @@ Phase 0 git automation layer has been successfully implemented. The Agency can n
 - Returns formatted results
 
 ### 4. Configuration
-✅ **`.env` updated** with GitHub settings:
+✅ **`.env` updated** with GitHub settings (PAT or GitHub App):
 ```bash
-GITHUB_AUTH_MODE=pat
-GITHUB_PAT=YOUR_TOKEN_HERE  # ⚠️ YOU NEED TO SET THIS
+GITHUB_AUTH_MODE=pat                    # or app
+GITHUB_PAT=YOUR_TOKEN_HERE              # optional if providing token per request
+GITHUB_APP_ID=your_app_id               # app mode
+GITHUB_APP_PRIVATE_KEY_PATH=./github-app-key.pem
+GITHUB_APP_INSTALLATION_ID=your_installation_id
 GITHUB_OWNER=tjpilant
 GITHUB_REPO=idse-developer-agency
 AGENCY_API_URL=http://localhost:8000
@@ -68,23 +71,12 @@ pynacl==1.6.1
 
 ## What You Need to Do
 
-### Step 1: Get GitHub Personal Access Token
-1. Go to https://github.com/settings/tokens
-2. Click "Generate new token (classic)"
-3. Select scopes:
-   - ✅ `repo`
-   - ✅ `workflow`
-4. Generate and copy the token
+### Step 1: Choose auth and supply a token
+- **PAT (default):** generate at https://github.com/settings/tokens with scopes `repo` and `workflow`. Supply via `Authorization: Bearer <token>` when running tools/tests, or store locally as `GITHUB_PAT` in `.env` for convenience.
+- **GitHub App:** create + install an app with Contents: Read & write (and PR/Issues if needed). Set `GITHUB_AUTH_MODE=app` with the app credentials in `.env`, or pass a short-lived installation token via `Authorization: Bearer <token>`. See `docs/github-app-setup.md`.
 
-### Step 2: Update .env
-Edit `.env` and replace:
-```bash
-GITHUB_PAT=YOUR_GITHUB_PERSONAL_ACCESS_TOKEN_HERE
-```
-with your actual token:
-```bash
-GITHUB_PAT=ghp_actual_token_here
-```
+### Step 2: Update .env (if storing credentials locally)
+Set the relevant variables in `.env` (PAT or GitHub App) or rely on per-request tokens if you prefer not to persist secrets.
 
 ### Step 3: Run Smoke Test
 
@@ -187,6 +179,7 @@ result = tool.run()
 ```bash
 curl -X POST http://localhost:8000/api/git/commit \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $GITHUB_TOKEN" \  # optional if backend has env token
   -d '{
     "session_id": "Puck_Components",
     "project": "IDSE_Core",

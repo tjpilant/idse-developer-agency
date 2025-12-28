@@ -47,25 +47,26 @@ The GitHub Integration layer enables the IDSE Agency to automatically commit gen
 
 ## Setup
 
-### 1. Create GitHub Personal Access Token
+Pick an auth mode:
 
-1. Go to https://github.com/settings/tokens
-2. Click "Generate new token" → "Generate new token (classic)"
-3. Select scopes:
-   - ✅ `repo` (Full control of private repositories)
-   - ✅ `workflow` (Update GitHub Action workflows)
-4. Generate and copy the token
+- **On-demand PAT (default)** — set `GITHUB_AUTH_MODE=pat`. Provide a one-time token via `Authorization: Bearer <token>` when calling the API/tools, or store a local dev token in `.env` as `GITHUB_PAT=...`. Scopes: `repo` (classic) or fine-grained `Contents: Read & write` (+ `workflow` if you edit workflows).
+- **GitHub App** — set `GITHUB_AUTH_MODE=app` and configure `GITHUB_APP_ID`, `GITHUB_APP_PRIVATE_KEY_PATH`, and `GITHUB_APP_INSTALLATION_ID`. The backend will mint a short-lived installation token per request. You can also pass a pre-generated installation token via `Authorization: Bearer <token>` without storing secrets on disk.
 
-### 2. Configure Environment Variables
+See `docs/github-app-setup.md` for detailed App creation steps.
 
-Edit `.env`:
+### Environment defaults
+
+Edit `.env` (values can be omitted if you always pass tokens on-demand):
 
 ```bash
 # GitHub Integration
-GITHUB_AUTH_MODE=pat
-GITHUB_PAT=ghp_your_token_here  # Replace with your token
-GITHUB_OWNER=tjpilant           # Your GitHub username
-GITHUB_REPO=idse-developer-agency  # Your repository name
+GITHUB_AUTH_MODE=pat                  # or 'app'
+GITHUB_PAT=ghp_your_token_here        # optional if providing token per request
+GITHUB_APP_ID=your_app_id             # app mode
+GITHUB_APP_PRIVATE_KEY_PATH=./github-app-key.pem
+GITHUB_APP_INSTALLATION_ID=your_installation_id
+GITHUB_OWNER=tjpilant                 # default owner
+GITHUB_REPO=idse-developer-agency     # default repo
 
 # Agency API URL (for tools)
 AGENCY_API_URL=http://localhost:8000
@@ -87,7 +88,8 @@ python backend/main.py
 ### 4. Test Authentication
 
 ```bash
-curl http://localhost:8000/api/git/status
+curl http://localhost:8000/api/git/status \
+  -H "Authorization: Bearer $GITHUB_TOKEN"   # optional if backend has env token
 ```
 
 Expected response:
@@ -119,7 +121,9 @@ tool = CommitArtifactsTool(
     ],
     commit_message="feat(idse): add Puck Components spec and plan",  # Optional
     branch="main",  # Optional, defaults to default branch
-    trigger_dispatch=True  # Triggers CI validation
+    trigger_dispatch=True,  # Triggers CI validation
+    auth_token=None,  # Optional one-time token (recommended: ask user when needed)
+    auth_mode=None,   # Optional override ('pat' or 'app')
 )
 
 result = tool.run()
@@ -132,6 +136,7 @@ print(result)  # ✅ Successfully committed 2 file(s) to main...
 # Commit artifacts
 curl -X POST http://localhost:8000/api/git/commit \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $GITHUB_TOKEN" \  # optional if backend has env token
   -d '{
     "session_id": "Puck_Components",
     "project": "IDSE_Core",
@@ -150,6 +155,7 @@ curl -X POST http://localhost:8000/api/git/commit \
 ```bash
 curl -X POST http://localhost:8000/api/git/pr \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $GITHUB_TOKEN" \
   -d '{
     "head_branch": "feature/new-spec",
     "base_branch": "main",
@@ -159,6 +165,8 @@ curl -X POST http://localhost:8000/api/git/pr \
 ```
 
 ## API Endpoints
+
+All endpoints accept `Authorization: Bearer <token>` for one-time PATs or installation tokens. If headers are hard to set, you can also pass `token`/`auth_mode` in the request body.
 
 ### POST `/api/git/commit`
 Commit artifacts to repository
@@ -173,7 +181,9 @@ Commit artifacts to repository
   ],
   "message": "string (optional)",
   "branch": "string (optional)",
-  "trigger_dispatch": "boolean (default: true)"
+  "trigger_dispatch": "boolean (default: true)",
+  "token": "string (optional, prefer Authorization header)",
+  "auth_mode": "pat | app (optional)"
 }
 ```
 
@@ -262,7 +272,7 @@ jobs:
 ```
 ValueError: GITHUB_PAT environment variable not set
 ```
-**Solution:** Set `GITHUB_PAT` in `.env` file
+**Solution:** Provide a one-time token via `Authorization: Bearer <token>` or set `GITHUB_PAT`/GitHub App credentials in `.env`. Ensure `GITHUB_AUTH_MODE` matches the token type (`pat` or `app`).
 
 ### Permission Errors
 ```
@@ -281,14 +291,13 @@ GithubException: 403 Resource not accessible by integration
 1. **Never commit `.env` file** - It contains sensitive tokens
 2. **Use `.env.example`** for documentation
 3. **Rotate tokens regularly** - Generate new PAT every 90 days
-4. **Use GitHub App** (future) - More secure than PATs for production
+4. **Prefer GitHub App** for automation - Scoped access, short-lived tokens
 5. **Limit token scope** - Only grant necessary permissions
 
 ## Next Steps
 
 - [ ] Wire CommitArtifactsTool into post-generation workflows
 - [ ] Add pre-commit validation hooks
-- [ ] Implement GitHub App authentication (more secure)
 - [ ] Add conflict detection before commits
 - [ ] Implement feedback loop (CI → Agency webhook)
 
