@@ -1,0 +1,11 @@
+validate-artifacts: project=IDSE_Core session=milkdown-crepe
+report_dir: reports/IDSE_Core_milkdown-crepe_1767117685
+
+Checks:
+ - intent: OK -> intents/projects/IDSE_Core/sessions/milkdown-crepe/intent.md (found)
+ - context: OK -> contexts/projects/IDSE_Core/sessions/milkdown-crepe/context.md (found)
+ - spec: OK -> specs/projects/IDSE_Core/sessions/milkdown-crepe/spec.md (found)
+ - plan: OK -> plans/projects/IDSE_Core/sessions/milkdown-crepe/plan.md (found)
+ - tasks: OK -> tasks/projects/IDSE_Core/sessions/milkdown-crepe/tasks.md (found)
+
+Overall: PASS

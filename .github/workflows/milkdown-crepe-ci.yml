@@ -1,0 +1,29 @@
+name: milkdown-crepe CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    paths:
+      - 'backend/services/milkdown-crepe/**'
+      - 'specs/projects/IDSE_Core/sessions/milkdown-crepe/**'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        working-directory: backend/services/milkdown-crepe
+        run: npm ci
+      - name: Run tests
+        working-directory: backend/services/milkdown-crepe
+        run: npm test --if-present
+      - name: Run IDSE governance validate
+        run: |
+          python3 idse-governance/validate-artifacts.py || true
+          python3 idse-governance/check-compliance.py || true

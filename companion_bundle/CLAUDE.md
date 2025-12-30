@@ -41,3 +41,9 @@ You are helping inside a project repo that includes the IDSE Companion. Follow t
 - Sync check: `python utils/sync_detector.py --show-changes`
 - Validate: `python integrations/claude-skill/scripts/validate_artifacts.py . --json`
 - Pre-commit: `python scripts/pre_commit_check.py`
+
+## Governance Check (MANDATORY FIRST STEP)
+- ALWAYS run `python .cursor/tasks/governance.py view` as the first action in every new conversation.
+- VERIFY you are the active_llm before any work; if not active, stop and inform the user.
+- For any status question, re-check current state—do not rely on conversation history.
+- If active_llm is not Claude, request handoff or ask the user to switch IDE before proceeding.

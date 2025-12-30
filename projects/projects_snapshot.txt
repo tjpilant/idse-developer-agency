@@ -1,0 +1,24 @@
+Projects folder snapshot (canonical)
+
+projects/
+├─ IDSE_Core/
+│  ├─ milkdown-crepe/
+│  │  └─ README.md (1481 bytes)
+│  ├─ session-1765806980/
+│  │  ├─ CHANGELOG.md (391 bytes)
+│  │  ├─ CLOSEOUT.md (1338 bytes)
+│  │  ├─ README.md (1264 bytes)
+│  │  ├─ README_REPORTS.md (2316 bytes)
+│  │  └─ REPORTS_INDEX.json (771 bytes)
+│  └─ status-browser-integration/
+│     ├─ README.md (1021 bytes)
+│     └─ REPORTS_INDEX.json (646 bytes)
+├─ Project_Status_Browser/
+└─ project-research-tools/
+
+Snapshot created at: projects/IDSE_Core/milkdown-crepe/projects_snapshot.txt
+Recorded by: interactive-user (IDSE Developer Agent)
+Timestamp: 2025-12-29T04:47:xxZ
+
+Notes:
+- This is the canonical snapshot of the projects/ tree as requested. If you want the exact timestamps or file contents included, I can add them.

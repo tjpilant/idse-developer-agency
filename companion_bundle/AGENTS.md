@@ -30,17 +30,12 @@ You are operating inside a project repo with the IDSE Companion. Follow these ru
 - Optional CI notify to Agency via `AGENCY_WEBHOOK_URL`: `validate-and-notify.yml`.
 - Reference: `docs/feedback-loop.md`.
 
-## Governance Boundaries
-- Protected governance paths: `idse-governance/`, `.cursor/config/idse-governance.json`, `.idse-layer`.
-- Do not write governance artifacts into app code or app code into governance paths.
-- Honor handoff/state if present (`idse-governance/state/state.json`, `handoff_protocol.md`).
-
-## LLM Safety
-- Before sending user input: apply `instruction_extraction_guardrail`.
-- After receiving output: apply `instruction_leakage_guardrail`.
-- Before file writes: apply `idse_boundary_guardrail`.
-
-## Quick Commands
+## Governance Compliance (CRITICAL)
+- FIRST ACTION: Always run `python .cursor/tasks/governance.py view` at conversation start.
+- BEFORE ANY WORK: Verify you are the active_llm in `idse-governance/state/state.json`.
+- IF NOT ACTIVE: Do not execute commands, make edits, or perform work; request handoff or ask user to switch IDE.
+- STATUS REQUESTS: Always check current state, never rely on cached information.
+- HANDOFF REQUIRED: If state shows a different active_llm, stop and coordinate handoff.
 - Session status: `python .cursor/tasks/governance.py`
 - Sync check: `python utils/sync_detector.py --show-changes`
 - Validate: `python integrations/claude-skill/scripts/validate_artifacts.py . --json`

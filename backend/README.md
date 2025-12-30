@@ -83,6 +83,17 @@ python agency.py --mode web --no-reload
 python agency.py --mode cli
 ```
 
+### Admin Shell (Puck + Status Browser)
+- The admin UI is provided by the React/Vite app in `frontend/widget/` and includes the Puck editor shell plus the Status Browser tab (enabled when `VITE_STATUS_BROWSER_ENABLED` is not `false`).
+- Run it in another terminal:
+  ```bash
+  cd frontend/widget
+  npm install
+  npm run dev  # Vite dev server (default port 5173; set VITE_API_BASE to point at your backend)
+  ```
+- Point the frontend at the backend web server via `VITE_API_BASE` (e.g., `http://localhost:8000`). Use `--port` on `agency.py --mode web` if you need a different backend port.
+- Admin tools (Puck, Status Browser) are configured and accessed from this shell; the backend only serves the APIs (`/admin/ag-ui`, `/api/copilot`, `/api/pages`, `/status*`).
+
 ### Method 2: Direct Uvicorn
 
 ```bash

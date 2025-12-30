@@ -5,10 +5,16 @@ Handles LLM handoffs and role changes for Claude ↔ Codex collaboration
 """
 
 import json
+import os
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Literal
+
+# Ensure repository root is on sys.path for helper imports when invoked via VS Code tasks
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 # Paths
 STATE_FILE = Path("idse-governance/state/state.json")
@@ -29,11 +35,30 @@ ROLE_CHANGE_ARTICLES = {
 }
 
 
+def default_state() -> dict:
+    """Create a default state when none exists."""
+    return {
+        "active_llm": "codex_gpt",
+        "awaiting_handoff": False,
+        "handoff_cycle_id": generate_cycle_id(),
+        "layer_scope": "implementation",
+        "active_stage": "Implementation",
+        "role_change_event": None,
+        "last_handoff": None,
+        "last_checked": generate_timestamp(),
+    }
+
+
 def load_state() -> dict:
     """Load current state from state.json"""
     if not STATE_FILE.exists():
-        print(f"❌ State file not found: {STATE_FILE}")
-        sys.exit(1)
+        # Bootstrap a default state to avoid first-run failures
+        STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        state = default_state()
+        with open(STATE_FILE, "w") as f:
+            json.dump(state, f, indent=2)
+        print(f"ℹ️ Created default governance state at {STATE_FILE}")
+        return state
 
     with open(STATE_FILE, 'r') as f:
         return json.load(f)
@@ -89,6 +114,56 @@ def verify_active_llm(calling_llm: str, state: dict, command: str) -> None:
         print(f"\n   Only the active LLM can execute governance commands.")
         print(f"   Wait for handoff or ask the active LLM to hand off control.")
         sys.exit(1)
+
+
+def parse_iso(ts: str | None) -> datetime | None:
+    if not ts:
+        return None
+    try:
+        return datetime.fromisoformat(ts.replace("Z", "+00:00"))
+    except Exception:
+        return None
+
+
+def check_active(calling_llm: str | None = None, warn_only: bool = False, quiet: bool = False) -> bool:
+    """Check whether the current environment LLM matches the active LLM."""
+    state = load_state()
+    env_llm = os.getenv("LLM_ID")
+    if calling_llm is None:
+        calling_llm = env_llm
+
+    messages = []
+    ok = True
+
+    if env_llm and env_llm not in VALID_LLMS:
+        messages.append(f"❌ LLM_ID '{env_llm}' is invalid. Valid: {VALID_LLMS}")
+        ok = False
+
+    if calling_llm and calling_llm not in VALID_LLMS:
+        messages.append(f"❌ Caller '{calling_llm}' is invalid. Valid: {VALID_LLMS}")
+        ok = False
+
+    active = state.get("active_llm")
+    if calling_llm and calling_llm != active:
+        messages.append(f"❌ Active LLM is '{active}', but caller/env is '{calling_llm}'")
+        ok = False
+    elif not calling_llm and env_llm and env_llm != active:
+        messages.append(f"❌ Active LLM is '{active}', but LLM_ID is '{env_llm}'")
+        ok = False
+
+    last_checked = parse_iso(state.get("last_checked"))
+    if last_checked and datetime.now(timezone.utc) - last_checked > timedelta(minutes=5):
+        messages.append("⚠ State may be stale (last_checked >5 minutes ago)")
+
+    if not quiet:
+        for m in messages:
+            print(m)
+        if ok:
+            print(f"✅ Active LLM verified: {active}")
+
+    if not ok and not warn_only:
+        sys.exit(1)
+    return ok
 
 
 def create_handoff_document(from_llm: str, to_llm: str, state: dict, reason: str) -> Path:
@@ -301,11 +376,17 @@ def view_state() -> None:
     """Display current state"""
 
     state = load_state()
+    env_llm = os.getenv("LLM_ID")
+    env_note = f" (LLM_ID={env_llm})" if env_llm else ""
+    stale = ""
+    last_checked = parse_iso(state.get("last_checked"))
+    if last_checked and datetime.now(timezone.utc) - last_checked > timedelta(minutes=5):
+        stale = "⚠ stale (>5m)"
 
     print("\n" + "="*70)
     print("📊 IDSE Governance State")
     print("="*70)
-    print(f"Active LLM:       {state['active_llm']}")
+    print(f"Active LLM:       {state['active_llm']}{env_note}")
     print(f"Awaiting Handoff: {state['awaiting_handoff']}")
     print(f"Cycle ID:         {state.get('handoff_cycle_id', 'N/A')}")
     print(f"Active Stage:     {state.get('active_stage', 'Unknown')}")
@@ -323,7 +404,7 @@ def view_state() -> None:
         print(f"  Timestamp:      {last.get('timestamp', 'N/A')}")
         print(f"  Notes:          {last.get('notes', 'N/A')}")
 
-    print(f"\nLast Checked:     {state.get('last_checked', 'N/A')}")
+    print(f"\nLast Checked:     {state.get('last_checked', 'N/A')} {stale}")
     print("="*70)
 
 
@@ -336,6 +417,7 @@ def main():
         print("  Acknowledge: governance.py acknowledge --as <llm_name>")
         print("  Role Change: governance.py role --as <llm_name> <new_role> [reason]")
         print("  Stage Change: governance.py stage --as <llm_name> <new_stage>")
+        print("  Check Active: governance.py check-active [--as <llm_name>] [--warn-only] [--quiet]")
         print("  View State:  governance.py view")
         print()
         print(f"Valid LLMs: {VALID_LLMS}")
@@ -383,6 +465,18 @@ def main():
             calling_llm = sys.argv[3]
             new_stage = sys.argv[4]
             change_stage(calling_llm, new_stage)
+
+        elif command == "check-active":
+            warn_only = "--warn-only" in sys.argv
+            quiet = "--quiet" in sys.argv
+            as_llm = None
+            if "--as" in sys.argv:
+                idx = sys.argv.index("--as")
+                if idx + 1 >= len(sys.argv):
+                    print("❌ Usage: governance.py check-active [--as <llm_name>] [--warn-only] [--quiet]")
+                    sys.exit(1)
+                as_llm = sys.argv[idx + 1]
+            check_active(as_llm, warn_only=warn_only, quiet=quiet)
 
         elif command == "view":
             view_state()

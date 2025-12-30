@@ -46,6 +46,7 @@ PROTECTED_CONTENT_PATTERNS = [
 BOUNDARY_VIOLATION_PATTERNS = [
     r"write.*idse-governance/.*\.py",
     r"create.*src/.*governance",
+    r"(write|modify).*idse-governance/state/state\.json",
     r"modify.*state\.json\s+directly",
     r"edit.*handoff_protocol\.md",
 ]
