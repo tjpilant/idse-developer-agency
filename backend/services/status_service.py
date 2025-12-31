@@ -96,17 +96,19 @@ class StatusService:
 
     def get_stage_status(self, project: str, session: str, stage_key: str) -> StageStatus:
         stage_dir, filename = STAGES[stage_key]
-        path = self.root / stage_dir / "projects" / project / "sessions" / session / filename
+        # Use project-rooted structure
+        path = self.root / "projects" / project / "sessions" / session / stage_dir / filename
         exists = path.exists()
         req_count = self.count_requires_input(path) if exists else 0
         return StageStatus(exists=exists, requires_input_count=req_count, path=str(path) if exists else None)
 
     def get_project_sessions(self, project: str) -> ProjectSessionsResponse:
-        intents_dir = self.root / "intents" / "projects" / project / "sessions"
-        if not intents_dir.exists():
+        # Use project-rooted structure
+        sessions_dir = self.root / "projects" / project / "sessions"
+        if not sessions_dir.exists():
             raise FileNotFoundError(f"Project '{project}' not found")
 
-        session_ids = sorted([p.name for p in intents_dir.iterdir() if p.is_dir()])
+        session_ids = sorted([p.name for p in sessions_dir.iterdir() if p.is_dir()])
         sessions: List[SessionStatus] = []
 
         for session_id in session_ids:

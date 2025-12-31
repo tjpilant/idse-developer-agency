@@ -5,13 +5,13 @@ import { FileNode } from "../types/fileTree";
 
 const nodes: FileNode[] = [
   {
-    name: "intents (rooted at workspace)",
-    path: "intents/projects/IDSE_Core/sessions/milkdown-crepe",
+    name: "intents",
+    path: "projects/IDSE_Core/sessions/milkdown-crepe/intents",
     type: "folder",
     children: [
       {
         name: "intent.md",
-        path: "intents/projects/IDSE_Core/sessions/milkdown-crepe/intent.md",
+        path: "projects/IDSE_Core/sessions/milkdown-crepe/intents/intent.md",
         type: "file",
       },
     ],
@@ -24,15 +24,15 @@ describe("FileTree", () => {
     render(
       <FileTree
         nodes={nodes}
-        selectedPath="intents/projects/IDSE_Core/sessions/milkdown-crepe/intent.md"
+        selectedPath="projects/IDSE_Core/sessions/milkdown-crepe/intents/intent.md"
         onSelect={onSelect}
       />,
     );
-    expect(screen.getByText("intents (rooted at workspace)")).toBeInTheDocument();
+    expect(screen.getByText("intents")).toBeInTheDocument();
     const file = screen.getByText("intent.md");
     fireEvent.click(file);
     expect(onSelect).toHaveBeenCalledWith(
-      "intents/projects/IDSE_Core/sessions/milkdown-crepe/intent.md",
+      "projects/IDSE_Core/sessions/milkdown-crepe/intents/intent.md",
     );
   });
 });

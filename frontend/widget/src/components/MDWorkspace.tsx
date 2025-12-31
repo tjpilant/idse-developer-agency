@@ -196,8 +196,8 @@ export function MDWorkspace({
       return short;
     }
 
-    // Single filename defaults to intents folder
-    return `intents/projects/${project}/sessions/${session}/${short}`;
+    // Single filename defaults to intents folder (project-rooted structure)
+    return `projects/${project}/sessions/${session}/intents/${short}`;
   };
 
   // Show "Open Document" dialog
