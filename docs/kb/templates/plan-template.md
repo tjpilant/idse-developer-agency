@@ -54,7 +54,11 @@ criteria.
 Break work into phases; each should deliver incremental value and be
 independent where possible.
 
-- Phase 0: Foundations (infra, scaffolding, initial schemas).
-- Phase 1: Core behavior.
-- Phase 2: NFRs (scale, security, resilience).
-- Phase 3: Cleanup/Hardening (refactors, docs, extra tests).
+- Phase 0: Foundations (architecture decisions, documented schemas, API contracts).
+- Phase 1: Core behavior (documented implementation approach).
+- Phase 2: NFRs (scale, security, resilience strategies).
+- Phase 3: Cleanup/Hardening (refinements, additional validation).
+
+**Note:** This plan is **documentation** that guides the IDE/development team.
+The actual code, schemas, and configurations will be created by the development
+team in the appropriate codebase directories (src/, backend/, frontend/, etc.).

@@ -47,6 +47,7 @@ export function MilkdownEditor({
   }, [isDirty]);
 
   // Create/destroy Crepe when load finishes or path changes
+  // NOTE: Don't include 'content' in deps - it would recreate editor on every keystroke
   useLayoutEffect(() => {
     if (loading || !editorRef.current) return;
 
@@ -81,7 +82,8 @@ export function MilkdownEditor({
       crepeRef.current?.destroy();
       crepeRef.current = null;
     };
-  }, [loading, path, readOnly, setContent, content]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, path, readOnly]);
 
   const handleSave = async () => {
     try {

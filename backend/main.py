@@ -76,6 +76,7 @@ def register_routes():
             git_routes,
             status_routes,
             status_pages,
+            files_routes,
         )
 
         status_enabled = (
@@ -95,6 +96,9 @@ def register_routes():
             git_routes.router, tags=["Git Integration"]
         )
         app.include_router(agui_realtime.router, tags=["AG-UI Realtime"])
+        app.include_router(
+            files_routes.router, prefix="/api", tags=["File Browser"]
+        )
 
         if status_enabled:
             app.include_router(status_routes.router, tags=["Status Browser"])

@@ -20,12 +20,26 @@ Structured system requirements:
 
 ## Plan
 Architecture, components, models, APIs, strategy.
+- Documented architecture diagrams and design decisions
+- Component descriptions and relationships
+- API contracts and data models (documented, not implemented)
+- Implementation strategy and approach
 
 ## Tasks
 Atomic units with clear testability and safe parallelization.
 
 ## Implementation
-Code + tests produced from tasks.
+**For IDSE Agency:** Documentation artifacts that guide code creation:
+- Validation reports confirming tasks were executed
+- Code snippet examples (illustrative, in markdown)
+- References to actual code locations in the codebase
+- Handoff records to IDE/development team
+- **NOT** production code, working schemas, or executable artifacts
+
+**For IDE/Development Team:** Actual executable code lives in the codebase:
+- Source code in appropriate directories (src/, backend/, frontend/, etc.)
+- Tests, configs, and production artifacts
+- These are created by reading the IDSE pipeline documents
 
 ## Feedback
 Production learnings that update specs.

@@ -11,8 +11,8 @@ Precedence:
 - Handoff protocol: `idse-governance/protocols/handoff_protocol.md`
 - State tracking: `idse-governance/state/state.json`
 - Templates: `idse-governance/templates/handoff_templates/`
-- **Never write governance artifacts into application code directories (idse_developer_agent/, implementation/, src/)**
-- **Never write application code into the governance layer**
+- **Never write governance artifacts into application code directories (idse_developer_agent/, src/, backend/, frontend/)**
+- **Never write application code into the governance layer or IDSE session implementation/ directories**
 
 ## Repository Purpose & IDSE Project Structure
 ⚠️ **Critical Understanding**: This is an **IDSE Developer Agent** environment that can work in any repository.
@@ -23,43 +23,38 @@ A **project** = A feature, capability, or improvement that goes through the IDSE
 **NOT** a separate repository. **NOT** a standalone application directory.
 
 ### IDSE Project Structure (MANDATORY):
-When creating a new project, ALWAYS follow this structure:
+When creating a new project, ALWAYS follow this **projects-rooted** structure per Article X:
 
 ```
 [repository_root]/
-├── specs/
-│   ├── current/spec.md                    ← Pointer to active session
-│   └── projects/[ProjectName]/
-│       └── sessions/session-[timestamp]/
-│           └── spec.md
-├── plans/
-│   ├── current/plan.md                    ← Pointer to active session
-│   └── projects/[ProjectName]/
-│       └── sessions/session-[timestamp]/
-│           └── plan.md
-├── tasks/
-│   ├── current/tasks.md                   ← Pointer to active session
-│   └── projects/[ProjectName]/
-│       └── sessions/session-[timestamp]/
-│           └── tasks.md
-├── implementation/
-│   ├── current/                           ← Pointer to active session
-│   └── projects/[ProjectName]/
-│       └── sessions/session-[timestamp]/
-│           └── [actual code/artifacts]
-├── feedback/
-│   ├── current/feedback.md                ← Pointer to active session
-│   └── projects/[ProjectName]/
-│       └── sessions/session-[timestamp]/
-│           └── feedback.md
+├── projects/
+│   └── [ProjectName]/
+│       ├── CURRENT_SESSION                 ← Pointer to active session
+│       └── sessions/
+│           └── session-[timestamp]/
+│               ├── intents/intent.md
+│               ├── contexts/context.md
+│               ├── specs/spec.md
+│               ├── plans/plan.md
+│               ├── tasks/tasks.md
+│               ├── implementation/         ← Documentation ONLY
+│               │   ├── README.md
+│               │   ├── validation-reports/
+│               │   └── code-examples.md    ← Illustrative, not executable
+│               ├── feedback/feedback.md
+│               └── metadata/
+│                   └── .owner
 ```
 
 ### Guardrails for Project Creation:
 1. **ALWAYS** create session-based artifacts under `projects/[ProjectName]/sessions/session-[timestamp]/`
-2. **ALWAYS** update `current/` pointers to active session
+2. **ALWAYS** update `projects/[ProjectName]/CURRENT_SESSION` pointer to active session
 3. **NEVER** create project folders outside the IDSE pipeline structure
 4. **ALWAYS** follow the IDSE pipeline: Intent → Context → Spec → Plan → Tasks → Implementation → Feedback
-5. Implementation artifacts (code, configs, etc.) go in `implementation/projects/[ProjectName]/sessions/session-[timestamp]/`
+5. **CRITICAL:** `implementation/` contains **DOCUMENTATION ONLY** (validation reports, code examples in markdown, handoff records)
+   - **NOT** production code, working schemas, or executable artifacts
+   - Production code lives in codebase directories (src/, backend/, frontend/, etc.)
+   - The IDSE Agency produces documentation; the IDE team produces code
 6. This structure applies to ANY repository using IDSE, not just Agency Swarm projects
 
 # Agency Builder

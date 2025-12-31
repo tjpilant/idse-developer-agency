@@ -4,6 +4,7 @@ import { getDocument, putDocument } from "../services/milkdownApi";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Save, FolderOpen, FilePlus, Loader2 } from "lucide-react";
+import { FileBrowserDialog } from "./FileBrowserDialog";
 import "@milkdown/crepe/theme/common/style.css";
 import "@milkdown/crepe/theme/frame.css";
 
@@ -171,39 +172,11 @@ export function MDWorkspace({
     }
   };
 
-  const buildFullPath = (short: string): string => {
-    // If already a full path with /projects/, use as-is
-    if (short.includes("/projects/")) {
-      return short;
-    }
 
-    // List of IDSE pipeline folders that use session structure
-    const sessionFolders = ["intents", "specs", "plans", "tasks", "contexts"];
-
-    const parts = short.split("/");
-
-    // If path has multiple parts, check if first part is a session folder
-    if (parts.length >= 2) {
-      const folder = parts[0];
-      const filename = parts.slice(1).join("/");
-
-      // If it's a session folder (intents, specs, plans, tasks, contexts), add session path
-      if (sessionFolders.includes(folder)) {
-        return `${folder}/projects/${project}/sessions/${session}/${filename}`;
-      }
-
-      // Otherwise, use the path as-is (repository-root file like docs/03-idse-pipeline.md)
-      return short;
-    }
-
-    // Single filename defaults to intents folder (project-rooted structure)
-    return `projects/${project}/sessions/${session}/intents/${short}`;
-  };
-
-  // Show "Open Document" dialog
+  // Show "Open Document" dialog with file browser
   if (showOpenDialog) {
     return (
-      <FileOpenDialog
+      <FileBrowserDialog
         onSelect={(path) => {
           setCurrentPath(path);
           setShowOpenDialog(false);
@@ -211,7 +184,6 @@ export function MDWorkspace({
         onCancel={() => setShowOpenDialog(false)}
         project={project}
         session={session}
-        buildFullPath={buildFullPath}
       />
     );
   }
@@ -309,126 +281,6 @@ export function MDWorkspace({
       ) : (
         <div ref={editorRef} className="flex-1 overflow-auto bg-white" />
       )}
-    </div>
-  );
-}
-
-// File Open Dialog
-function FileOpenDialog({
-  onSelect,
-  onCancel,
-  project,
-  session,
-  buildFullPath,
-}: {
-  onSelect: (path: string) => void;
-  onCancel: () => void;
-  project: string;
-  session: string;
-  buildFullPath: (short: string) => string;
-}) {
-  const [shortPath, setShortPath] = useState("");
-  const [error, setError] = useState<string | null>(null);
-
-  const commonShortPaths = [
-    "intents/intent.md",
-    "specs/spec.md",
-    "plans/plan.md",
-    "tasks/tasks.md",
-    "contexts/context.md",
-  ];
-
-  // Validate path against backend restrictions
-  const validateShortPath = (path: string): boolean => {
-    const pathPattern = /^(intents|contexts|specs|plans|tasks|docs|projects|feedback|implementation)\//;
-    return pathPattern.test(path);
-  };
-
-  const handleOpen = () => {
-    if (!validateShortPath(shortPath)) {
-      setError("Path must start with: intents/, specs/, plans/, tasks/, contexts/, docs/, projects/, feedback/, or implementation/");
-      return;
-    }
-    setError(null);
-    const fullPath = buildFullPath(shortPath);
-    onSelect(fullPath);
-  };
-
-  const handleQuickPick = (shortPath: string) => {
-    // Quick picks are always valid (pre-defined paths)
-    setError(null);
-    const fullPath = buildFullPath(shortPath);
-    onSelect(fullPath);
-  };
-
-  return (
-    <div className="flex-1 flex flex-col items-center justify-center p-8 gap-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Open Document</CardTitle>
-          <CardDescription>
-            Use short path format like <code className="bg-slate-100 px-1 rounded">plans/plan.md</code>
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-700">
-              {error}
-            </div>
-          )}
-
-          <div className="bg-blue-50 border border-blue-200 rounded p-3 text-sm text-blue-800">
-            <strong>Full path preview:</strong>{" "}
-            <code className="bg-blue-100 px-1 rounded text-xs">
-              {shortPath ? buildFullPath(shortPath) : `${project}/${session}/...`}
-            </code>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Document Path (short format)
-            </label>
-            <input
-              type="text"
-              value={shortPath}
-              onChange={(e) => {
-                setShortPath(e.target.value);
-                setError(null); // Clear error on input change
-              }}
-              placeholder="e.g., plans/plan.md or tasks/task-list.md"
-              className="w-full px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              autoFocus
-            />
-            <p className="mt-1 text-xs text-slate-500">
-              Must start with: intents/, specs/, plans/, tasks/, contexts/, docs/, projects/, feedback/, or implementation/
-            </p>
-          </div>
-
-          <div>
-            <div className="text-sm font-medium text-slate-700 mb-2">Quick Open:</div>
-            <div className="flex flex-col gap-1">
-              {commonShortPaths.map((p) => (
-                <button
-                  key={p}
-                  onClick={() => handleQuickPick(p)}
-                  className="text-left px-3 py-2 text-sm rounded hover:bg-slate-100 text-slate-700 border border-slate-200"
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex gap-2 mt-4">
-            <Button onClick={handleOpen} disabled={!shortPath} className="flex-1">
-              Open
-            </Button>
-            <Button onClick={onCancel} variant="outline">
-              Cancel
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

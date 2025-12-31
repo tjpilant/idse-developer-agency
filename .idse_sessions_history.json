@@ -11,7 +11,12 @@
     "name": "Puck_Components",
     "created_at": 1766800898.0,
     "owner": "tjpilant",
-    "project": "IDSE_Core"
+    "project": "IDSE_Core",
+    "milkdown-crepe-v2": {
+      "created_at": 1767192192.756277,
+      "owner": "tjpilant",
+      "status": "active"
+    }
   },
   "Project_Status_Browser": {
     "session_id": "session-1765832163",

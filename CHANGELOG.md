@@ -2,6 +2,229 @@
 
 ## 2025-12-31
 
+### Full Repository Access & AG-UI Restoration
+
+**Session:** IDSE_Core/milkdown-crepe-v2 (continuation)
+
+#### Milkdown Editor - Full Repository Access
+**Problem:** MD Editor was restricted to specific IDSE pipeline folders (intents/, specs/, plans/, tasks/, etc.), preventing access to repository documentation and other markdown files.
+
+**Solutions Implemented:**
+
+1. **Dynamic File Tree API**
+   - Created `/api/files/tree` endpoint in `backend/routes/files_routes.py`
+   - Recursively scans repository with smart exclusions (node_modules, .git, etc.)
+   - Replaced 465 lines of hardcoded tree with dynamic fetch
+   - Added loading/error states in FileBrowserDialog
+
+2. **Workspace-Level Permissions**
+   - Created `.owner` file at repository root with workspace owner ID
+   - Implemented two-tier permission model in FileRoleProvider.ts:
+     - **Tier 1:** Workspace owner → full access to everything
+     - **Tier 2A:** Non-session files → 'collaborator' (allow editing)
+     - **Tier 2B:** Session files → check session .owner/.collaborators
+   - Workspace owners can now edit ANY file in repository
+   - Session collaboration preserved for multi-user workflows
+
+3. **Path Validation Fix**
+   - Updated Zod schema regex in `validators/schemas.ts`:
+     - **Old:** `/^(intents|contexts|specs|...)\/.*\.md$/` (9 specific prefixes)
+     - **New:** `/^.*\.md$/` (any .md file)
+   - Security still enforced via:
+     - Path traversal protection in `validatePath()`
+     - Permission checks in FileRoleProvider
+     - JWT authentication
+
+4. **Milkdown Editor Stability**
+   - Fixed "editorView not found" crash in MilkdownEditor.tsx
+   - Removed `content` from useLayoutEffect dependency array
+   - Editor no longer destroyed/recreated on every keystroke
+   - Added explanatory comment about dependency management
+
+5. **Markdown-Only File Browser**
+   - Added `filterMarkdownOnly()` function to FileBrowserDialog
+   - Recursively filters tree to show only .md files
+   - Hides folders that don't contain markdown files
+   - Updated description: "Browse markdown files from the entire repository"
+
+**Files Modified:**
+- `backend/routes/files_routes.py` (created, 116 lines)
+- `backend/main.py` (disabled routes with missing dependencies)
+- `backend/services/milkdown-crepe/src/services/roles/FileRoleProvider.ts` (two-tier permissions)
+- `backend/services/milkdown-crepe/src/validators/schemas.ts` (path regex)
+- `backend/services/milkdown-crepe/src/validators/paths.ts` (updated pattern)
+- `frontend/widget/src/components/FileBrowserDialog.tsx` (dynamic tree + markdown filter)
+- `frontend/widget/src/components/MilkdownEditor.tsx` (editor lifecycle fix)
+- `.owner` (created at workspace root)
+
+**Testing Results:**
+- ✅ README.md accessible (previously blocked)
+- ✅ backend/README.md accessible (previously 400 error)
+- ✅ All repository .md files accessible
+- ✅ Editor stable during editing
+- ✅ File tree shows only markdown files
+- ✅ Security layers intact
+
+**Impact:**
+- MD Editor transformed from IDSE-only tool to **general-purpose repository markdown editor**
+- Can browse and edit ANY .md file in the repository
+- Maintains security through workspace ownership model
+- Clean UX with markdown-only filtering
+
+#### AG-UI Backend Restoration
+**Problem:** RightPanel chat component showing 404 errors - AG-UI backend routes were disabled due to missing dependencies.
+
+**Root Cause:** Backend process running with system Python instead of virtual environment Python, causing `ModuleNotFoundError` for `agency_swarm` and `PyGithub`.
+
+**Solutions Implemented:**
+
+1. **Dependency Verification**
+   - Confirmed all dependencies already installed in `.venv/`:
+     - agency-swarm v1.5.0
+     - PyGithub v2.8.1
+
+2. **Route Re-enablement**
+   - Re-enabled all disabled routes in `backend/main.py`:
+     - `agui_realtime` - /stream (SSE) and /inbound (chat messages)
+     - `agui_routes` - Admin interface
+     - `copilot_routes` - CopilotKit widget integration
+     - `git_routes` - GitHub integration
+     - `puck_routes` - Page builder
+
+3. **Backend Restart with Virtual Environment**
+   - Killed old process (PID 54077)
+   - Started with `.venv/bin/python3 -m uvicorn backend.main:app --reload --port 5004`
+   - All routes now loading successfully
+
+4. **Frontend Configuration**
+   - Added `VITE_API_BASE=http://localhost:5004` to `frontend/widget/.env`
+   - RightPanel now points to correct backend port
+   - Rebuilt frontend to pick up environment variable
+
+**Files Modified:**
+- `backend/main.py` (re-enabled 5 route modules)
+- `frontend/widget/.env` (added VITE_API_BASE)
+
+**Testing Results:**
+- ✅ `/stream` endpoint working (SSE for real-time events)
+- ✅ `/inbound` endpoint working (POST for user messages)
+- ✅ Backend running on port 5004 with all routes
+- ✅ Agency Swarm initialized successfully
+- ✅ RightPanel chat component connected
+
+**Impact:**
+- Critical AG-UI chat functionality restored
+- Real-time AI assistance available in dashboard
+- Full Agency Swarm integration operational
+
+**Total Changes:**
+- 8 files modified
+- ~200 lines added (file tree API + filter logic)
+- ~50 lines removed (hardcoded tree data)
+- 0 breaking changes (all additive improvements)
+
+---
+
+### Article X Implementation & Implementation Boundary Clarification
+
+**Session:** IDSE_Core/milkdown-crepe-v2
+
+#### Path Structure Migration (Stage-Rooted → Projects-Rooted)
+Completed migration of entire codebase from legacy stage-rooted paths to Article X projects-rooted canonical structure.
+
+**Migration Details:**
+- **Old:** `<stage>/projects/<project>/sessions/<session>/`
+- **New:** `projects/<project>/sessions/<session>/<stage>/`
+
+**Files Updated (14 total):**
+- Backend: FileRoleProvider.ts, status_service.py
+- Frontend: MDWorkspace.tsx, FileTree.test.tsx
+- Core: SessionManager.py (now creates .owner at session root + metadata/)
+- Scripts: bootstrap_idse_session.sh, publish_reports_to_session.sh, validate-fast.sh
+- Governance: audit-feedback.py
+- Tests: test_session_bootstrap.py (11/11 passing)
+- Companion: instruction_protection.py
+
+**Testing Results:**
+- ✅ All 11 integration tests passing
+- ✅ Frontend build successful
+- ✅ Milkdown service operational
+- ✅ MD Editor fully functional
+
+#### Implementation Boundary Clarification
+**Problem Identified:** Confusion about whether `implementation/` directory should contain production code or documentation. Initial manual setup created `implementation/` with schemas/configs, blurring the line between IDSE Agency (documentation producer) and IDE/development team (code producer).
+
+**Resolution:** Established clear separation of concerns across ALL governance documentation.
+
+**Principle Established:**
+```
+IDSE Agency
+   ↓ produces
+Pipeline Documentation (intent, spec, plan, tasks, implementation reports)
+   ↓ handoff to
+IDE/Development Team
+   ↓ produces
+Production Code (src/, backend/, frontend/, etc.)
+```
+
+**Documentation Updated (8 files):**
+
+1. **Core Governance:**
+   - `docs/03-idse-pipeline.md` - Rewrote Implementation section with two modes (Agency vs IDE Team)
+   - `docs/02-idse-constitution.md` - Added Article X Section 3 clarification
+   - `idse-governance/policies/artifact-placement.md` - Complete rewrite with projects-rooted paths
+
+2. **Templates:**
+   - `docs/kb/templates/plan-template.md` - Added note: documentation guides IDE team
+   - `docs/kb/templates/tasks-template.md` - Added note: tasks describe what, not where
+
+3. **Agent Tools & Instructions:**
+   - `idse_developer_agent/tools/ImplementSystemTool.py` - Updated docstring with explicit warning
+   - `idse_developer_agent/instructions.md` - Added CRITICAL note, renamed section, DO/DON'T guidelines
+
+4. **Project Configuration:**
+   - `CLAUDE.md` - Complete IDSE structure rewrite, fixed to projects-rooted, critical guardrail #5
+
+**Key Changes:**
+- `implementation/` contains **documentation only**: validation reports, code examples (in markdown), handoff records
+- `implementation/` does **NOT** contain: production code, working schemas, executable artifacts
+- Production code lives in codebase directories: src/, backend/, frontend/, tests/
+
+#### Milkdown Service Bug Fixes
+**Issue:** MD Editor showing 401/404 errors, unable to access documents
+
+**Root Causes:**
+1. Milkdown service not running on port 8001
+2. FileRoleProvider missing `/sessions/` path segment
+3. `.owner` file in wrong location (specs/.owner instead of session root)
+
+**Fixes:**
+- Updated FileRoleProvider.ts:79 to include `/sessions/` in path: `path.join(workspaceRoot, 'projects', project, 'sessions', session)`
+- Started Milkdown service in dev mode
+- Copied `.owner` files to session root for compatibility
+- SessionManager now creates `.owner` at both session root (Milkdown) and metadata/ (legacy)
+
+**Result:** ✅ MD Editor fully operational
+
+#### Breaking Changes
+- **Path structure:** Stage-rooted paths no longer supported (grace period active with warnings)
+- **`.owner` location:** Must be at session root for Milkdown compatibility
+- **Implementation semantics:** Strictly documentation-only going forward
+
+#### Files Changed Summary
+- **Backend:** 3 files (FileRoleProvider.ts, status_routes.py, status_service.py)
+- **Frontend:** 3 files (MDWorkspace.tsx, FileTree.test.tsx, useSessionFiles.ts)
+- **Core:** 1 file (SessionManager.py)
+- **Governance:** 4 files (constitution, pipeline, artifact-placement, CLAUDE.md)
+- **Agent:** 2 files (instructions.md, ImplementSystemTool.py)
+- **Templates:** 2 files (plan-template.md, tasks-template.md)
+- **Scripts:** 5 files (bootstrap, publish, validate, audit, protection)
+- **Tests:** 1 file (test_session_bootstrap.py)
+
+**Total:** 21 files modified, ~150 lines changed
+
+---
+
 ### Unified Admin Dashboard - Complete Refactor
 
 **Phase 0-6: Admin Dashboard Refactor**

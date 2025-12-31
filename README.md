@@ -30,9 +30,11 @@ Full philosophy: see [`/docs/`](./docs/).
 | `agency.py` | Entry point that runs the IDSE Developer Agent. |
 | `idse_developer_agent/` | Tools and logic for the seven IDSE stages. |
 | `docs/` | IDSE Constitution, pipeline, prompting guide, and patterns. |
+| `backend/` | **Multi-Protocol Backend** – FastAPI server with AG-UI, CopilotKit, file tree API. |
+| `backend/services/milkdown-crepe/` | **Milkdown Service** – TypeScript markdown editing service with ACL. |
+| `frontend/widget/` | **React Admin Dashboard** – Unified interface with Puck editor & MD editor. |
 | `.cursor/` | Cursor IDE automation and task scripts. |
 | `idse-governance/` | **IDE Governance Layer** – Claude ↔ Codex coordination system. |
-| `backend/services/git_service.py` | GitHub commit + repository_dispatch integration (Phase 0). |
 | `.vscode/` | Tasks integrating governance commands. |
 | `.env` | Environment keys. |
 | `requirements.txt` | Dependencies for Agency Swarm + IDSE tools. |
@@ -41,14 +43,102 @@ Full philosophy: see [`/docs/`](./docs/).
 
 ## ⚙️ Running the IDSE Developer Agency
 
+### Backend Services
+
+**1. FastAPI Backend (Port 5004)**
 ```bash
-git clone https://github.com/your-username/your-idse-agency.git
-cd your-idse-agency
-python -m venv .venv
+# Start with virtual environment Python
+.venv/bin/python3 -m uvicorn backend.main:app --reload --port 5004
+```
+
+**2. Milkdown Service (Port 8001)**
+```bash
+cd backend/services/milkdown-crepe
+npm run dev
+```
+
+**3. Frontend Development Server**
+```bash
+cd frontend/widget
+npm run dev
+```
+
+**Production Build:**
+```bash
+cd frontend/widget
+npm run build
+# Serves static files from dist/ via FastAPI at http://localhost:5004/
+```
+
+### IDSE Agency Agent
+
+```bash
+# Activate virtual environment
 source .venv/bin/activate
-pip install -r requirements.txt
+
+# Run the IDSE Developer Agent
 python agency.py
+```
+
 This launches the IDSE Developer Agent locally and enters the seven-stage loop.
+
+---
+
+## 🖥️ Admin Dashboard
+
+The unified admin dashboard provides a comprehensive interface for managing IDSE projects and creating web pages.
+
+**Access:** `http://localhost:5004/admin`
+
+### Features
+
+**📝 Markdown Editor (MD Workspace)**
+- Full repository access to ALL `.md` files
+- Visual WYSIWYG editing with Milkdown Crepe
+- Workspace-level permissions (`.owner` file controls access)
+- Real-time save/dirty state tracking
+- File browser filtered to show only markdown files
+- Quick-load buttons for IDSE pipeline documents
+
+**🎨 Puck Editor (Visual Page Builder)**
+- Drag-and-drop component-based page creation
+- Live preview with instant updates
+- Tabbed interface: Blocks | Fields | Outline | Published Pages
+- Page management: Create, edit, publish, delete
+
+**💬 AI Assistant (RightPanel)**
+- Real-time chat powered by Agency Swarm
+- Context-aware assistance (shows current document path)
+- SSE streaming for instant responses
+- Integrated into dashboard sidebar
+
+### Dashboard Layout
+```
+┌─────────────┬──────────────────────┬────────────────┐
+│  LeftNav    │   Center Canvas      │  RightPanel    │
+│  (240px)    │   (flexible)         │  (590px)       │
+│             │                      │                │
+│ Puck Editor │ • WelcomeView        │ AI Assistant   │
+│ MD Editor   │ • PuckWorkspace      │ (Chat)         │
+│             │ • MDWorkspace        │                │
+└─────────────┴──────────────────────┴────────────────┘
+```
+
+### File Permissions
+
+**Workspace Owner** (`.owner` file at repo root):
+- Full access to ALL files in repository
+- Can create/edit/delete any markdown file
+
+**Session Collaborator** (`.collaborators` in session folder):
+- Read/write access to session-specific files
+- Read-only access to other sessions
+
+**Default** (no ownership):
+- Read-only access to session files
+- Collaborator access to non-session files
+
+---
 
 🧠 Using the IDSE Agent with VS Code + Claude + Codex + Cursor
 🧩 The Dual-Governance System

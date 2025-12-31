@@ -6,7 +6,14 @@ from SessionManager import SessionManager
 
 
 class ImplementSystemTool(BaseTool):
-    """Scaffold implementation artifacts based on tasks."""
+    """
+    Create implementation documentation artifacts based on tasks.
+
+    IMPORTANT: This tool creates DOCUMENTATION ONLY, not production code.
+    - Produces: Validation reports, code examples (in markdown), handoff records
+    - Does NOT produce: Executable code, working schemas, production configs
+    - Production code is created by IDE/development team in codebase directories
+    """
 
     tasks_path: str = Field(
         default="projects/<project>/sessions/<active>/tasks/tasks.md",
@@ -14,7 +21,7 @@ class ImplementSystemTool(BaseTool):
     )
     output_path: str = Field(
         default="projects/<project>/sessions/<active>/implementation/README.md",
-        description="Path where implementation scaffold should be written (project/session scoped).",
+        description="Path where implementation documentation should be written (project/session scoped).",
     )
     project: str = Field(default="default", description="Project name for session-scoped paths.")
 

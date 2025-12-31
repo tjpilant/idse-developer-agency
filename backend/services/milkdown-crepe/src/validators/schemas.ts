@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
-const pathPattern = /^(intents|contexts|specs|plans|tasks|docs|projects|feedback|implementation)\/.*\.md$/;
+// Allow any .md file path (path traversal protection is in validatePath())
+const pathPattern = /^.*\.md$/;
 
 export const DocumentPathSchema = z.object({
   path: z.string().min(1).regex(pathPattern),

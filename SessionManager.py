@@ -102,13 +102,19 @@ class SessionManager:
         """
         Build a per-session, per-project path:
             projects/<project>/sessions/<session-id>/<stage>/<filename>
-        Ensures the session directory exists and metadata/.owner is present.
+        Ensures the session directory exists and .owner files are present.
         """
         meta = SessionManager.get_active_session()
         session_dir = ROOT / "projects" / meta.project / "sessions" / meta.session_id
         stage_dir = session_dir / stage
         stage_dir.mkdir(parents=True, exist_ok=True)
 
+        # Create .owner at session root for Milkdown service compatibility
+        root_owner_file = session_dir / ".owner"
+        if not root_owner_file.exists():
+            root_owner_file.write_text(meta.owner, encoding="utf-8")
+
+        # Also create in metadata/ for legacy compatibility
         metadata_dir = session_dir / "metadata"
         metadata_dir.mkdir(parents=True, exist_ok=True)
         owner_file = metadata_dir / ".owner"

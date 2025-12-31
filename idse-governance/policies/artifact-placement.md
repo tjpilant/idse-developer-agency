@@ -7,42 +7,56 @@ Scope
 - Applies to all contributors and automation modifying session-scoped artifacts, scaffolds, implementation code, CI workflows, and governance reports.
 
 Canonical locations
-1. Pipeline artifacts (single source-of-truth):
-   - intents/projects/<project>/sessions/<session>/
-   - contexts/projects/<project>/sessions/<session>/
-   - specs/projects/<project>/sessions/<session>/
-   - plans/projects/<project>/sessions/<session>/
-   - tasks/projects/<project>/sessions/<session>/
-   - feedback/projects/<project>/sessions/<session>/
-   - reports/projects/<project>/sessions/<session>/
-
-2. Implementation scaffolds (staging, non-production):
+1. Pipeline artifacts (single source-of-truth, **projects-rooted per Article X**):
+   - projects/<project>/sessions/<session>/intents/
+   - projects/<project>/sessions/<session>/contexts/
+   - projects/<project>/sessions/<session>/specs/
+   - projects/<project>/sessions/<session>/plans/
+   - projects/<project>/sessions/<session>/tasks/
+   - projects/<project>/sessions/<session>/feedback/
    - projects/<project>/sessions/<session>/implementation/
-   Rationale: scaffolds are staging artifacts tied to a session. They are discoverable by session owner and governance tooling but explicitly separated from production source.
 
-3. Production source (post-approval):
-   - projects/<project>/src/ OR repo-root src/ (project convention)
-   Promotion to production requires an approved PR and passing governance validators in CI.
+2. Implementation directory (documentation, **NOT** production code):
+   - projects/<project>/sessions/<session>/implementation/
+
+   **Purpose:** Documentation artifacts that guide code creation:
+   - Validation reports confirming task execution
+   - Code examples (illustrative, in markdown)
+   - References to actual code locations
+   - Handoff records to IDE/development team
+
+   **NOT FOR:**
+   - Production source code
+   - Working schemas or configurations
+   - Executable artifacts that get imported/used by the codebase
+
+   **Rationale:** The IDSE Agency produces documentation that the IDE/development team uses to create actual code. This maintains separation of concerns between documentation (IDSE) and implementation (IDE team).
+
+3. Production source (created by IDE/development team):
+   - Repository codebase directories: src/, backend/, frontend/, tests/, etc.
+   - Created by reading IDSE pipeline documents
+   - Managed through standard PR/review process
 
 4. CI workflows & automation:
    - .github/workflows/ (CI workflows must write governance reports to reports/projects/<project>/sessions/<session>/)
 
-Promotion rules
-- Scaffolds remain in projects/<project>/sessions/<session>/implementation/ until the design is approved by stakeholders and governance validators PASS.
-- To promote:
-  1. Create a PR that introduces production code under projects/<project>/src/ (or src/) and references the session artifacts (spec, plan, tasks).
-  2. CI must run validate-artifacts.py, check-compliance.py, and audit-feedback.py and produce reports under reports/projects/<project>/sessions/<session>/.
-  3. Only after CI passes and reviewers approve may the PR be merged.
+Workflow
+- IDSE Agency produces pipeline documentation (intent → spec → plan → tasks)
+- Implementation directory contains validation reports and code examples (documentation only)
+- IDE/development team reads pipeline documents and creates production code in codebase
+- Production code is managed through standard PR/CI process with governance validators
 
 Enforcement
-- Validators in idse-governance will check artifact locations and report violations in reports/. Repeated violations will be escalated to project owners.
-- Session owners are responsible for ensuring artifacts are placed correctly and for initiating promotions.
+- Validators in idse-governance will check artifact locations and report violations
+- IDSE Agency tools must not write production code to implementation/ directories
+- Session owners are responsible for ensuring artifacts are documentation only
 
 Exceptions
-- Short-lived experimental code may be stored under implementation/ with explicit labeling and an expiry/cleanup note; exceptions must be documented in feedback/projects/<project>/sessions/<session>/feedback.md and approved by project owners.
+- None. The implementation/ directory is strictly for documentation artifacts. Production code must live in the codebase.
 
 Rationale
-- Separation of concerns: keeps design/scaffold artifacts separate from production source.
-- Traceability: session-scoped artifacts and reports enable auditability and governance.
-- Safety: prevents accidental merging of unapproved scaffolds into production code.
+- **Separation of concerns:** IDSE Agency produces documentation; IDE team produces code
+- **Traceability:** Session-scoped artifacts enable auditability and governance
+- **Clarity:** Eliminates confusion about where production code lives
+- **Tool compatibility:** Allows IDE agents to read IDSE docs and write code to appropriate codebase locations
 
