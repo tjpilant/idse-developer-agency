@@ -2,6 +2,77 @@
 
 ## 2025-12-31
 
+### Unified Admin Dashboard - Complete Refactor
+
+**Phase 0-6: Admin Dashboard Refactor**
+- ✅ Replaced fragmented admin routes with unified `/admin` dashboard
+- ✅ Implemented persistent 3-column layout using shadcn/ui + Tailwind CSS Grid
+- ✅ Created collapsible left navigation (240px) with Puck Editor and MD Editor sections
+- ✅ Built dynamic center canvas workspace (Welcome | Puck Workspace | MD Workspace)
+- ✅ Integrated persistent chat panel (590px) with session awareness
+- ✅ Removed Status Browser (4 components, 719 lines deleted - governance scripts handle validation)
+- ✅ Added legacy route redirects (/editor, /workspace, /landing → /admin)
+- ✅ Fixed MD Editor path validation to match backend restrictions (intents/, specs/, plans/, tasks/, contexts/)
+
+**Dashboard Architecture**:
+```
+/admin Dashboard (3-column grid)
+├─ LeftNav (240px): Collapsible menu with Puck Editor and MD Editor sections
+├─ CenterCanvas (flexible): Dynamic workspace area
+│  ├─ WelcomeView: Default centered message with feature cards
+│  ├─ PuckWorkspace: Visual page builder with ControlPanel + Preview
+│  │  ├─ Tabs: Blocks | Fields | Outline | Published Pages
+│  │  └─ Toolbar: New Page | Publish buttons
+│  └─ MDWorkspace: Full-width Crepe WYSIWYG editor
+│     ├─ Toolbar: Open | Save | Save As | Dirty indicator
+│     └─ Quick-load: Intent | Spec | Plan | Tasks | Context
+└─ RightPanel (590px): Persistent chat with session context display
+```
+
+**Components Created** (9 files):
+- `frontend/widget/src/components/AdminDashboard.tsx` - Main dashboard container with state management
+- `frontend/widget/src/components/DashboardLayout.tsx` - 3-column CSS Grid layout
+- `frontend/widget/src/components/LeftNav.tsx` - Collapsible sidebar menu (shadcn Sidebar + Collapsible)
+- `frontend/widget/src/components/WelcomeView.tsx` - Default welcome screen (shadcn Card)
+- `frontend/widget/src/components/PuckWorkspace.tsx` - Puck editor workspace wrapper
+- `frontend/widget/src/components/ControlPanel.tsx` - Tabbed control panel for Puck
+- `frontend/widget/src/components/PageListView.tsx` - Published pages grid display
+- `frontend/widget/src/components/MDWorkspace.tsx` - MD editor workspace with Crepe integration
+- `frontend/widget/src/components/CrepeEditor.tsx` - Extracted Crepe editor component
+
+**Components Deleted** (4 files, 719 lines):
+- `frontend/widget/src/puck/components/StatusBrowserWidget.tsx`
+- `frontend/widget/src/puck/components/StatusBrowserRowWidget.tsx`
+- `frontend/widget/src/puck/components/StatusPane.tsx`
+- `frontend/widget/src/puck/components/SessionList.tsx`
+
+**shadcn/ui Setup**:
+- Installed 11 components: Sidebar, Button, Card, Collapsible, Separator, ScrollArea, Dialog, Input, Label, Tabs, Avatar
+- Configured TypeScript path aliases (`@/*` → `./src/*`)
+- Configured Vite alias resolution
+
+**Path Validation Fix**:
+- Backend only accepts paths matching: `/^(intents|contexts|specs|plans|tasks)\/.*\.md$/`
+- Added client-side validation in FileOpenDialog to match backend restrictions
+- Display error message for invalid paths (e.g., "docs/03-idse-pipeline.md")
+- Updated help text and placeholder to clarify folder restrictions
+
+**Bug Fixes**:
+- Fixed RightPanel import path in AdminDashboard
+- Fixed RightPanel props interface (removed hideEmbeddedChat)
+- Fixed buildFullPath() to distinguish session-scoped vs repository-root files
+- Added path validation to prevent 400 Bad Request errors
+
+**Files Modified**:
+- `frontend/widget/tsconfig.json` - Added baseUrl and paths for @/* alias
+- `frontend/widget/vite.config.ts` - Added Vite alias resolution
+- `frontend/widget/src/App.tsx` - Added /admin route and legacy redirects
+- `frontend/widget/src/puck/components/RightPanel.tsx` - Session awareness
+- `frontend/widget/src/puck/config.tsx` - Removed status browser components
+- `frontend/widget/src/puck/PuckEditor.tsx` - Removed status tab
+
+**Total Changes**: 8 commits, ~2,500 lines added, ~800 lines deleted
+
 ### Milkdown Crepe Editor - Frontend Implementation Complete
 
 **Phase 5: Frontend Milkdown Editor** (IDSE_Core/milkdown-crepe session)
