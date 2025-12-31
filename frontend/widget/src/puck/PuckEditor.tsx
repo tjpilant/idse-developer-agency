@@ -5,9 +5,6 @@ import { PublishDialog } from "./PublishDialog";
 import { useSearchParams } from "react-router-dom";
 import { ApplicationShell } from "./ApplicationShell";
 import { RightPanel } from "./components/RightPanel";
-import { SessionList } from "./components/SessionList";
-import { StatusPane } from "./components/StatusPane";
-import type { SessionStatus } from "./components/types";
 
 const apiBase = (import.meta as any).env?.VITE_API_BASE ?? "http://localhost:8000";
 
@@ -88,9 +85,7 @@ export function PuckEditor({ hideEmbeddedChat = false }: { hideEmbeddedChat?: bo
   const [titleInput, setTitleInput] = useState<string>(seedContent.root?.props?.title ?? "Untitled");
   const [slugInput, setSlugInput] = useState<string>("");
   const [showPublishDialog, setShowPublishDialog] = useState(false);
-  const statusBrowserEnabled = (import.meta as any).env?.VITE_STATUS_BROWSER_ENABLED !== "false";
-  const [activeTab, setActiveTab] = useState<"blocks" | "fields" | "outline" | "status">("blocks");
-  const [selectedSession, setSelectedSession] = useState<SessionStatus | null>(null);
+  const [activeTab, setActiveTab] = useState<"blocks" | "fields" | "outline">("blocks");
 
   const apiUrl = useMemo(() => `${apiBase.replace(/\/$/, "")}/api/status-pages`, []);
 
@@ -316,7 +311,6 @@ export function PuckEditor({ hideEmbeddedChat = false }: { hideEmbeddedChat?: bo
                   { key: "blocks", label: "Blocks", icon: "🧱" },
                   { key: "fields", label: "Fields", icon: "💬" },
                   { key: "outline", label: "Outline", icon: "📦" },
-                  ...(statusBrowserEnabled ? [{ key: "status", label: "Status Browser", icon: "📊" }] : []),
                 ].map((item) => (
                   <button
                     key={item.key}
@@ -344,19 +338,12 @@ export function PuckEditor({ hideEmbeddedChat = false }: { hideEmbeddedChat?: bo
               {activeTab === "blocks" && <Puck.Components />}
               {activeTab === "fields" && <Puck.Fields />}
               {activeTab === "outline" && <Puck.Outline />}
-              {activeTab === "status" && statusBrowserEnabled && (
-                <SessionList
-                  apiBase={apiBase}
-                  onSelectSession={(_, session) => setSelectedSession(session)}
-                  selectedSessionId={selectedSession?.session_id}
-                />
-              )}
             </div>
 
             {/* Center Panel - Puck Canvas */}
             <main className="flex-1 min-w-0 bg-slate-50 overflow-auto min-h-0">
               <div className="mx-auto my-4 w-full">
-                {activeTab === "status" && statusBrowserEnabled ? <StatusPane sessionData={selectedSession} /> : <Puck.Preview />}
+                <Puck.Preview />
               </div>
             </main>
 

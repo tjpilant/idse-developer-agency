@@ -4,8 +4,6 @@ import { Card } from "./components/Card";
 import { ChatWidget } from "./components/ChatWidget";
 import { ChatPopupWidget } from "./components/ChatPopupWidget";
 import { FourColumnLayout } from "./components/FourColumnLayout";
-import { StatusBrowserWidget } from "./components/StatusBrowserWidget";
-import { StatusBrowserRowWidget } from "./components/StatusBrowserRowWidget";
 
 export const puckConfig: Config = {
   components: {
@@ -14,8 +12,6 @@ export const puckConfig: Config = {
     ChatWidget,
     ChatPopupWidget,
     FourColumnLayout,
-    StatusBrowserWidget,
-    StatusBrowserRowWidget,
   },
   categories: {
     Content: {
@@ -25,8 +21,6 @@ export const puckConfig: Config = {
       components: [
         "ChatWidget",
         "ChatPopupWidget",
-        "StatusBrowserWidget",
-        "StatusBrowserRowWidget",
       ],
     },
     Layouts: {
