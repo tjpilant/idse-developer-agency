@@ -71,6 +71,17 @@ export function AdminDashboard() {
     return <WelcomeView />;
   };
 
+  // Generate context info for RightPanel based on active workspace
+  const getContextInfo = () => {
+    if (state.activeWorkspace === "puck") {
+      return `Puck Editor - ${state.puckSubView || ""}`;
+    }
+    if (state.activeWorkspace === "md") {
+      return `MD Editor - ${state.mdSubView || ""}`;
+    }
+    return undefined;
+  };
+
   return (
     <DashboardLayout
       leftNav={
@@ -81,7 +92,13 @@ export function AdminDashboard() {
         />
       }
       centerCanvas={renderCenterCanvas()}
-      rightPanel={<RightPanel />}
+      rightPanel={
+        <RightPanel
+          project={state.currentSession.project}
+          session={state.currentSession.session}
+          contextInfo={getContextInfo()}
+        />
+      }
     />
   );
 }

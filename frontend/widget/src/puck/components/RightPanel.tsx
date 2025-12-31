@@ -12,7 +12,13 @@ type AguiEvent =
 
 const apiBase = (import.meta as any).env?.VITE_API_BASE ?? "http://localhost:8000";
 
-export function RightPanel() {
+interface RightPanelProps {
+  project?: string;
+  session?: string;
+  contextInfo?: string; // Additional context like current page slug or document path
+}
+
+export function RightPanel({ project, session, contextInfo }: RightPanelProps = {}) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     { role: "assistant", content: "Hi! I'm your IDSE Assistant. Ask me about IDSE, page building, or workflows." },
   ]);
@@ -117,17 +123,29 @@ export function RightPanel() {
   return (
     <aside className="col-span-12 lg:col-span-3 bg-white/90 border-l border-slate-200/70">
       <div className="h-full flex flex-col">
-        <div className="px-4 py-3 border-b border-slate-200/70 bg-gradient-to-r from-slate-50 to-white flex items-center justify-between">
-          <div>
+        <div className="px-4 py-3 border-b border-slate-200/70 bg-gradient-to-r from-slate-50 to-white">
+          <div className="flex items-center justify-between mb-2">
             <h3 className="font-semibold text-slate-900">AI Assistant</h3>
-            <p className="text-xs text-slate-500">AG-UI stream {connected ? "connected" : "connecting…"}</p>
+            <span
+              className={`h-2.5 w-2.5 rounded-full ${
+                connected ? "bg-emerald-500" : "bg-amber-500 animate-pulse"
+              }`}
+              aria-hidden
+            />
           </div>
-          <span
-            className={`h-2.5 w-2.5 rounded-full ${
-              connected ? "bg-emerald-500" : "bg-amber-500 animate-pulse"
-            }`}
-            aria-hidden
-          />
+          {project && session && (
+            <div className="text-xs text-slate-600 mb-1">
+              <span className="font-medium">Session:</span> {project}/{session}
+            </div>
+          )}
+          {contextInfo && (
+            <div className="text-xs text-slate-500 truncate">
+              <span className="font-medium">Context:</span> {contextInfo}
+            </div>
+          )}
+          <p className="text-xs text-slate-500 mt-1">
+            AG-UI stream {connected ? "connected" : "connecting…"}
+          </p>
         </div>
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {messages.map((msg, idx) => (
