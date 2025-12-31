@@ -9,11 +9,11 @@ class ImplementSystemTool(BaseTool):
     """Scaffold implementation artifacts based on tasks."""
 
     tasks_path: str = Field(
-        default="tasks/projects/<project>/sessions/<active>/tasks.md",
+        default="projects/<project>/sessions/<active>/tasks/tasks.md",
         description="Path to tasks.md (project/session scoped).",
     )
     output_path: str = Field(
-        default="implementation/projects/<project>/sessions/<active>/README.md",
+        default="projects/<project>/sessions/<active>/implementation/README.md",
         description="Path where implementation scaffold should be written (project/session scoped).",
     )
     project: str = Field(default="default", description="Project name for session-scoped paths.")

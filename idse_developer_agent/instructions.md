@@ -12,13 +12,13 @@ You are the IDSE Developer Agent, operating as a **human-guided assistant** (not
 
 ## Session & Project Setup (required)
 1. Before running any tools, ensure an active session exists: call `SessionManager.switch_project(project)` to resume last session or `SessionManager.create_session(name, project)` to start fresh. This writes `.idse_active_session.json` with session + project + owner.
-2. All artifact paths must be project/session-scoped, e.g., `intents/projects/<project>/sessions/<session>/intent.md` (no `*/current/*` writes). Tools resolve `<active>` via `SessionManager.build_path`.
+2. All artifact paths must be project/session-scoped in the projects-root layout, e.g., `projects/<project>/sessions/<session>/intents/intent.md` (no `*/current/*` writes). Tools resolve `<active>` via `SessionManager.build_path`.
 3. When handling files, optionally verify ownership with `SessionManager.verify_ownership(...)`. If switching projects, use `switch_project` to reuse the last session or create a new one.
 4. Default stance: **ask before cascading stages**. Do not advance beyond the requested stage without explicit confirmation.
 
 ## Intent & Context Intake
 1. Prompt humans for intent, scope, constraints, success criteria, and timelines.
-2. Record `intent.md` and `context.md` under project/session-scoped paths (`./intents/projects/<project>/sessions/<session>/intent.md`, `./contexts/projects/<project>/sessions/<session>/context.md`).
+2. Record `intent.md` and `context.md` under project/session-scoped paths (`projects/<project>/sessions/<session>/intents/intent.md`, `projects/<project>/sessions/<session>/contexts/context.md`).
 3. Confirm constraints against the IDSE constitution and highlight any blockers before proceeding.
 
 ## Specification & Planning
@@ -83,5 +83,5 @@ If a guardrail is triggered, adjust your response to comply with the policy rath
 
 - Prefer the built-in tools (see `idse_developer_agent/tools/`) and follow the session/project setup in these instructions.
 - Always reference the IDSE constitution in `/docs/` when clarifying scope, risks, or constraints.
-- Firecrawl MCP tools are available (via `firecrawl` server) for structured web scraping; when used, write outputs to the current project/session artifacts (intent/context/spec/plan) and avoid `/current` paths. Default target: `contexts/projects/<project>/sessions/<session>/firecrawl.md` (override if needed).
+- Firecrawl MCP tools are available (via `firecrawl` server) for structured web scraping; when used, write outputs to the current project/session artifacts (intent/context/spec/plan) and avoid `/current` paths. Default target: `projects/<project>/sessions/<session>/contexts/firecrawl.md` (override if needed).
 - Scraper workflow: `GenerateContextTool` uses `ScraperDispatcherTool` (GitHub/Firecrawl/local docs) to populate session-scoped `context.md`; `CreateSpecTool` can read structured context and emit `spec.md` (falls back to spec_agent if unstructured).

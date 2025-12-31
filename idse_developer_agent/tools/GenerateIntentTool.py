@@ -17,7 +17,7 @@ class GenerateIntentTool(BaseTool):
         description="Project name for session-scoped paths.",
     )
     output_path: str = Field(
-        default="intents/projects/<project>/sessions/<active>/intent.md",
+        default="projects/<project>/sessions/<active>/intents/intent.md",
         description="Path where intent.md should be written (session-scoped).",
     )
 

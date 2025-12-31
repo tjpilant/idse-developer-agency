@@ -27,15 +27,15 @@ class CreateSpecTool(BaseTool):
         description="Attempt to parse structured JSON context before falling back to spec_agent.",
     )
     intent_path: str = Field(
-        default="intents/projects/<project>/sessions/<active>/intent.md",
+        default="projects/<project>/sessions/<active>/intents/intent.md",
         description="Path to intent.md (project/session scoped).",
     )
     context_path: str = Field(
-        default="contexts/projects/<project>/sessions/<active>/context.md",
+        default="projects/<project>/sessions/<active>/contexts/context.md",
         description="Path to context.md (project/session scoped).",
     )
     output_path: str = Field(
-        default="specs/projects/<project>/sessions/<active>/spec.md",
+        default="projects/<project>/sessions/<active>/specs/spec.md",
         description="Path where spec.md should be written (project/session scoped).",
     )
     project: str = Field(default="default", description="Project name for session-scoped paths.")

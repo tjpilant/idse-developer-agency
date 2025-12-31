@@ -22,7 +22,7 @@ class GenerateContextTool(BaseTool):
     )
     project: str = Field(default="default", description="Project name for session-scoped paths.")
     output_path: str = Field(
-        default="contexts/projects/<project>/sessions/<active>/context.md",
+        default="projects/<project>/sessions/<active>/contexts/context.md",
         description="Path where context.md should be written (session-scoped).",
     )
 

@@ -9,11 +9,11 @@ class GenerateTasksTool(BaseTool):
     """Generate an atomic task list from plan.md."""
 
     plan_path: str = Field(
-        default="plans/projects/<project>/sessions/<active>/plan.md",
+        default="projects/<project>/sessions/<active>/plans/plan.md",
         description="Path to plan.md (project/session scoped).",
     )
     output_path: str = Field(
-        default="tasks/projects/<project>/sessions/<active>/tasks.md",
+        default="projects/<project>/sessions/<active>/tasks/tasks.md",
         description="Path where tasks.md should be written (project/session scoped).",
     )
     project: str = Field(default="default", description="Project name for session-scoped paths.")

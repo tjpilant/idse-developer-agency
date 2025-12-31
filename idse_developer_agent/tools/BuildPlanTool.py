@@ -9,15 +9,15 @@ class BuildPlanTool(BaseTool):
     """Generate plan.md and test-plan.md from the specification."""
 
     spec_path: str = Field(
-        default="specs/projects/<project>/sessions/<active>/spec.md",
+        default="projects/<project>/sessions/<active>/specs/spec.md",
         description="Path to spec.md (project/session scoped).",
     )
     plan_path: str = Field(
-        default="plans/projects/<project>/sessions/<active>/plan.md",
+        default="projects/<project>/sessions/<active>/plans/plan.md",
         description="Path where plan.md should be written (project/session scoped).",
     )
     test_plan_path: str = Field(
-        default="plans/projects/<project>/sessions/<active>/test-plan.md",
+        default="projects/<project>/sessions/<active>/plans/test-plan.md",
         description="Path where test-plan.md should be written (project/session scoped).",
     )
     project: str = Field(default="default", description="Project name for session-scoped paths.")

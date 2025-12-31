@@ -13,11 +13,11 @@ class DeriveContextTool(BaseTool):
         description="Optional context content to write. If omitted, scaffolds a context shell referencing intent.",
     )
     intent_path: str = Field(
-        default="intents/projects/<project>/sessions/<active>/intent.md",
+        default="projects/<project>/sessions/<active>/intents/intent.md",
         description="Path to the current intent.md (project/session scoped).",
     )
     output_path: str = Field(
-        default="contexts/projects/<project>/sessions/<active>/context.md",
+        default="projects/<project>/sessions/<active>/contexts/context.md",
         description="Path where context.md should be written (project/session scoped).",
     )
 

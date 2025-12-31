@@ -13,7 +13,7 @@ class FeedbackAuditTool(BaseTool):
         description="Feedback notes to record.",
     )
     output_path: str = Field(
-        default="feedback/projects/<project>/sessions/<active>/feedback.md",
+        default="projects/<project>/sessions/<active>/feedback/feedback.md",
         description="Path where feedback.md should be written (project/session scoped).",
     )
     project: str = Field(default="default", description="Project name for session-scoped paths.")

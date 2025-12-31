@@ -12,26 +12,25 @@ export function useSessionFiles({ project, session, customTree }: UseSessionFile
   const [loading, setLoading] = useState(true);
 
   const defaultTree = useMemo<FileNode[]>(() => {
-    // Files live under the IDSE collections at workspace root: e.g.
-    // intents/projects/<project>/sessions/<session>/intent.md
-    const filePath = (collection: string, file: string): string =>
-      `${collection}/projects/${project}/sessions/${session}/${file}`.replace(/\/+$/, "");
+    // Files live under the projects-root canonical layout: projects/<project>/sessions/<session>/<stage>/<file>
+    const filePath = (stage: string, file: string): string =>
+      `projects/${project}/sessions/${session}/${stage}/${file}`.replace(/\/+$/, "");
     return [
       {
-        name: "intents (rooted at workspace)",
-        path: `intents/projects/${project}/sessions/${session}`,
+        name: "intents",
+        path: `projects/${project}/sessions/${session}/intents`,
         type: "folder",
         children: [{ name: "intent.md", path: filePath("intents", "intent.md"), type: "file" }],
       },
       {
         name: "specs",
-        path: `specs/projects/${project}/sessions/${session}`,
+        path: `projects/${project}/sessions/${session}/specs`,
         type: "folder",
         children: [{ name: "spec.md", path: filePath("specs", "spec.md"), type: "file" }],
       },
       {
         name: "plans",
-        path: `plans/projects/${project}/sessions/${session}`,
+        path: `projects/${project}/sessions/${session}/plans`,
         type: "folder",
         children: [
           { name: "plan.md", path: filePath("plans", "plan.md"), type: "file" },
@@ -40,7 +39,7 @@ export function useSessionFiles({ project, session, customTree }: UseSessionFile
       },
       {
         name: "tasks",
-        path: `tasks/projects/${project}/sessions/${session}`,
+        path: `projects/${project}/sessions/${session}/tasks`,
         type: "folder",
         children: [{ name: "tasks.md", path: filePath("tasks", "tasks.md"), type: "file" }],
       },

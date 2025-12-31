@@ -2,8 +2,8 @@
 Session-scoped path manager for IDSE artifacts.
 
 - Creates sessions and records metadata in .idse_active_session.json
-- Builds per-session paths: <stage>/sessions/<session-id>/<filename>
-- Drops a .owner marker in each session directory
+- Builds per-session paths: projects/<project>/sessions/<session-id>/<stage>/<filename>
+- Drops a .owner marker in the session metadata directory
 """
 
 from __future__ import annotations
@@ -101,16 +101,21 @@ class SessionManager:
     def build_path(stage: str, filename: str) -> Path:
         """
         Build a per-session, per-project path:
-            <stage>/projects/<project>/sessions/<session-id>/<filename>
-        Ensures the session directory exists and contains a .owner marker.
+            projects/<project>/sessions/<session-id>/<stage>/<filename>
+        Ensures the session directory exists and metadata/.owner is present.
         """
         meta = SessionManager.get_active_session()
-        session_dir = ROOT / stage / "projects" / meta.project / "sessions" / meta.session_id
-        session_dir.mkdir(parents=True, exist_ok=True)
-        owner_file = session_dir / ".owner"
+        session_dir = ROOT / "projects" / meta.project / "sessions" / meta.session_id
+        stage_dir = session_dir / stage
+        stage_dir.mkdir(parents=True, exist_ok=True)
+
+        metadata_dir = session_dir / "metadata"
+        metadata_dir.mkdir(parents=True, exist_ok=True)
+        owner_file = metadata_dir / ".owner"
         if not owner_file.exists():
             owner_file.write_text(meta.owner, encoding="utf-8")
-        return session_dir / filename
+
+        return stage_dir / filename
 
     @staticmethod
     def verify_ownership(path: Path, expected_owner: str) -> None:

@@ -41,7 +41,7 @@ class CommitArtifactsTool(BaseTool):
         ...,
         description=(
             "List of file paths to commit (relative to repo root). "
-            "Example: ['specs/projects/IDSE_Core/sessions/Puck_Components/spec.md']"
+            "Example: ['projects/IDSE_Core/sessions/Puck_Components/specs/spec.md']"
         )
     )
 
@@ -156,8 +156,8 @@ Example:
     "session_id": "Puck_Components",
     "project": "IDSE_Core",
     "file_paths": [
-        "specs/projects/IDSE_Core/sessions/Puck_Components/spec.md",
-        "plans/projects/IDSE_Core/sessions/Puck_Components/plan.md"
+        "projects/IDSE_Core/sessions/Puck_Components/specs/spec.md",
+        "projects/IDSE_Core/sessions/Puck_Components/plans/plan.md"
     ],
     "trigger_dispatch": true
 }

@@ -14,7 +14,7 @@ router = APIRouter(prefix="/api/projects", tags=["status"])
 
 @router.get("/")
 async def list_projects():
-    """List all projects discovered under intents/projects/*"""
+    """List all projects discovered under projects/* (projects-root canonical)"""
     projects = status_service.list_projects()
     return {"projects": projects}
 

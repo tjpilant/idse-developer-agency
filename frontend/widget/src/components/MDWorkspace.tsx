@@ -48,11 +48,11 @@ export function MDWorkspace({
     if (!activeSubView || activeSubView === "open") return;
 
     const pathMap: Record<string, string> = {
-      intent: `intents/projects/${project}/sessions/${session}/intent.md`,
-      spec: `specs/projects/${project}/sessions/${session}/spec.md`,
-      plan: `plans/projects/${project}/sessions/${session}/plan.md`,
-      tasks: `tasks/projects/${project}/sessions/${session}/tasks.md`,
-      context: `contexts/projects/${project}/sessions/${session}/context.md`,
+      intent: `projects/${project}/sessions/${session}/intents/intent.md`,
+      spec: `projects/${project}/sessions/${session}/specs/spec.md`,
+      plan: `projects/${project}/sessions/${session}/plans/plan.md`,
+      tasks: `projects/${project}/sessions/${session}/tasks/tasks.md`,
+      context: `projects/${project}/sessions/${session}/contexts/context.md`,
     };
 
     const path = pathMap[activeSubView];
