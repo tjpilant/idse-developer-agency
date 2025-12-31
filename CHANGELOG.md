@@ -58,6 +58,12 @@
 - Updated help text and placeholder to clarify folder restrictions
 - Added `docs/` folder support for repository documentation files
 
+**Chat Panel Context Awareness**:
+- Added document path tracking to AdminDashboard state (`mdCurrentPath`)
+- MDWorkspace notifies parent when document changes via `onPathChange` callback
+- Chat panel now displays full document path: "MD Editor - docs/03-idse-pipeline.md"
+- Enables context-aware AI assistance for the currently open document
+
 **Bug Fixes**:
 - Fixed RightPanel import path in AdminDashboard
 - Fixed RightPanel props interface (removed hideEmbeddedChat)
@@ -72,7 +78,7 @@
 - `frontend/widget/src/puck/config.tsx` - Removed status browser components
 - `frontend/widget/src/puck/PuckEditor.tsx` - Removed status tab
 
-**Total Changes**: 10 commits, ~2,500 lines added, ~800 lines deleted
+**Total Changes**: 12 commits, ~2,500 lines added, ~800 lines deleted
 
 ### Milkdown Crepe Editor - Frontend Implementation Complete
 
