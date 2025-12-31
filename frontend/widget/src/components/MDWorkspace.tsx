@@ -321,6 +321,7 @@ function FileOpenDialog({
   buildFullPath: (short: string) => string;
 }) {
   const [shortPath, setShortPath] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   const commonShortPaths = [
     "intents/intent.md",
@@ -330,12 +331,25 @@ function FileOpenDialog({
     "contexts/context.md",
   ];
 
+  // Validate path against backend restrictions
+  const validateShortPath = (path: string): boolean => {
+    const pathPattern = /^(intents|contexts|specs|plans|tasks)\//;
+    return pathPattern.test(path);
+  };
+
   const handleOpen = () => {
+    if (!validateShortPath(shortPath)) {
+      setError("Path must start with: intents/, specs/, plans/, tasks/, or contexts/");
+      return;
+    }
+    setError(null);
     const fullPath = buildFullPath(shortPath);
     onSelect(fullPath);
   };
 
   const handleQuickPick = (shortPath: string) => {
+    // Quick picks are always valid (pre-defined paths)
+    setError(null);
     const fullPath = buildFullPath(shortPath);
     onSelect(fullPath);
   };
@@ -350,6 +364,12 @@ function FileOpenDialog({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+
           <div className="bg-blue-50 border border-blue-200 rounded p-3 text-sm text-blue-800">
             <strong>Full path preview:</strong>{" "}
             <code className="bg-blue-100 px-1 rounded text-xs">
@@ -364,11 +384,17 @@ function FileOpenDialog({
             <input
               type="text"
               value={shortPath}
-              onChange={(e) => setShortPath(e.target.value)}
-              placeholder="e.g., plans/plan.md"
+              onChange={(e) => {
+                setShortPath(e.target.value);
+                setError(null); // Clear error on input change
+              }}
+              placeholder="e.g., plans/plan.md or tasks/task-list.md"
               className="w-full px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
               autoFocus
             />
+            <p className="mt-1 text-xs text-slate-500">
+              Must start with: intents/, specs/, plans/, tasks/, or contexts/
+            </p>
           </div>
 
           <div>

@@ -13,9 +13,11 @@ npm install
 ```
 
 ## Configure
-- Create `.env` (optional) to override backend base:
+- Create `.env` (optional) to override backends:
 ```
-VITE_API_BASE=http://localhost:8000
+VITE_API_BASE=http://localhost:8000          # Puck/renderer backend
+VITE_MILKDOWN_API_URL=http://localhost:3001  # Milkdown docs backend
+VITE_MILKDOWN_TOKEN=                         # Optional JWT for docs API
 ```
 
 ## Run
@@ -35,7 +37,11 @@ npm run preview
 - `src/puck/config.tsx` — Registers components for the editor/renderer
 - `src/puck/PuckEditor.tsx` — Visual editor with publish to `/api/pages`
 - `src/puck/PuckRenderer.tsx` — Renders saved pages by id
-- `src/App.tsx` — Routes (`/`, `/editor`, `/page/:pageId`)
+- `src/components/WorkspacePage.tsx` — Tabbed view (Page Builder | Pipeline Docs)
+- `src/components/PipelineDocsEditor.tsx` — File tree + Milkdown Crepe editor
+- `src/components/MilkdownEditor.tsx` — Milkdown Crepe integration
+- `src/services/milkdownApi.ts` — Client for docs GET/PUT/render endpoints
+- `src/App.tsx` — Routes (`/`, `/editor`, `/pages`, `/workspace`, `/landing`, `/:slug`)
 
 ## Backend contracts
 - `POST /api/pages` — Save Puck JSON (returns `{ id }`)

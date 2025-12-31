@@ -104,6 +104,76 @@ All notable changes to this session will be documented in this file.
 - **Ready for**: Production deployment (local mode only)
 - **Deferred**: PR mode implementation (requires git/GitHub integration design)
 
+## [2025-12-30/31] Phase 5 — Frontend Milkdown Editor Completed
+
+### Added
+- **Frontend Components** (Codex implementation 2025-12-30, Claude troubleshooting 2025-12-31):
+  - `MilkdownEditor` component with Milkdown Crepe WYSIWYG editor (`frontend/widget/src/components/MilkdownEditor.tsx`)
+  - `PipelineDocsEditor` wrapper combining FileTree sidebar + MilkdownEditor (`frontend/widget/src/components/PipelineDocsEditor.tsx`)
+  - `FileTree` component displaying session directory structure (`frontend/widget/src/components/FileTree.tsx`)
+  - `FilePickerDialog` for file selection (`frontend/widget/src/components/FilePickerDialog.tsx`)
+  - `SessionTabs` for switching between Puck page builder and Pipeline Docs (`frontend/widget/src/components/SessionTabs.tsx`)
+  - `WorkspacePage` integrating tabs and editors (`frontend/widget/src/components/WorkspacePage.tsx`)
+
+- **Hooks & Services**:
+  - `useMilkdownDocument` hook for document load/save/dirty state tracking (`frontend/widget/src/hooks/useMilkdownDocument.ts`)
+  - `useSessionFiles` hook for listing session markdown files (`frontend/widget/src/hooks/useSessionFiles.ts`)
+  - `milkdownApi` service with GET/PUT/render functions (`frontend/widget/src/services/milkdownApi.ts`)
+
+- **TypeScript Types**:
+  - `milkdown.ts` - API request/response types (DocumentResponse, SaveResponse, RenderResponse)
+  - `fileTree.ts` - File tree node types
+
+- **Features**:
+  - Manual save button with dirty state tracking (no auto-save per user requirement)
+  - Unsaved changes warning on navigation/close
+  - Read-only mode for reader role
+  - Error handling for 403/404/500 responses
+  - File tree sidebar (25% width) with file selection
+  - WYSIWYG markdown editing with Milkdown Crepe
+  - Tabbed interface: "Page Builder" | "Pipeline Docs"
+
+- **Dependencies**:
+  - `@milkdown/crepe@^7.5.4` - WYSIWYG markdown editor
+  - `@milkdown/core@^7.5.4` - Core Milkdown framework
+  - `@milkdown/preset-commonmark@^7.5.4` - CommonMark support
+  - `@milkdown/plugin-listener@^7.5.4` - Editor event listeners
+  - `@milkdown/react@^7.5.4` - React integration
+  - `vitest@^2.1.4` - Testing framework
+  - `@testing-library/react@^16.2.0` - React testing utilities
+
+### Fixed
+- **Overlay Issue** (Claude 2025-12-31): Removed `@milkdown/crepe/theme/frame.css` import causing editor to display as modal overlay instead of inline component
+
+### Changed
+- Default API base URL: `http://localhost:8001` (configured via `VITE_MILKDOWN_API_URL`)
+- Editor layout: 25% sidebar (FileTree) + 75% editor (MilkdownEditor) per user requirement
+- Token authentication: Falls back to `localStorage.getItem("auth_token")` or `VITE_MILKDOWN_TOKEN`
+
+### Testing
+- Component tests created: `MilkdownEditor.test.tsx`, `FileTree.test.tsx`
+- API client tests created: `milkdownApi.test.ts`
+- Test coverage: Component rendering, file loading, save operations, read-only mode
+
+### Documentation
+- Component props documented inline with TypeScript interfaces
+- API client functions fully typed
+- Hook interfaces defined
+
+### User Decisions Implemented
+1. ✅ Integration: Tabbed interface (Puck | Pipeline Docs)
+2. ✅ Document selection: File browser/tree view sidebar
+3. ✅ Save: Manual save button only (no auto-save)
+4. ✅ Preview: No preview mode (Crepe WYSIWYG sufficient)
+5. ✅ Role handling: Read-only editor for reader role
+
+### Status
+- **Current**: Phase 5 ✅ COMPLETE
+- **Backend**: Production-ready (49/49 tests passing)
+- **Frontend**: Functional editor with all core features
+- **Ready for**: End-to-end testing and deployment
+- **Deferred**: PR mode remains deferred (backend+frontend)
+
 ---
 
 ## Format

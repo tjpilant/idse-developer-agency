@@ -1,7 +1,8 @@
 import path from 'path';
 import { ValidationError } from '../errors/types';
 
-const allowedPattern = /^(intents|contexts|specs|plans|tasks)\/.*\.md$/;
+// Allow any markdown file under the workspace root (still guarded against traversal).
+const allowedPattern = /^.*\.md$/;
 
 export function validatePath(inputPath: string, workspaceRoot: string): string {
   const resolved = path.resolve(workspaceRoot, inputPath);
@@ -13,7 +14,7 @@ export function validatePath(inputPath: string, workspaceRoot: string): string {
 
   const relative = path.relative(normalizedRoot, resolved);
   if (!allowedPattern.test(relative)) {
-    throw new ValidationError('Invalid IDSE path structure');
+    throw new ValidationError('Invalid path (must be a .md file)');
   }
 
   return resolved;

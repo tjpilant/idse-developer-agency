@@ -4,34 +4,35 @@
   "private": true,
   "main": "dist/index.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "dev": "ts-node-dev --require dotenv/config --respawn --transpile-only src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "node -r dotenv/config dist/index.js",
     "test": "vitest run"
   },
   "dependencies": {
     "@fastify/cors": "^8.4.0",
     "@fastify/rate-limit": "^7.0.0",
+    "@octokit/rest": "^19.0.7",
+    "dotenv": "^17.2.3",
     "fastify": "^4.24.0",
     "fastify-type-provider-zod": "^1.1.9",
+    "jsdom": "^22.1.0",
     "jsonwebtoken": "^9.0.2",
     "pino": "^9.0.0",
-    "zod": "^3.22.2",
-    "@octokit/rest": "^19.0.7",
-    "unified": "^11.0.0",
-    "remark-parse": "^10.0.2",
-    "remark-rehype": "^10.1.0",
     "rehype-raw": "^6.1.1",
     "rehype-sanitize": "^5.0.0",
     "rehype-stringify": "^10.0.0",
-    "jsdom": "^22.1.0"
+    "remark-parse": "^10.0.2",
+    "remark-rehype": "^10.1.0",
+    "unified": "^11.0.0",
+    "zod": "^3.22.2"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.7",
-    "typescript": "^5.6.3",
-    "ts-node-dev": "^2.0.0",
-    "vitest": "^1.0.0",
     "@types/node": "^20.0.0",
-    "supertest": "^6.3.3"
+    "supertest": "^6.3.3",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.6.3",
+    "vitest": "^1.0.0"
   }
 }
