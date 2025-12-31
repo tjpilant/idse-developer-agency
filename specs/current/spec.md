@@ -1,1 +1,1 @@
-../projects/IDSE_Core/sessions/status-browser-integration/spec.md
+../projects/TestBootstrap/sessions/canary-test-1/spec.md

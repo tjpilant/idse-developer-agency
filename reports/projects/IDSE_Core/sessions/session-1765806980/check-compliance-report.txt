@@ -1,6 +1,0 @@
-check-compliance: project=IDSE_Core session=session-1765806980
-report_dir: reports/projects/IDSE_Core/sessions/session-1765806980
-timestamp: 2025-12-20T21:56:30.293129Z
-
-Findings:
-OK: No compliance issues detected.

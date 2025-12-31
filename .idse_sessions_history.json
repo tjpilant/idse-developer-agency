@@ -26,5 +26,38 @@
     "created_at": 1765977053.0,
     "owner": "tjpilant",
     "project": "project-research-tools"
+  },
+  "TestProject": {
+    "test-session": {
+      "created_at": 1767161450.382432,
+      "owner": "test-owner",
+      "status": "active"
+    }
+  },
+  "IntegrationTest": {
+    "session-1": {
+      "created_at": 1767161450.391971,
+      "owner": "integration-owner",
+      "status": "active"
+    },
+    "session-2": {
+      "created_at": 1767161450.395041,
+      "owner": "integration-owner",
+      "status": "active"
+    }
+  },
+  "TestValidation": {
+    "test-validation-session": {
+      "created_at": 1767161459.238037,
+      "owner": "test-user",
+      "status": "active"
+    }
+  },
+  "TestBootstrap": {
+    "canary-test-1": {
+      "created_at": 1767161596.977524,
+      "owner": "tjpilant",
+      "status": "active"
+    }
   }
 }
