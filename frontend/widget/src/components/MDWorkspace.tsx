@@ -13,6 +13,7 @@ interface MDWorkspaceProps {
   session: string;
   token?: string;
   role?: "owner" | "collaborator" | "reader";
+  onPathChange?: (path: string | null) => void;
 }
 
 export function MDWorkspace({
@@ -21,6 +22,7 @@ export function MDWorkspace({
   session,
   token,
   role = "collaborator",
+  onPathChange,
 }: MDWorkspaceProps) {
   const editorRef = useRef<HTMLDivElement | null>(null);
   const crepeRef = useRef<Crepe | null>(null);
@@ -35,6 +37,11 @@ export function MDWorkspace({
   const readOnly = role === "reader";
 
   const isDirty = content !== initialContent;
+
+  // Notify parent when path changes
+  useEffect(() => {
+    onPathChange?.(currentPath);
+  }, [currentPath, onPathChange]);
 
   // Quick-load document based on activeSubView
   useEffect(() => {

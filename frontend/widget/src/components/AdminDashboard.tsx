@@ -12,6 +12,7 @@ export interface DashboardState {
   activeWorkspace: "welcome" | "puck" | "md";
   puckSubView: "blocks" | "fields" | "outline" | "pages" | null;
   mdSubView: "open" | "intent" | "spec" | "plan" | "tasks" | "context" | null;
+  mdCurrentPath: string | null;
   currentSession: {
     project: string;
     session: string;
@@ -23,6 +24,7 @@ export function AdminDashboard() {
     activeWorkspace: "welcome",
     puckSubView: null,
     mdSubView: null,
+    mdCurrentPath: null,
     currentSession: {
       project: "IDSE_Core",
       session: "milkdown-crepe",
@@ -63,6 +65,7 @@ export function AdminDashboard() {
             session={state.currentSession.session}
             token={MILKDOWN_TOKEN}
             role="owner"
+            onPathChange={handleMDPathChange}
           />
         </div>
       );
@@ -77,9 +80,16 @@ export function AdminDashboard() {
       return `Puck Editor - ${state.puckSubView || ""}`;
     }
     if (state.activeWorkspace === "md") {
+      if (state.mdCurrentPath) {
+        return `MD Editor - ${state.mdCurrentPath}`;
+      }
       return `MD Editor - ${state.mdSubView || ""}`;
     }
     return undefined;
+  };
+
+  const handleMDPathChange = (path: string | null) => {
+    setState((prev) => ({ ...prev, mdCurrentPath: path }));
   };
 
   return (
