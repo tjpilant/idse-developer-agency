@@ -165,22 +165,32 @@ export function MDWorkspace({
   };
 
   const buildFullPath = (short: string): string => {
+    // If already a full path with /projects/, use as-is
     if (short.includes("/projects/")) {
       return short;
     }
 
-    const parts = short.split("/");
-    let folder = "intents";
-    let filename = short;
+    // List of IDSE pipeline folders that use session structure
+    const sessionFolders = ["intents", "specs", "plans", "tasks", "contexts"];
 
-    if (parts.length === 2) {
-      folder = parts[0];
-      filename = parts[1];
-    } else if (parts.length === 1) {
-      filename = parts[0];
+    const parts = short.split("/");
+
+    // If path has multiple parts, check if first part is a session folder
+    if (parts.length >= 2) {
+      const folder = parts[0];
+      const filename = parts.slice(1).join("/");
+
+      // If it's a session folder (intents, specs, plans, tasks, contexts), add session path
+      if (sessionFolders.includes(folder)) {
+        return `${folder}/projects/${project}/sessions/${session}/${filename}`;
+      }
+
+      // Otherwise, use the path as-is (repository-root file like docs/03-idse-pipeline.md)
+      return short;
     }
 
-    return `${folder}/projects/${project}/sessions/${session}/${filename}`;
+    // Single filename defaults to intents folder
+    return `intents/projects/${project}/sessions/${session}/${short}`;
   };
 
   // Show "Open Document" dialog
