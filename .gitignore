@@ -186,3 +186,6 @@ data/puck_pages/
 
 # Ignore frontend underscore env file
 frontend/_.env
+
+# IDSE validator reports
+reports/
