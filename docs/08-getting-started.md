@@ -66,20 +66,20 @@ bash .cursor/tasks/bootstrap_project.sh IDSE_Core puck-components tjpilant
 
 The SessionManager creates:
 
-1. **Canonical Stage Directories** (Article X, Section 3):
+1. **Canonical Projects-Root Directories** (Article X, Section 3):
    ```
-   intents/projects/<ProjectName>/sessions/<session-name>/
-   contexts/projects/<ProjectName>/sessions/<session-name>/
-   specs/projects/<ProjectName>/sessions/<session-name>/
-   plans/projects/<ProjectName>/sessions/<session-name>/
-   tasks/projects/<ProjectName>/sessions/<session-name>/
-   implementation/projects/<ProjectName>/sessions/<session-name>/
-   feedback/projects/<ProjectName>/sessions/<session-name>/
+   projects/<ProjectName>/sessions/<session-name>/intents/
+   projects/<ProjectName>/sessions/<session-name>/contexts/
+   projects/<ProjectName>/sessions/<session-name>/specs/
+   projects/<ProjectName>/sessions/<session-name>/plans/
+   projects/<ProjectName>/sessions/<session-name>/tasks/
+   projects/<ProjectName>/sessions/<session-name>/implementation/
+   projects/<ProjectName>/sessions/<session-name>/feedback/
    ```
 
 2. **Project Visibility Folder**:
    - `projects/<ProjectName>/README.md` – Project overview
-   - `projects/<ProjectName>/CURRENT_SESSION` – Advisory pointer to active session (Article X, Section 4)
+   - `projects/<ProjectName>/CURRENT_SESSION` – Authoritative pointer to active session (Article X, Section 4)
 
 3. **Current Pointers** (auto-synchronized):
    - `intents/current/intent.md` → points to active session
@@ -93,7 +93,7 @@ The SessionManager creates:
 4. **Session Metadata**:
    - `.idse_active_session.json` – Updated with new session
    - `.idse_sessions_history.json` – Session appended to history
-   - `specs/projects/<ProjectName>/sessions/<session-name>/.owner` – Ownership marker
+   - `projects/<ProjectName>/sessions/<session-name>/specs/.owner` – Ownership marker
 
 5. **Audit Trail** (Article X, Section 7):
    - `idse-governance/feedback/bootstrap_<ProjectName>_<timestamp>.md`
@@ -124,14 +124,37 @@ python idse-governance/check-compliance.py \
 
 ### Important Notes
 
-- **Canonical Paths:** Always use stage-rooted paths (`intents/projects/.../sessions/...`) as the source of truth
-- **Advisory Pointer:** The `projects/<ProjectName>/CURRENT_SESSION` file is advisory only—it's for convenience, not authority
+- **Canonical Paths:** Use projects-rooted paths (`projects/<Project>/sessions/<session>/<stage>/...`) as the source of truth
+- **Active Session Pointer:** The `projects/<ProjectName>/CURRENT_SESSION` file is authoritative for resolving the active session
+- **Legacy Stage-Root:** Stage-rooted paths are legacy and only valid during the grace period; migrate with the provided tooling
 - **Manual Creation Prohibited:** Article X, Section 5 forbids manual session directory creation—always use SessionManager
 - **Human-Readable Session Names:** Use descriptive names like `puck-components`, not timestamps
+- **Session Metadata:** Store owner/collaborators/changelog/project README/checklist under `projects/<Project>/sessions/<session>/metadata/` (see `docs/09-metadata-sop.md`)
+
+### Legacy Stage-Root Grace Policy (Article X Section 6) and Metadata (Section 8)
+
+The canonical root is now `projects/<Project>/sessions/<session>/<stage>/...`. Use this checklist to manage legacy stage-rooted paths during the grace period:
+
+- **Validators:** `validate-artifacts.py` and `check-compliance.py` default to projects-rooted paths; use `--accept-stage-root` only for legacy checks. Drift is warned/failed.
+- **SessionManager:** Scaffolds projects-rooted paths and emits legacy pointers/notices into stage-rooted locations without overwriting existing files.
+- **Data migration:** Use the migration script (to be added) to move artifacts from `<stage>/projects/.../sessions/...` into `projects/<project>/sessions/<session>/<stage>/`, with dry-run, logs under `idse-governance/feedback/`, and rollback plan.
+- **CI enforcement:** Add a CI job to fail new writes to stage-rooted paths after the grace window; optional pre-commit warning.
+- **Docs/update:** Stage-rooted paths are legacy; `projects/<Project>/CURRENT_SESSION` is authoritative.
+
+Migration task list:
+- Phase A (dual-mode ready): Validators + SessionManager prefer new layout, support old with `--accept-stage-root`.
+- Phase B (canary): Migrate 1–2 projects with the script; fix drift; run validators in both modes.
+- Phase C (full migration): Migrate remaining projects; enable CI enforcement; remove temporary pointers.
+- Phase D (cleanup): Remove transitional flags; treat stage-rooted writes as failures; update any tooling/scripts that still assume stage-rooted paths.
+
+Session metadata (Article X Section 8):
+- Store owner/collaborators/changelog/project README/checklist under `projects/<Project>/sessions/<session>/metadata/`.
+- Use `projects/<Project>/CURRENT_SESSION` to resolve the active session before writing metadata.
+- Project-root metadata files are read-only; do not write there after grace.
 
 ### Next Steps After Bootstrap
 
-1. Start with the Intent stage: Create `intents/projects/<ProjectName>/sessions/<session-name>/intent.md`
+1. Start with the Intent stage: Create `projects/<ProjectName>/sessions/<session-name>/intents/intent.md`
 2. Follow the IDSE pipeline: Intent → Context → Spec → Plan → Tasks → Implementation → Feedback
 3. Use templates from `kb/templates/` as starting points
 4. Keep all artifacts in their canonical locations

@@ -18,19 +18,30 @@ import argparse
 import os
 import sys
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
 
-REQUIRED_ARTIFACTS = [
-    "intents/projects/{project}/sessions/{session}/intent.md",
-    "contexts/projects/{project}/sessions/{session}/context.md",
-    "specs/projects/{project}/sessions/{session}/spec.md",
-    "plans/projects/{project}/sessions/{session}/plan.md",
-    "plans/projects/{project}/sessions/{session}/test-plan.md",
-    "tasks/projects/{project}/sessions/{session}/tasks.md",
-    "feedback/projects/{project}/sessions/{session}/feedback.md",
-    "implementation/projects/{project}/sessions/{session}/README.md",
-]
+PRIMARY_ARTIFACTS = {
+    "intent": "projects/{project}/sessions/{session}/intents/intent.md",
+    "context": "projects/{project}/sessions/{session}/contexts/context.md",
+    "spec": "projects/{project}/sessions/{session}/specs/spec.md",
+    "plan": "projects/{project}/sessions/{session}/plans/plan.md",
+    "test-plan": "projects/{project}/sessions/{session}/plans/test-plan.md",
+    "tasks": "projects/{project}/sessions/{session}/tasks/tasks.md",
+    "feedback": "projects/{project}/sessions/{session}/feedback/feedback.md",
+    "implementation": "projects/{project}/sessions/{session}/implementation/README.md",
+}
+
+LEGACY_ARTIFACTS = {
+    "intent": "intents/projects/{project}/sessions/{session}/intent.md",
+    "context": "contexts/projects/{project}/sessions/{session}/context.md",
+    "spec": "specs/projects/{project}/sessions/{session}/spec.md",
+    "plan": "plans/projects/{project}/sessions/{session}/plan.md",
+    "test-plan": "plans/projects/{project}/sessions/{session}/test-plan.md",
+    "tasks": "tasks/projects/{project}/sessions/{session}/tasks.md",
+    "feedback": "feedback/projects/{project}/sessions/{session}/feedback.md",
+    "implementation": "implementation/projects/{project}/sessions/{session}/README.md",
+}
 
 GOVERNANCE_CONFIG = Path(".cursor/config/idse-governance.json")
 
@@ -77,6 +88,8 @@ def main() -> int:
     p.add_argument("--session", required=False, help="Session ID (can be omitted if --accept-projects-pointer is used)")
     p.add_argument("--accept-projects-pointer", action='store_true',
                    help="Allow reading session ID from projects/<project>/CURRENT_SESSION (transitional mode, Article X)")
+    p.add_argument("--accept-stage-root", action='store_true',
+                   help="Allow legacy stage-rooted paths during grace period (Article X Section 6)")
     p.add_argument("--report-dir", default=None, help="Where to write the report (default: reports/<project>/<session>/)")
     args = p.parse_args()
 
@@ -109,34 +122,72 @@ def main() -> int:
         warnings.append(f"Governance config missing: {GOVERNANCE_CONFIG}")
 
     # Artifact presence and placeholder scan
-    for template in REQUIRED_ARTIFACTS:
-        path = Path(template.format(project=project, session=session))
+    path_map: dict[str, Path] = {}
+    legacy_used: list[str] = []
+    drift: list[str] = []
+
+    for key, template in PRIMARY_ARTIFACTS.items():
+        primary = Path(template.format(project=project, session=session))
+        legacy = Path(LEGACY_ARTIFACTS.get(key, "").format(project=project, session=session))
+
+        if primary.exists():
+            path_map[key] = primary
+            if args.accept_stage_root and legacy.exists() and legacy != primary:
+                drift.append(str(legacy))
+        elif args.accept_stage_root and legacy.exists():
+            path_map[key] = legacy
+            legacy_used.append(str(legacy))
+        else:
+            path_map[key] = primary
+
+    for key, path in path_map.items():
         if not path.exists():
             errors.append(f"Missing artifact: {path}")
             continue
+
         text = read_text(path) or ""
         if "[REQUIRES INPUT]" in text:
             warnings.append(f"Placeholder '[REQUIRES INPUT]' found in {path}")
 
-    # Check if pointer exists but canonical artifacts missing (Article X warning)
-    if args.accept_projects_pointer:
-        pointer_file = f"projects/{project}/CURRENT_SESSION"
-        if os.path.isfile(pointer_file):
-            missing_canonical = []
-            for template in REQUIRED_ARTIFACTS:
-                path = Path(template.format(project=project, session=session))
-                if not path.exists():
-                    missing_canonical.append(str(path))
+    if legacy_used:
+        errors.append("Legacy stage-root artifacts in use (grace period only): " + ", ".join(legacy_used))
 
-            if missing_canonical:
-                errors.append(f"CURRENT_SESSION pointer exists but {len(missing_canonical)} canonical artifacts missing")
+    if drift:
+        errors.append("Legacy artifacts present alongside canonical projects-root: " + ", ".join(drift))
+
+    # Metadata (Article X Section 8)
+    metadata_dir = Path(f"projects/{project}/sessions/{session}/metadata")
+    required_metadata = [".owner", ".collaborators", "changelog.md", "project-readme.md", "review-checklist.md"]
+    if not metadata_dir.exists():
+        errors.append(f"Metadata directory missing: {metadata_dir} (Article X Section 8)")
+    else:
+        for fname in required_metadata:
+            mpath = metadata_dir / fname
+            if not mpath.exists():
+                errors.append(f"Missing metadata file: {mpath} (Article X Section 8)")
+
+    # Check if pointer exists but canonical artifacts missing (Article X warning)
+    pointer_file = f"projects/{project}/CURRENT_SESSION"
+    if os.path.isfile(pointer_file):
+        missing_canonical = []
+        for template in PRIMARY_ARTIFACTS.values():
+            path = Path(template.format(project=project, session=session))
+            if not path.exists():
+                missing_canonical.append(str(path))
+
+        if missing_canonical:
+            errors.append(f"CURRENT_SESSION pointer exists but {len(missing_canonical)} canonical artifacts missing")
 
     lines: list[str] = []
     lines.append(f"check-compliance: project={project} session={session}")
     lines.append(f"report_dir: {report_dir}")
+    mode_line = "mode: projects-root canonical"
+    if args.accept_stage_root:
+        mode_line += " (legacy stage-root accepted)"
+    lines.append(mode_line)
     if args.accept_projects_pointer:
-        lines.append(f"mode: transitional (Article X, Section 4)")
-    lines.append(f"timestamp: {datetime.utcnow().isoformat()}Z")
+        lines.append("session_resolution: CURRENT_SESSION pointer allowed")
+    lines.append(f"timestamp: {datetime.now(timezone.utc).isoformat()}")
     lines.append("")
     lines.append("Findings:")
     if errors:

@@ -4,7 +4,7 @@ IDSE SessionManager - Project Bootstrap & Session Creation
 Implements Article X of the IDSE Constitution
 
 This module provides the official mechanism for creating new IDSE project sessions
-with complete folder scaffolding, maintaining canonical artifact locations.
+with complete folder scaffolding, maintaining projects-rooted canonical artifact locations.
 """
 
 import json
@@ -28,6 +28,15 @@ class SessionManager:
     """
 
     STAGES = ['intents', 'contexts', 'specs', 'plans', 'tasks', 'implementation', 'feedback']
+    FILE_NAMES = {
+        'intents': 'intent.md',
+        'contexts': 'context.md',
+        'specs': 'spec.md',
+        'plans': 'plan.md',
+        'tasks': 'tasks.md',
+        'implementation': 'README.md',
+        'feedback': 'feedback.md'
+    }
 
     @staticmethod
     def create_session(project: str, session_name: str, owner: str) -> Dict[str, any]:
@@ -65,7 +74,7 @@ class SessionManager:
         print()
 
         try:
-            # 2. Create canonical stage directories (Article X, Section 3)
+            # 2. Create canonical stage directories (Article X, Section 3 - projects-rooted)
             canonical_paths = SessionManager._create_canonical_directories(project, session_id)
 
             # 3. Create project visibility folder
@@ -87,8 +96,11 @@ class SessionManager:
             # 8. Update current/ pointers (auto-sync all stages)
             SessionManager._update_current_pointers(project, session_id)
 
-            # 9. Create audit entry (Article X, Section 7)
-            audit_file = SessionManager._create_audit_entry(project, session_id, owner, canonical_paths)
+            # 9. Create legacy pointers (grace period support)
+            legacy_paths = SessionManager._create_legacy_pointers(project, session_id)
+
+            # 10. Create audit entry (Article X, Section 7)
+            audit_file = SessionManager._create_audit_entry(project, session_id, owner, canonical_paths, legacy_paths)
 
             print("✅ Session creation complete")
             print(f"📋 Audit: {audit_file}")
@@ -109,7 +121,7 @@ class SessionManager:
     @staticmethod
     def _create_canonical_directories(project: str, session_id: str) -> Dict[str, str]:
         """
-        Create canonical stage-rooted directories per Article X, Section 3.
+        Create canonical projects-rooted directories per Article X, Section 3.
 
         Returns:
             Dict mapping stage name -> canonical path
@@ -117,7 +129,7 @@ class SessionManager:
         canonical_paths = {}
 
         for stage in SessionManager.STAGES:
-            path = f"{stage}/projects/{project}/sessions/{session_id}"
+            path = f"projects/{project}/sessions/{session_id}/{stage}"
             os.makedirs(path, exist_ok=True)
             canonical_paths[stage] = path
             print(f"   📁 {stage:15} → {path}")
@@ -150,17 +162,17 @@ class SessionManager:
         """
         Write CURRENT_SESSION pointer file (Article X, Section 4).
 
-        Status: Advisory only - not canonical.
+        Status: Authoritative for active session resolution.
         """
         pointer_path = f"{project_dir}/CURRENT_SESSION"
 
         with open(pointer_path, 'w') as f:
             f.write(f"session_id: {session_id}\n")
-            f.write(f"canonical_root: specs/projects/{project}/sessions/{session_id}\n")
+            f.write(f"canonical_root: projects/{project}/sessions/{session_id}\n")
             f.write(f"updated: {datetime.now(timezone.utc).isoformat()}\n")
-            f.write(f"# Advisory pointer only - canonical artifacts are in stage-rooted paths\n")
+            f.write("# Canonical root is projects-rooted per Article X Section 3\n")
 
-        print(f"   📌 Advisory pointer: {pointer_path}")
+        print(f"   📌 Active session pointer: {pointer_path}")
 
     @staticmethod
     def _write_owner_marker(specs_path: str, owner: str):
@@ -229,23 +241,46 @@ class SessionManager:
             current_dir = f"{stage}/current"
             os.makedirs(current_dir, exist_ok=True)
 
-            # Determine file name (strip 's' from plural stages except feedback)
-            if stage == 'feedback':
-                filename = 'feedback.md'
-            elif stage == 'implementation':
-                filename = 'README.md'  # implementation uses README
-            else:
-                filename = f"{stage.rstrip('s')}.md"
+            filename = SessionManager.FILE_NAMES[stage]
 
             pointer_file = f"{current_dir}/{filename}"
 
             # Write relative path pointer (matches existing pattern)
             with open(pointer_file, 'w') as f:
-                relative_path = f"../projects/{project}/sessions/{session_id}/{filename}"
+                relative_path = f"../../projects/{project}/sessions/{session_id}/{stage}/{filename}"
                 f.write(relative_path)
 
     @staticmethod
-    def _create_audit_entry(project: str, session_id: str, owner: str, canonical_paths: Dict[str, str]) -> str:
+    def _create_legacy_pointers(project: str, session_id: str) -> Dict[str, str]:
+        """
+        Create legacy stage-root pointers during grace period.
+
+        Returns:
+            Dict mapping stage -> legacy path (for reference/audit)
+        """
+        legacy_paths: Dict[str, str] = {}
+
+        for stage in SessionManager.STAGES:
+            legacy_root = Path(f"{stage}/projects/{project}/sessions/{session_id}")
+            legacy_root.mkdir(parents=True, exist_ok=True)
+
+            filename = SessionManager.FILE_NAMES[stage]
+
+            legacy_file = legacy_root / filename
+            legacy_paths[stage] = str(legacy_root)
+
+            # Write a pointer notice to the new canonical path (non-destructive if file already exists)
+            if not legacy_file.exists():
+                with open(legacy_file, 'w') as f:
+                    f.write(f"# Legacy path notice\n")
+                    f.write(f"Canonical location: projects/{project}/sessions/{session_id}/{stage}/{filename}\n")
+                    f.write(f"Status: Legacy (grace period) per Article X Section 6\n")
+
+        return legacy_paths
+
+    @staticmethod
+    def _create_audit_entry(project: str, session_id: str, owner: str, canonical_paths: Dict[str, str],
+                            legacy_paths: Dict[str, str]) -> str:
         """
         Create audit trail entry (Article X, Section 7).
 
@@ -269,22 +304,21 @@ class SessionManager:
             for stage, path in canonical_paths.items():
                 f.write(f"- {path}/\n")
 
-            f.write(f"\n## Advisory Pointer:\n")
+            f.write("\n## Legacy Pointers (grace period):\n")
+            for stage, path in legacy_paths.items():
+                f.write(f"- {path}/ (contains notice only)\n")
+
+            f.write(f"\n## Active Session Pointer:\n")
             f.write(f"- projects/{project}/CURRENT_SESSION → {session_id}\n")
 
             f.write(f"\n## Current Pointers Updated:\n")
             for stage in SessionManager.STAGES:
-                if stage == 'feedback':
-                    filename = 'feedback.md'
-                elif stage == 'implementation':
-                    filename = 'README.md'
-                else:
-                    filename = f"{stage.rstrip('s')}.md"
+                filename = SessionManager.FILE_NAMES[stage]
 
-                f.write(f"- {stage}/current/{filename} → ../projects/{project}/sessions/{session_id}/{filename}\n")
+                f.write(f"- {stage}/current/{filename} → ../../projects/{project}/sessions/{session_id}/{stage}/{filename}\n")
 
             f.write(f"\n## Verification:\n")
-            f.write(f"- [ ] .owner file created: specs/projects/{project}/sessions/{session_id}/.owner\n")
+            f.write(f"- [ ] .owner file created: projects/{project}/sessions/{session_id}/specs/.owner\n")
             f.write(f"- [ ] .idse_active_session.json updated\n")
             f.write(f"- [ ] All current/ pointers synchronized\n")
             f.write(f"- [ ] Validators pass: `python idse-governance/validate-artifacts.py --project {project} --session {session_id}`\n")

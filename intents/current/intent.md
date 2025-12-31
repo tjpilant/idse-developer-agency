@@ -1,1 +1,0 @@
-../projects/TestBootstrap/sessions/canary-test-1/intent.md

@@ -59,5 +59,12 @@
       "owner": "tjpilant",
       "status": "active"
     }
+  },
+  "RemapTest": {
+    "remap-session": {
+      "created_at": 1767163921.397807,
+      "owner": "tjpilant",
+      "status": "active"
+    }
   }
 }

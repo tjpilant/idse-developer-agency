@@ -1,1 +1,1 @@
-../projects/TestBootstrap/sessions/canary-test-1/README.md
+../../projects/RemapTest/sessions/remap-session/implementation/README.md

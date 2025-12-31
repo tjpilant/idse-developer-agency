@@ -1,7 +1,7 @@
 {
-  "active_llm": "claude_code",
+  "active_llm": "codex_gpt",
   "awaiting_handoff": false,
-  "handoff_cycle_id": "2025-12-31T00-45-11Z",
+  "handoff_cycle_id": "2025-12-31T06-33-56Z",
   "layer_scope": "implementation",
   "enforced_paths": [
     "frontend/",
@@ -15,10 +15,10 @@
   },
   "active_stage": "Implementation",
   "last_handoff": {
-    "from": "codex_gpt",
-    "to": "claude_code",
-    "timestamp": "2025-12-31T00:45:11.480127+00:00",
-    "notes": "Trblshoot MD Edito overlay"
+    "from": "claude_code",
+    "to": "codex_gpt",
+    "timestamp": "2025-12-31T06:33:56.424064+00:00",
+    "notes": "Constitution Update"
   },
-  "last_checked": "2025-12-31T00:45:21.511718+00:00"
+  "last_checked": "2025-12-31T06:34:21.082232+00:00"
 }

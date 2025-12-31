@@ -1,1 +1,1 @@
-../projects/TestBootstrap/sessions/canary-test-1/feedback.md
+../../projects/RemapTest/sessions/remap-session/feedback/feedback.md

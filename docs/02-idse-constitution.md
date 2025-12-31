@@ -38,17 +38,17 @@ To reduce ambiguity at project creation, the Agency may scaffold a visible proje
 Only the SessionManager (or an approved SessionManager-compatible mechanism) may create or initialize project sessions and the associated folder scaffolding. All session metadata and ownership markers remain authoritative.
 
 ### Section 3 — Canonical Artifacts
-The canonical locations for pipeline artifacts remain **stage-rooted**:
-- Pattern: `<stage>/projects/<project>/sessions/<session-id>/`
-- Stages: `intents/`, `contexts/`, `specs/`, `plans/`, `tasks/`, `implementation/`, `feedback/`
+The canonical locations for pipeline artifacts are now **projects-rooted**:
+- Pattern: `projects/<project>/sessions/<session-id>/<stage>/`
+- Stages (subdirectories under each session): `intents/`, `contexts/`, `specs/`, `plans/`, `tasks/`, `implementation/`, `feedback/`
 
-Validators MUST treat these stage paths as authoritative unless a project opts into a validated migration to an alternative canonical mapping per Section 6.
+Legacy stage-rooted paths (`<stage>/projects/<project>/sessions/<session-id>/...`) are supported only during the grace period defined in Section 6 for backward compatibility and must be flagged by validators when encountered.
 
 ### Section 4 — Bootstrap Visibility
-Projects MAY include a visible project-level pointer for convenience:
+Projects MUST record the active session pointer:
 - Location: `projects/<Project>/CURRENT_SESSION`
-- Content: Records active session-id and canonical path
-- **Status: Advisory only** - does not replace canonical artifact locations
+- Content: Records active session-id and canonical root (`projects/<Project>/sessions/<session-id>/`)
+- **Status: Authoritative for active session resolution** — canonical artifacts live under the projects-rooted path
 
 ### Section 5 — Prohibitions
 1. Creating or writing to protected `*/current/*` paths under stage directories is **forbidden**
@@ -56,11 +56,12 @@ Projects MAY include a visible project-level pointer for convenience:
 3. Manual creation of session directories without SessionManager is **prohibited**
 
 ### Section 6 — Opt-in Remapping
-Remapping canonical artifact storage to a different root (e.g., to treat `projects/` as canonical) requires:
-1. A formal amendment draft
-2. Migration plan with validator updates
-3. Approval vote per governance procedures
-4. Backward compatibility guarantees
+The projects-rooted mapping in Section 3 is the new default. Legacy stage-rooted paths are permitted only during a **time-boxed grace period** with the following conditions:
+1. Validators MUST default to projects-rooted resolution and treat stage-rooted usage as legacy, emitting warnings or failures after the grace window.
+2. SessionManager MUST scaffold projects-rooted canonicals and MAY emit advisory pointers to legacy locations during grace; removal is mandatory after grace ends.
+3. A migration tool with dry-run, audit logs, and rollback MUST be provided to move artifacts from legacy to projects-rooted paths.
+4. CI MUST enforce that new artifacts are written to projects-rooted paths after the grace period; legacy writes MUST fail.
+5. Any future remap beyond projects-rooted requires a formal amendment, migration plan, approval vote, and backward compatibility guarantees.
 
 ### Section 7 — Audit & Trace
 All bootstrap actions MUST be recorded:
@@ -69,3 +70,10 @@ All bootstrap actions MUST be recorded:
 - Session-id
 - Audit entry location: `idse-governance/feedback/bootstrap_<project>_<timestamp>.md`
 - Included in session history for traceability
+
+### Section 8 — Session Metadata Canonical Location
+1. Session-level metadata (owner, collaborators, changelog, project README pointer, review checklist, and related session-scoped docs) MUST be stored under the active session’s metadata directory:  
+   `projects/<project>/sessions/<session>/metadata/`
+2. All pipeline-driven updates to these metadata files MUST target the metadata directory resolved via the authoritative pointer `projects/<project>/CURRENT_SESSION`.
+3. Project-root metadata files MAY exist for discoverability but are read-only; writing to project-root or legacy stage-root metadata locations is **forbidden** after the grace period.
+4. Validators and CI MUST warn/fail on missing session metadata or writes to non-canonical metadata locations.
