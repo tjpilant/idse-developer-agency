@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const pathPattern = /^(intents|contexts|specs|plans|tasks)\/.*\.md$/;
+const pathPattern = /^(intents|contexts|specs|plans|tasks|docs)\/.*\.md$/;
 
 export const DocumentPathSchema = z.object({
   path: z.string().min(1).regex(pathPattern),
