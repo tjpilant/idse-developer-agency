@@ -51,11 +51,12 @@
 - Configured TypeScript path aliases (`@/*` → `./src/*`)
 - Configured Vite alias resolution
 
-**Path Validation Fix**:
-- Backend only accepts paths matching: `/^(intents|contexts|specs|plans|tasks)\/.*\.md$/`
+**Path Validation**:
+- Backend accepts paths matching: `/^(intents|contexts|specs|plans|tasks|docs)\/.*\.md$/`
 - Added client-side validation in FileOpenDialog to match backend restrictions
-- Display error message for invalid paths (e.g., "docs/03-idse-pipeline.md")
+- Display error message for invalid paths with clear guidance
 - Updated help text and placeholder to clarify folder restrictions
+- Added `docs/` folder support for repository documentation files
 
 **Bug Fixes**:
 - Fixed RightPanel import path in AdminDashboard
@@ -71,7 +72,7 @@
 - `frontend/widget/src/puck/config.tsx` - Removed status browser components
 - `frontend/widget/src/puck/PuckEditor.tsx` - Removed status tab
 
-**Total Changes**: 8 commits, ~2,500 lines added, ~800 lines deleted
+**Total Changes**: 10 commits, ~2,500 lines added, ~800 lines deleted
 
 ### Milkdown Crepe Editor - Frontend Implementation Complete
 
