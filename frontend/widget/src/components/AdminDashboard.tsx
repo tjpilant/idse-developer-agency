@@ -3,7 +3,10 @@ import { DashboardLayout } from "./DashboardLayout";
 import { LeftNav } from "./LeftNav";
 import { WelcomeView } from "./WelcomeView";
 import { PuckWorkspace } from "./PuckWorkspace";
+import { MDWorkspace } from "./MDWorkspace";
 import { RightPanel } from "../puck/components/RightPanel";
+
+const MILKDOWN_TOKEN = (import.meta as any).env?.VITE_MILKDOWN_AUTH_TOKEN;
 
 export interface DashboardState {
   activeWorkspace: "welcome" | "puck" | "md";
@@ -52,18 +55,15 @@ export function AdminDashboard() {
     }
 
     if (state.activeWorkspace === "md") {
-      // Placeholder for MD workspace
       return (
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-slate-900">MD Editor</h2>
-            <p className="text-slate-600 mt-2">
-              Active view: {state.mdSubView}
-            </p>
-            <p className="text-sm text-slate-500 mt-4">
-              (Workspace will be implemented in Phase 3)
-            </p>
-          </div>
+        <div className="flex flex-col h-full">
+          <MDWorkspace
+            activeSubView={state.mdSubView}
+            project={state.currentSession.project}
+            session={state.currentSession.session}
+            token={MILKDOWN_TOKEN}
+            role="owner"
+          />
         </div>
       );
     }
