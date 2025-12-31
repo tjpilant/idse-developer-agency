@@ -35,7 +35,7 @@ fi
 # Fallback: discover the first session intent file
 if [ -z "$PROJECT" ] || [ -z "$SESSION" ]; then
   echo "No project/session supplied; attempting auto-discovery..."
-  FIRST=$(find intents/projects -maxdepth 3 -name intent.md 2>/dev/null | head -n1 || true)
+  FIRST=$(find projects -path "*/sessions/*/intents/intent.md" 2>/dev/null | head -n1 || true)
   if [ -n "$FIRST" ]; then
     PROJECT=$(echo "$FIRST" | awk -F/ '{for(i=1;i<=NF;i++) if($i=="projects"){print $(i+1); break}}')
     SESSION=$(echo "$FIRST" | awk -F/ '{for(i=1;i<=NF;i++) if($i=="sessions"){print $(i+1); break}}')
@@ -59,11 +59,11 @@ check_file() {
   fi
 }
 
-check_file "intents/projects/$PROJECT/sessions/$SESSION/intent.md"
-check_file "contexts/projects/$PROJECT/sessions/$SESSION/context.md"
-check_file "specs/projects/$PROJECT/sessions/$SESSION/spec.md"
-check_file "plans/projects/$PROJECT/sessions/$SESSION/plan.md"
-check_file "tasks/projects/$PROJECT/sessions/$SESSION/tasks.md"
+check_file "projects/$PROJECT/sessions/$SESSION/intents/intent.md"
+check_file "projects/$PROJECT/sessions/$SESSION/contexts/context.md"
+check_file "projects/$PROJECT/sessions/$SESSION/specs/spec.md"
+check_file "projects/$PROJECT/sessions/$SESSION/plans/plan.md"
+check_file "projects/$PROJECT/sessions/$SESSION/tasks/tasks.md"
 
 echo "Quick checks complete."
 

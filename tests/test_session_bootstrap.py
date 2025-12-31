@@ -121,8 +121,8 @@ class TestSessionBootstrap(unittest.TestCase):
 
         content = pointer.read_text()
         self.assertIn(f"session_id: {self.test_session}", content)
-        self.assertIn(f"canonical_root: specs/projects/{self.test_project}/sessions/{self.test_session}", content)
-        self.assertIn("Advisory pointer only", content)
+        self.assertIn(f"canonical_root: projects/{self.test_project}/sessions/{self.test_session}", content)
+        self.assertIn("Canonical root is projects-rooted", content)
 
     def test_creates_owner_marker(self):
         """Test that .owner marker is created for audit trail (Article X, Section 7)."""
@@ -132,7 +132,7 @@ class TestSessionBootstrap(unittest.TestCase):
             self.test_owner
         )
 
-        owner_file = self.root / "specs" / "projects" / self.test_project / "sessions" / self.test_session / ".owner"
+        owner_file = self.root / "projects" / self.test_project / "sessions" / self.test_session / "specs" / ".owner"
         self.assertTrue(owner_file.exists(), ".owner marker not created")
 
         owner_content = owner_file.read_text().strip()
@@ -186,18 +186,13 @@ class TestSessionBootstrap(unittest.TestCase):
 
         # Check all stage current/ pointers
         for stage in SessionManager.STAGES:
-            if stage == 'feedback':
-                filename = 'feedback.md'
-            elif stage == 'implementation':
-                filename = 'README.md'
-            else:
-                filename = f"{stage.rstrip('s')}.md"
+            filename = SessionManager.FILE_NAMES[stage]
 
             pointer_file = self.root / stage / "current" / filename
             self.assertTrue(pointer_file.exists(), f"Current pointer not created: {pointer_file}")
 
             content = pointer_file.read_text().strip()
-            expected_path = f"../projects/{self.test_project}/sessions/{self.test_session}/{filename}"
+            expected_path = f"../../projects/{self.test_project}/sessions/{self.test_session}/{stage}/{filename}"
             self.assertEqual(content, expected_path, f"Pointer content mismatch for {stage}")
 
     def test_creates_audit_entry(self):
@@ -244,7 +239,7 @@ class TestSessionBootstrap(unittest.TestCase):
         # Verify all stages in canonical_paths
         for stage in SessionManager.STAGES:
             self.assertIn(stage, canonical_paths)
-            expected_path = f"{stage}/projects/{self.test_project}/sessions/{self.test_session}"
+            expected_path = f"projects/{self.test_project}/sessions/{self.test_session}/{stage}"
             self.assertEqual(canonical_paths[stage], expected_path)
 
 

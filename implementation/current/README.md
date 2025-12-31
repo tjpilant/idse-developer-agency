@@ -1,1 +1,0 @@
-../../projects/RemapTest/sessions/remap-session/implementation/README.md

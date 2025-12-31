@@ -111,7 +111,7 @@ def self_test() -> bool:
     assert instruction_leakage_guardrail(good_output)[0] is True
 
     bad_boundary = "idse-governance/state/state.json"
-    good_boundary = "specs/projects/default/sessions/cli-123/spec.md"
+    good_boundary = "projects/default/sessions/cli-123/specs/spec.md"
     assert idse_boundary_guardrail(bad_boundary, "write")[0] is False
     assert idse_boundary_guardrail(good_boundary, "read")[0] is True
     return True

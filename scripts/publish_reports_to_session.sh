@@ -12,7 +12,7 @@ if [ -z "$project" ] || [ -z "$session" ]; then
 fi
 
 reports_src="reports/projects/$project/sessions/$session"
-session_dir="implementation/projects/$project/sessions/$session"
+session_dir="projects/$project/sessions/$session/implementation"
 index_file="$session_dir/REPORTS_INDEX.json"
 
 mkdir -p "$reports_src"

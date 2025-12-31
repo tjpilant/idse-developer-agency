@@ -46,7 +46,7 @@ def main() -> int:
     errors: list[str] = []
     warnings: list[str] = []
 
-    feedback_path = Path(f"feedback/projects/{project}/sessions/{session}/feedback.md")
+    feedback_path = Path(f"projects/{project}/sessions/{session}/feedback/feedback.md")
     if not feedback_path.exists():
         errors.append(f"Missing feedback file: {feedback_path}")
     else:

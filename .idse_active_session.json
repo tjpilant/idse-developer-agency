@@ -1,7 +1,7 @@
 {
-  "session_id": "remap-session",
-  "name": "remap-session",
-  "created_at": 1767163921.397245,
-  "owner": "tjpilant",
-  "project": "RemapTest"
+  "session_id": "session-2",
+  "name": "session-2",
+  "created_at": 1767191043.001802,
+  "owner": "integration-owner",
+  "project": "IntegrationTest"
 }

@@ -34,14 +34,14 @@ SESSION="$2"
 TEMPLATES_DIR="docs/kb/templates"
 
 declare -A SESSION_FILES=(
-  [intent]="intents/projects/${PROJECT}/sessions/${SESSION}/intent.md"
-  [context]="contexts/projects/${PROJECT}/sessions/${SESSION}/context.md"
-  [spec]="specs/projects/${PROJECT}/sessions/${SESSION}/spec.md"
-  [plan]="plans/projects/${PROJECT}/sessions/${SESSION}/plan.md"
-  [test_plan]="plans/projects/${PROJECT}/sessions/${SESSION}/test-plan.md"
-  [tasks]="tasks/projects/${PROJECT}/sessions/${SESSION}/tasks.md"
-  [feedback]="feedback/projects/${PROJECT}/sessions/${SESSION}/feedback.md"
-  [implementation]="implementation/projects/${PROJECT}/sessions/${SESSION}/README.md"
+  [intent]="projects/${PROJECT}/sessions/${SESSION}/intents/intent.md"
+  [context]="projects/${PROJECT}/sessions/${SESSION}/contexts/context.md"
+  [spec]="projects/${PROJECT}/sessions/${SESSION}/specs/spec.md"
+  [plan]="projects/${PROJECT}/sessions/${SESSION}/plans/plan.md"
+  [test_plan]="projects/${PROJECT}/sessions/${SESSION}/plans/test-plan.md"
+  [tasks]="projects/${PROJECT}/sessions/${SESSION}/tasks/tasks.md"
+  [feedback]="projects/${PROJECT}/sessions/${SESSION}/feedback/feedback.md"
+  [implementation]="projects/${PROJECT}/sessions/${SESSION}/implementation/README.md"
 )
 
 copy_if_missing() {
@@ -110,7 +110,7 @@ VALIDATE_REPORT_PATH="${REPORT_DIR}/validate-artifacts-report.txt"
 SCRIPTS_VALIDATE_PATH="${REPORT_DIR}/scripts-validate.log"
 
 TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-cat > "implementation/projects/${PROJECT}/sessions/${SESSION}/REPORTS_INDEX.json" <<EOF
+cat > "projects/${PROJECT}/sessions/${SESSION}/implementation/REPORTS_INDEX.json" <<EOF
 {
   "project": "${PROJECT}",
   "session": "${SESSION}",
