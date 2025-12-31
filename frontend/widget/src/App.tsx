@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { PuckEditor } from "./puck/PuckEditor";
 import { PuckRenderer } from "./puck/PuckRenderer";
 import { PuckShellPage } from "./puck/PuckShellPage";
+import { WorkspacePage } from "./components/WorkspacePage";
+import { AdminDashboard } from "./components/AdminDashboard";
 
 const apiBase = (import.meta as any).env?.VITE_API_BASE ?? "http://localhost:8000";
 
@@ -110,6 +112,19 @@ function Landing() {
               View renderer →
             </div>
           </Link>
+
+          <Link
+            to="/workspace"
+            className="block rounded-2xl bg-white p-6 shadow-sm border border-slate-100 hover:shadow-md transition md:col-span-2"
+          >
+            <div className="text-indigo-600 font-semibold">Pipeline Docs (Milkdown)</div>
+            <div className="text-slate-700 mt-2">
+              Edit IDSE pipeline markdown with the Milkdown/Crepe editor and file tree.
+            </div>
+            <div className="mt-4 inline-flex items-center text-indigo-600 font-semibold">
+              Open workspace →
+            </div>
+          </Link>
         </div>
       </div>
     </div>
@@ -121,11 +136,13 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<PuckRenderer pageSlug="index" />} />
+        <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/editor" element={<PuckEditor />} />
         <Route path="/editor-shell" element={<PuckShellPage />} />
         <Route path="/pages" element={<RendererLanding />} />
         <Route path="/:slug" element={<PuckRenderer />} />
         <Route path="/landing" element={<Landing />} />
+        <Route path="/workspace" element={<WorkspacePage />} />
       </Routes>
     </BrowserRouter>
   );

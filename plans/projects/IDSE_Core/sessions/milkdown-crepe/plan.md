@@ -76,69 +76,264 @@ Deferred decisions
 - Production CORS origin list (FRONTEND_URL) and rate-limit profile tuning.
 - Compose/K8s topology with the existing Python service (document in DEPLOYMENT/INTEGRATION once decided).
 
-Phase 5 — Frontend Milkdown Editor (current - 2025-12-30)
+Phase 5 — Frontend Milkdown Editor (✅ completed 2025-12-31)
 
-**Status**: Backend complete ✅ → Frontend implementation needed
+**Status**: Backend complete ✅ → Frontend complete ✅
 
-**User Decisions**:
-- Integration approach: Tabbed interface (Puck page builder | Pipeline Docs editor)
-- Document selection: File browser/tree view sidebar
-- Save behavior: Manual save button only (no auto-save)
-- Preview mode: None (Crepe WYSIWYG sufficient)
-- Role handling: Read-only editor for reader role
+**Final Implementation (User Redirected from Original Plan)**:
+- Integration approach: **Modal/overlay editor** (NOT tabbed interface - user wanted Milkdown example style)
+- Document selection: **File open/save dialogs with short path format** (NOT sidebar file tree)
+- Save behavior: Manual save button only (no auto-save) ✅
+- Preview mode: None (Crepe WYSIWYG sufficient) ✅
+- Role handling: Read-only editor for reader role ✅
 
-**Deliverables**:
-- API client (milkdownApi.ts) with GET/PUT/render functions
-- FileTree component for session directory structure
-- MilkdownEditor component with Crepe integration
-- useMilkdownDocument hook for document load/save
-- SessionTabs component for tab switching
-- PipelineDocsEditor wrapper (FileTree + MilkdownEditor)
-- Component tests and API client tests
+**What Was Actually Built**:
 
-**Files to Create**:
-- frontend/widget/src/services/milkdownApi.ts - API client
-- frontend/widget/src/types/milkdown.ts - TypeScript types
-- frontend/widget/src/components/FileTree.tsx - File tree sidebar
-- frontend/widget/src/hooks/useSessionFiles.ts - Hook to list files
-- frontend/widget/src/types/fileTree.ts - File tree types
-- frontend/widget/src/components/MilkdownEditor.tsx - Main editor
-- frontend/widget/src/hooks/useMilkdownDocument.ts - Document state hook
-- frontend/widget/src/components/SessionTabs.tsx - Tab switcher
-- frontend/widget/src/components/PipelineDocsEditor.tsx - Wrapper component
+✅ **API Client & Types**:
+- frontend/widget/src/services/milkdownApi.ts - GET/PUT/render/listFiles functions
+- frontend/widget/src/types/milkdown.ts - DocumentResponse, SaveResponse, RenderResponse types
+- Authentication via JWT Bearer token from VITE_MILKDOWN_AUTH_TOKEN
 
-**Files to Modify**:
-- frontend/widget/package.json - Add @milkdown/* dependencies
-- frontend/widget/src/components/SessionPage.tsx (or equivalent) - Add tabs
-- frontend/widget/.env - Add VITE_MILKDOWN_API_URL
+✅ **Modal Overlay Editor**:
+- frontend/widget/src/components/MarkdownEditorModal.tsx - Full-screen modal overlay
+- Integrated into frontend/widget/src/components/WorkspacePage.tsx
+- Fixed inset-4 overlay matching Milkdown examples (https://github.com/Milkdown/examples/tree/main/editor-crepe)
+- Backdrop click to close with unsaved changes confirmation
 
-**Layout**:
-```
-┌─────────────────────────────────────────┐
-│  Sidebar (25%)  │  Editor (75%)         │
-│  FileTree       │  MilkdownEditor       │
-│  - intents/     │  ┌─────────────────┐ │
-│    - intent.md  │  │ Save    [Dirty] │ │
-│  - specs/       │  │  # Intent       │ │
-│    - spec.md    │  │  ...            │ │
-│  - plans/       │  └─────────────────┘ │
-└─────────────────────────────────────────┘
-```
+✅ **File Open/Save Dialogs**:
+- FileOpenDialog with short path input ("plans/plan.md")
+- buildFullPath() auto-converts to full repository paths ("plans/projects/IDSE_Core/sessions/milkdown-crepe/plan.md")
+- Quick-pick buttons for common IDSE documents (intents, specs, plans, tasks, contexts)
+- FileSaveAsDialog for creating new documents
+- Removed browser file picker (security prevents full path access)
 
-**Acceptance Criteria**:
-- Milkdown Crepe integrated and rendering WYSIWYG markdown
-- Documents load from backend GET endpoint
-- Manual save button writes via PUT endpoint
-- Dirty state tracking (unsaved changes indicator)
+✅ **Crepe Editor Integration**:
+- Proper useLayoutEffect lifecycle management
+- CRITICAL FIX: Removed `content` from dependency array to prevent infinite recreation
+- Manual save button with dirty state indicator
 - Read-only mode for reader role
-- File tree shows session .md files
-- Tab switching between Puck and Pipeline Docs works
-- Error handling for 403/404/500
-- Component properly cleans up (crepe.destroy())
-- Tests cover main flows
+- Error handling (401 Unauthorized, 404 Not Found, 500 Server Error)
+- Cleanup on unmount (crepe.destroy())
+- Unsaved changes confirmation
+
+✅ **Authentication & Bug Fixes**:
+- Fixed token env var: VITE_MILKDOWN_TOKEN → VITE_MILKDOWN_AUTH_TOKEN
+- Fixed modal click events (backdrop vs content detection)
+- Fixed editor editability (dependency array issue)
+- Fixed path building for IDSE repository structure
+- Fixed TypeScript types in withAuth()
+
+**Files Created**:
+- frontend/widget/src/components/MarkdownEditorModal.tsx (393 lines)
+- frontend/widget/src/types/milkdown.ts
+
+**Files Modified**:
+- frontend/widget/src/components/WorkspacePage.tsx (token fix, modal integration)
+- frontend/widget/src/services/milkdownApi.ts (auth header types)
+- frontend/widget/.env (VITE_MILKDOWN_AUTH_TOKEN added)
+
+**Not Implemented** (Different approach chosen):
+- ❌ FileTree sidebar - User wanted modal overlay instead
+- ❌ Tabbed interface - User wanted overlay like Milkdown examples
+- ❌ useMilkdownDocument hook - Logic integrated directly into modal
+- ❌ SessionTabs component - Not needed for overlay approach
+- ❌ PipelineDocsEditor wrapper - Not needed
+- ❌ Component tests - Deferred for future work
+
+**Acceptance Criteria - Status**:
+- ✅ Milkdown Crepe integrated and rendering WYSIWYG markdown
+- ✅ Documents load from backend GET endpoint
+- ✅ Manual save button writes via PUT endpoint
+- ✅ Dirty state tracking (unsaved changes indicator)
+- ✅ Read-only mode for reader role
+- ✅ Error handling for 401/403/404/500
+- ✅ Component properly cleans up (crepe.destroy())
+- ⚠️ Tests - Manual E2E testing passed, automated tests deferred
+
+**Technical Details**:
+
+Modal Layout:
+```
+┌──────────────────────────────────────────────┐
+│ Fixed Backdrop (z-40, black/50)             │
+│  ┌────────────────────────────────────────┐ │
+│  │ Modal (z-50, inset-4, white)           │ │
+│  │ ┌────────────────────────────────────┐ │ │
+│  │ │ Header: path | Open | SaveAs | Save│ │ │
+│  │ ├────────────────────────────────────┤ │ │
+│  │ │ Crepe Editor (WYSIWYG)             │ │ │
+│  │ │ # Intent                           │ │ │
+│  │ │ ...content...                      │ │ │
+│  │ └────────────────────────────────────┘ │ │
+│  └────────────────────────────────────────┘ │
+└──────────────────────────────────────────────┘
+```
+
+File Open Dialog:
+```
+┌──────────────────────────────────────┐
+│ Open Document                        │
+│ ┌──────────────────────────────────┐ │
+│ │ Tip: Use short format like       │ │
+│ │ "plans/plan.md"                  │ │
+│ │ Full path: plans/projects/...    │ │
+│ └──────────────────────────────────┘ │
+│                                      │
+│ Input: [plans/plan.md____________]  │
+│                                      │
+│ Quick Open:                          │
+│ [intents/intent.md               ]  │
+│ [specs/spec.md                   ]  │
+│ [plans/plan.md                   ]  │
+│ [tasks/tasks.md                  ]  │
+│ [contexts/context.md             ]  │
+│                                      │
+│ [Open]  [Cancel]                     │
+└──────────────────────────────────────┘
+```
+
+Phase 6 — Unified Admin Dashboard (✅ Phase 0-1 completed 2025-12-31)
+
+**Status**: Planning complete ✅ → Shell & Layout complete ✅
+
+**Objective**: Refactor disconnected admin routes into a unified `/admin` dashboard with persistent 3-column layout (left nav | center canvas | right chat).
+
+**Problem Statement**:
+- Puck Editor opens in separate shell (`/editor`)
+- MD Editor opens in workspace with broken menu (`/workspace`)
+- Status Browser may be redundant (governance scripts handle validation)
+- No unified control center - user navigates between disconnected routes
+
+**Solution Architecture**:
+- **Single `/admin` route** - all admin functionality in one place
+- **Persistent 3-column layout**:
+  - Left sidebar (~240px): Navigation menu with 2 collapsible sections
+  - Center canvas (flexible): Dynamic workspace (Welcome | Puck | MD Editor)
+  - Right sidebar (~590px): Persistent chat panel, always visible
+- **No external navigation**: Everything happens inside dashboard canvas
+- **Welcome screen**: Default view when no workspace active
+
+**Implementation Plan Summary**:
+- Phase 0: shadcn/ui setup (11 components installed) ✅
+- Phase 1: Dashboard shell & layout (4 new components) ✅
+- Phase 2: Puck Editor workspace integration (pending)
+- Phase 3: MD Editor workspace integration (pending)
+- Phase 4: Persistent chat session awareness (pending)
+- Phase 5: Remove Status Browser (pending)
+- Phase 6: Route cleanup and redirects (pending)
+
+**Phase 0 - shadcn/ui Setup** ✅:
+- Configured TypeScript path aliases (`@/*` → `./src/*`)
+- Configured Vite alias resolution with path module
+- Ran `npx shadcn@latest init --yes --defaults`
+- Installed components: sidebar, button, card, collapsible, separator, scroll-area
+- Installed dependencies: sheet, tooltip, input, skeleton, use-mobile hook
+- Total: 11 shadcn/ui components ready for use
+
+**Phase 1 - Dashboard Shell & Layout** ✅:
+
+Files Created:
+1. **frontend/widget/src/components/WelcomeView.tsx**
+   - Default centered welcome message using shadcn Card
+   - Displays when no workspace selected
+   - Describes Puck Editor and MD Editor capabilities
+
+2. **frontend/widget/src/components/LeftNav.tsx**
+   - Dark slate navigation sidebar (240px fixed width)
+   - Two collapsible sections using shadcn Collapsible:
+     - **Puck Editor**: Blocks, Fields, Outline, Published Pages
+     - **MD Editor**: Open Document, Intent, Spec, Plan, Tasks, Context
+   - Active state highlighting with bg-slate-800
+   - User profile section at bottom (Developer / admin@idse.dev)
+
+3. **frontend/widget/src/components/DashboardLayout.tsx**
+   - 3-column CSS Grid: `grid-cols-[240px_1fr_590px]`
+   - Left column: Navigation sidebar with border-r
+   - Center column: Dynamic canvas with bg-slate-50
+   - Right column: Chat panel with border-l
+   - Full viewport height with overflow handling per column
+
+4. **frontend/widget/src/components/AdminDashboard.tsx**
+   - Main dashboard container with state management
+   - State interface: activeWorkspace, puckSubView, mdSubView, currentSession
+   - handleWorkspaceChange() for menu navigation
+   - renderCenterCanvas() switches between Welcome/Puck/MD views
+   - Placeholder content for Puck and MD workspaces (Phase 2-3)
+
+Files Modified:
+- **frontend/widget/src/App.tsx**: Added `/admin` route → `<AdminDashboard />`
+- **frontend/widget/tsconfig.json**: Added baseUrl and paths for `@/*` alias
+- **frontend/widget/vite.config.ts**: Added path import and resolve.alias
+
+**Dashboard State Interface**:
+```typescript
+interface DashboardState {
+  activeWorkspace: "welcome" | "puck" | "md";
+  puckSubView: "blocks" | "fields" | "outline" | "pages" | null;
+  mdSubView: "open" | "intent" | "spec" | "plan" | "tasks" | "context" | null;
+  currentSession: {
+    project: string;
+    session: string;
+  };
+}
+```
+
+**Layout Diagrams**:
+
+Welcome State:
+```
+┌──────────────────────────────────────────────────────┐
+│ LeftNav │    Welcome (centered card)     │  Chat   │
+│  240px  │         (flexible width)        │ 590px   │
+│         │                                 │         │
+│ IDSE    │  ┌────────────────────────┐    │ Session │
+│ Admin   │  │ IDSE Developer Agency  │    │ IDSE_   │
+│         │  │ Welcome to unified...  │    │ Core/   │
+│ Puck▾   │  │                        │    │ milkdo… │
+│ MD      │  │ • Puck Editor          │    │         │
+│         │  │ • MD Editor            │    │ [chat]  │
+│ [User]  │  └────────────────────────┘    │         │
+└──────────────────────────────────────────────────────┘
+```
+
+Puck/MD Placeholder State:
+```
+┌──────────────────────────────────────────────────────┐
+│ LeftNav │    Workspace Placeholder       │  Chat   │
+│  240px  │         (centered)              │ 590px   │
+│         │                                 │         │
+│ Puck▾   │      Puck Editor                │         │
+│ Blocks* │      Active view: blocks        │         │
+│ Fields  │      (Phase 2 pending)          │         │
+│ Outline │                                 │         │
+│ Pages   │                                 │         │
+└──────────────────────────────────────────────────────┘
+```
+
+**Technical Decisions**:
+- **Framework**: shadcn/ui + Tailwind CSS (not Pagedone - license concerns)
+- **Layout**: CSS Grid (not flexbox) for precise column sizing
+- **Navigation**: Collapsible sections (not tabs or accordion)
+- **State Management**: React useState (no Redux/Zustand needed yet)
+- **Routing**: Single `/admin` route (no sub-routes or URL params)
+
+**Next Steps**:
+- Phase 2: Extract Puck editor logic into PuckWorkspace component
+- Phase 3: Extract MD editor logic into MDWorkspace component
+- Phase 4: Make RightPanel session-aware with project/session header
+- Phase 5: Remove StatusBrowserWidget and all status browser files
+- Phase 6: Add route redirects (`/editor`, `/workspace` → `/admin`)
+
+**References**:
+- Plan file: `/home/tjpilant/.claude/plans/indexed-splashing-lamport.md`
+- shadcn/ui docs: https://ui.shadcn.com/
+- Components library: `frontend/widget/src/components/ui/`
+
+---
 
 Next steps
-- **Immediate**: Codex implements Phase 5 frontend (see tasks.md T5.1-T5.6)
-- Ops: confirm production env vars (AUTH_SECRET, WORKSPACE_ROOT, ROLE_PROVIDER=file, CORS origins, rate limits) and deploy in local-write mode.
-- Optional: if a non-file role source is requested, define it and implement a new RoleProvider subclass with tests.
+- Documentation: Update frontend README with modal editor usage guide
+- Optional: Add automated component tests
+- Optional: Clean up debug console.log statements
+- Ops: Deploy with confirmed env vars (AUTH_SECRET, WORKSPACE_ROOT, ROLE_PROVIDER=file, CORS origins)
 - Optional future: PR mode remains deferred; treat as separate scoped phase if ever requested.
