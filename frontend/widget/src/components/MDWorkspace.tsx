@@ -340,13 +340,13 @@ function FileOpenDialog({
 
   // Validate path against backend restrictions
   const validateShortPath = (path: string): boolean => {
-    const pathPattern = /^(intents|contexts|specs|plans|tasks|docs)\//;
+    const pathPattern = /^(intents|contexts|specs|plans|tasks|docs|projects|feedback|implementation)\//;
     return pathPattern.test(path);
   };
 
   const handleOpen = () => {
     if (!validateShortPath(shortPath)) {
-      setError("Path must start with: intents/, specs/, plans/, tasks/, contexts/, or docs/");
+      setError("Path must start with: intents/, specs/, plans/, tasks/, contexts/, docs/, projects/, feedback/, or implementation/");
       return;
     }
     setError(null);
@@ -400,7 +400,7 @@ function FileOpenDialog({
               autoFocus
             />
             <p className="mt-1 text-xs text-slate-500">
-              Must start with: intents/, specs/, plans/, tasks/, contexts/, or docs/
+              Must start with: intents/, specs/, plans/, tasks/, contexts/, docs/, projects/, feedback/, or implementation/
             </p>
           </div>
 

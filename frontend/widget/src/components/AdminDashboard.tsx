@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { DashboardLayout } from "./DashboardLayout";
 import { LeftNav } from "./LeftNav";
 import { WelcomeView } from "./WelcomeView";
@@ -88,9 +88,9 @@ export function AdminDashboard() {
     return undefined;
   };
 
-  const handleMDPathChange = (path: string | null) => {
+  const handleMDPathChange = useCallback((path: string | null) => {
     setState((prev) => ({ ...prev, mdCurrentPath: path }));
-  };
+  }, []);
 
   return (
     <DashboardLayout
