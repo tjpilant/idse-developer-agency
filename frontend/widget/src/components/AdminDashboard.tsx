@@ -2,6 +2,7 @@ import { useState } from "react";
 import { DashboardLayout } from "./DashboardLayout";
 import { LeftNav } from "./LeftNav";
 import { WelcomeView } from "./WelcomeView";
+import { PuckWorkspace } from "./PuckWorkspace";
 import { RightPanel } from "../puck/components/RightPanel";
 
 export interface DashboardState {
@@ -42,19 +43,10 @@ export function AdminDashboard() {
       return <WelcomeView />;
     }
 
-    if (state.activeWorkspace === "puck") {
-      // Placeholder for Puck workspace
+    if (state.activeWorkspace === "puck" && state.puckSubView) {
       return (
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-slate-900">Puck Editor</h2>
-            <p className="text-slate-600 mt-2">
-              Active view: {state.puckSubView}
-            </p>
-            <p className="text-sm text-slate-500 mt-4">
-              (Workspace will be implemented in Phase 2)
-            </p>
-          </div>
+        <div className="flex flex-col h-full">
+          <PuckWorkspace activeSubView={state.puckSubView} />
         </div>
       );
     }
