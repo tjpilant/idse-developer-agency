@@ -43,7 +43,100 @@ pipeline:
 7. **Review and iterate:** Apply feedback from reviews and production; update
    intent, context, or specs as needed.
 
-## 3. Running the Validation Workflow
+## 3. Creating a New Project Session
+
+**Authority:** Article X of the IDSE Constitution
+
+All IDSE project sessions must be created using the official SessionManager to ensure proper folder scaffolding, canonical artifact locations, and audit trail compliance.
+
+### Quick Start
+
+Use the bootstrap script to create a new project session:
+
+```bash
+bash .cursor/tasks/bootstrap_project.sh <ProjectName> <session-name> [owner]
+```
+
+**Example:**
+```bash
+bash .cursor/tasks/bootstrap_project.sh IDSE_Core puck-components tjpilant
+```
+
+### What Gets Created
+
+The SessionManager creates:
+
+1. **Canonical Stage Directories** (Article X, Section 3):
+   ```
+   intents/projects/<ProjectName>/sessions/<session-name>/
+   contexts/projects/<ProjectName>/sessions/<session-name>/
+   specs/projects/<ProjectName>/sessions/<session-name>/
+   plans/projects/<ProjectName>/sessions/<session-name>/
+   tasks/projects/<ProjectName>/sessions/<session-name>/
+   implementation/projects/<ProjectName>/sessions/<session-name>/
+   feedback/projects/<ProjectName>/sessions/<session-name>/
+   ```
+
+2. **Project Visibility Folder**:
+   - `projects/<ProjectName>/README.md` – Project overview
+   - `projects/<ProjectName>/CURRENT_SESSION` – Advisory pointer to active session (Article X, Section 4)
+
+3. **Current Pointers** (auto-synchronized):
+   - `intents/current/intent.md` → points to active session
+   - `contexts/current/context.md` → points to active session
+   - `specs/current/spec.md` → points to active session
+   - `plans/current/plan.md` → points to active session
+   - `tasks/current/task.md` → points to active session
+   - `implementation/current/README.md` → points to active session
+   - `feedback/current/feedback.md` → points to active session
+
+4. **Session Metadata**:
+   - `.idse_active_session.json` – Updated with new session
+   - `.idse_sessions_history.json` – Session appended to history
+   - `specs/projects/<ProjectName>/sessions/<session-name>/.owner` – Ownership marker
+
+5. **Audit Trail** (Article X, Section 7):
+   - `idse-governance/feedback/bootstrap_<ProjectName>_<timestamp>.md`
+
+### Validation
+
+After bootstrapping, validate the session structure:
+
+```bash
+# Using transitional mode (reads from CURRENT_SESSION pointer)
+python idse-governance/validate-artifacts.py \
+  --project <ProjectName> \
+  --accept-projects-pointer
+
+# Or specify session explicitly
+python idse-governance/validate-artifacts.py \
+  --project <ProjectName> \
+  --session <session-name>
+```
+
+Check compliance:
+
+```bash
+python idse-governance/check-compliance.py \
+  --project <ProjectName> \
+  --accept-projects-pointer
+```
+
+### Important Notes
+
+- **Canonical Paths:** Always use stage-rooted paths (`intents/projects/.../sessions/...`) as the source of truth
+- **Advisory Pointer:** The `projects/<ProjectName>/CURRENT_SESSION` file is advisory only—it's for convenience, not authority
+- **Manual Creation Prohibited:** Article X, Section 5 forbids manual session directory creation—always use SessionManager
+- **Human-Readable Session Names:** Use descriptive names like `puck-components`, not timestamps
+
+### Next Steps After Bootstrap
+
+1. Start with the Intent stage: Create `intents/projects/<ProjectName>/sessions/<session-name>/intent.md`
+2. Follow the IDSE pipeline: Intent → Context → Spec → Plan → Tasks → Implementation → Feedback
+3. Use templates from `kb/templates/` as starting points
+4. Keep all artifacts in their canonical locations
+
+## 4. Running the Validation Workflow
 
 Run the CI check locally to ensure no unresolved placeholders remain:
 
@@ -55,7 +148,7 @@ grep -R "REQUIRES INPUT" -n kb/ docs/ --exclude-dir templates \
 Templates under `kb/templates/` intentionally contain placeholders and are
 excluded from the check.
 
-## 4. Contributing Guidelines
+## 5. Contributing Guidelines
 
 - Describe changes: Note which artifacts (intent, context, spec, plan, tasks,
   docs) you updated and why.
@@ -68,9 +161,10 @@ excluded from the check.
 - Multiple packages: If you add subprojects, include an `AGENTS.md` in each with
   package-specific guidance.
 
-## 5. Learning More
+## 6. Learning More
 
 - **Philosophy:** `docs/01-idse-philosophy.md`
+- **Constitution:** `docs/02-idse-constitution.md` (includes Article X on Project Bootstrap)
 - **Artifacts compared:** `docs/04-idse-spec-plan-tasks.md`
 - **SDD to IDSE evolution:** `docs/07-sdd-to-idse.md`
 - **Example walkthrough:** `kb/examples/real-time-notifications.md`

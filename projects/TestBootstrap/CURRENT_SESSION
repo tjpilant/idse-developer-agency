@@ -1,0 +1,4 @@
+session_id: canary-test-1
+canonical_root: specs/projects/TestBootstrap/sessions/canary-test-1
+updated: 2025-12-31T06:13:16.976923+00:00
+# Advisory pointer only - canonical artifacts are in stage-rooted paths

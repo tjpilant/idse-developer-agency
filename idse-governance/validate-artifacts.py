@@ -47,15 +47,55 @@ def write_report(report_dir, name, content):
     return path
 
 
+def resolve_session_from_pointer(project):
+    """
+    Read session-id from projects/<project>/CURRENT_SESSION if it exists.
+
+    Returns:
+        str | None: Session ID or None if pointer doesn't exist
+    """
+    pointer_file = f"projects/{project}/CURRENT_SESSION"
+    if not os.path.isfile(pointer_file):
+        return None
+
+    try:
+        with open(pointer_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                if line.startswith('session_id:'):
+                    return line.split(':', 1)[1].strip()
+    except Exception:
+        return None
+
+    return None
+
+
 def main():
     p = argparse.ArgumentParser(description="Validate IDSE session artifacts (lightweight).")
     p.add_argument("--project", required=True)
-    p.add_argument("--session", required=True)
+    p.add_argument("--session", required=False, help="Session ID (can be omitted if --accept-projects-pointer is used)")
+    p.add_argument("--accept-projects-pointer", action='store_true',
+                   help="Allow reading session ID from projects/<project>/CURRENT_SESSION (transitional mode, Article X)")
     p.add_argument("--report-dir", default=None, help="Directory to write reports. Defaults to ./reports/")
     args = p.parse_args()
 
     project = args.project
-    session = args.session
+
+    # Resolve session ID (Article X, Section 4 - accept advisory pointer)
+    if args.accept_projects_pointer:
+        session = resolve_session_from_pointer(project)
+        if session:
+            print(f"ℹ️ Resolved session from pointer: {session}")
+        else:
+            print(f"⚠️ No CURRENT_SESSION pointer found for project: {project}")
+            if not args.session:
+                print("❌ Error: --session required when pointer not found")
+                return 1
+            session = args.session
+    else:
+        if not args.session:
+            print("❌ Error: --session is required (or use --accept-projects-pointer)")
+            return 1
+        session = args.session
     report_dir = args.report_dir or os.path.join("reports", f"{project}_{session}_{int(datetime.utcnow().timestamp())}")
 
     results = []
@@ -76,10 +116,27 @@ def main():
             overall_ok = False
             results.append((key, path, False, "missing"))
 
+    # Check if pointer exists but canonical artifacts missing (Article X warning)
+    if args.accept_projects_pointer:
+        pointer_file = f"projects/{project}/CURRENT_SESSION"
+        if os.path.isfile(pointer_file):
+            missing_canonical = []
+            for key, tmpl in REQUIRED_FILES.items():
+                path = tmpl.format(project=project, session=session)
+                if not os.path.isfile(path):
+                    missing_canonical.append(path)
+
+            if missing_canonical:
+                overall_ok = False
+                results.append(("pointer.consistency", pointer_file, False,
+                               f"CURRENT_SESSION pointer exists but {len(missing_canonical)} canonical artifacts missing"))
+
     # summary text
     lines = []
     lines.append(f"validate-artifacts: project={project} session={session}")
     lines.append(f"report_dir: {report_dir}")
+    if args.accept_projects_pointer:
+        lines.append(f"mode: transitional (Article X, Section 4)")
     lines.append("")
     lines.append("Checks:")
     for r in results:
