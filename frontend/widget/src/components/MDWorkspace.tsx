@@ -3,7 +3,7 @@ import { Crepe } from "@milkdown/crepe";
 import { getDocument, putDocument } from "../services/milkdownApi";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Save, FolderOpen, FilePlus, Loader2 } from "lucide-react";
+import { FileText, Save, FolderOpen, FilePlus, Loader2, X } from "lucide-react";
 import { FileBrowserDialog } from "./FileBrowserDialog";
 import "@milkdown/crepe/theme/common/style.css";
 import "@milkdown/crepe/theme/frame.css";
@@ -172,6 +172,38 @@ export function MDWorkspace({
     }
   };
 
+  const handleNewFile = () => {
+    if (isDirty) {
+      const confirm = window.confirm(
+        "You have unsaved changes. Do you want to discard them and create a new file?"
+      );
+      if (!confirm) return;
+    }
+    setCurrentPath(null);
+    setContent("");
+    setInitialContent("");
+    setError(null);
+    setShowSaveAsDialog(true);
+  };
+
+  const handleClose = () => {
+    if (isDirty) {
+      const confirm = window.confirm(
+        "You have unsaved changes. Do you want to discard them and close the file?"
+      );
+      if (!confirm) return;
+    }
+    setCurrentPath(null);
+    setContent("");
+    setInitialContent("");
+    setError(null);
+    // Destroy editor
+    if (crepeRef.current) {
+      crepeRef.current.destroy();
+      crepeRef.current = null;
+    }
+  };
+
 
   // Show "Open Document" dialog with file browser
   if (showOpenDialog) {
@@ -207,11 +239,15 @@ export function MDWorkspace({
           <CardHeader>
             <CardTitle>MD Editor</CardTitle>
             <CardDescription>
-              Select a document from the left menu or open a custom document
+              Create a new document or open an existing one
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <Button onClick={() => setShowOpenDialog(true)} className="w-full">
+          <CardContent className="space-y-2">
+            <Button onClick={handleNewFile} className="w-full" disabled={readOnly}>
+              <FilePlus className="h-4 w-4 mr-2" />
+              New Document
+            </Button>
+            <Button onClick={() => setShowOpenDialog(true)} variant="outline" className="w-full">
               <FolderOpen className="h-4 w-4 mr-2" />
               Open Document
             </Button>
@@ -238,18 +274,13 @@ export function MDWorkspace({
         </div>
 
         <div className="flex items-center gap-2">
+          <Button onClick={handleNewFile} variant="outline" size="sm" disabled={readOnly}>
+            <FilePlus className="h-4 w-4 mr-2" />
+            New
+          </Button>
           <Button onClick={() => setShowOpenDialog(true)} variant="outline" size="sm">
             <FolderOpen className="h-4 w-4 mr-2" />
             Open
-          </Button>
-          <Button
-            onClick={() => setShowSaveAsDialog(true)}
-            variant="outline"
-            size="sm"
-            disabled={readOnly}
-          >
-            <FilePlus className="h-4 w-4 mr-2" />
-            Save As
           </Button>
           {isDirty && <span className="text-xs text-amber-600 font-semibold">● Unsaved</span>}
           <Button
@@ -259,6 +290,10 @@ export function MDWorkspace({
           >
             <Save className="h-4 w-4 mr-2" />
             {saving ? "Saving..." : "Save"}
+          </Button>
+          <Button onClick={handleClose} variant="outline" size="sm" disabled={!currentPath}>
+            <X className="h-4 w-4 mr-2" />
+            Close
           </Button>
         </div>
       </div>

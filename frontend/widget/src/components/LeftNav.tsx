@@ -3,14 +3,25 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
+import { SessionSelector } from "@/components/SessionSelector";
 
 interface LeftNavProps {
   activeWorkspace: "welcome" | "puck" | "md";
   activeSubView: string | null;
+  currentProject: string;
+  currentSession: string;
   onWorkspaceChange: (workspace: "puck" | "md", subView?: string) => void;
+  onSessionChange: (project: string, session: string) => void;
 }
 
-export function LeftNav({ activeWorkspace, activeSubView, onWorkspaceChange }: LeftNavProps) {
+export function LeftNav({
+  activeWorkspace,
+  activeSubView,
+  currentProject = "IDSE_Core",
+  currentSession = "milkdown-crepe",
+  onWorkspaceChange,
+  onSessionChange = () => {}
+}: LeftNavProps) {
   const [puckExpanded, setPuckExpanded] = useState(activeWorkspace === "puck");
   const [mdExpanded, setMdExpanded] = useState(activeWorkspace === "md");
 
@@ -21,6 +32,15 @@ export function LeftNav({ activeWorkspace, activeSubView, onWorkspaceChange }: L
         <h1 className="text-xl font-bold text-white">IDSE Admin</h1>
         <p className="text-xs text-slate-400 mt-1">Developer Agency</p>
       </div>
+
+      <Separator className="bg-slate-700" />
+
+      {/* Session Selector */}
+      <SessionSelector
+        currentProject={currentProject}
+        currentSession={currentSession}
+        onSessionChange={onSessionChange}
+      />
 
       <Separator className="bg-slate-700" />
 

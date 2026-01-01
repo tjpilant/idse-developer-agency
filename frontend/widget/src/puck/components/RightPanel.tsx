@@ -4,13 +4,14 @@ type ChatMessage = { role: "user" | "assistant" | "system"; content: string };
 
 // AG-UI event names we care about; keep loose to avoid runtime coupling.
 type AguiEvent =
-  | { type: "TEXT_MESSAGE_CONTENT"; content: string }
-  | { type: "SYSTEM_MESSAGE"; content: string }
+  | { type: "TEXT_MESSAGE_CONTENT"; content?: string }
+  | { type: "SYSTEM_MESSAGE"; content?: string }
   | { type: "TOOL_CALL_START"; tool_name?: string }
   | { type: "TOOL_CALL_END"; tool_name?: string }
   | { type: string; [key: string]: unknown };
 
-const apiBase = (import.meta as any).env?.VITE_API_BASE ?? "http://localhost:8000";
+// Use separate base URL for agency chat (defaults to 8000, not the main API at 5004)
+const chatApiBase = (import.meta as any).env?.VITE_CHAT_API_BASE ?? "http://localhost:8000";
 
 interface RightPanelProps {
   project?: string;
@@ -26,8 +27,8 @@ export function RightPanel({ project, session, contextInfo }: RightPanelProps = 
   const [sending, setSending] = useState(false);
   const [connected, setConnected] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
-  const streamUrl = useMemo(() => `${apiBase.replace(/\/$/, "")}/stream`, []);
-  const inboundUrl = useMemo(() => `${apiBase.replace(/\/$/, "")}/inbound`, []);
+  const streamUrl = useMemo(() => `${chatApiBase.replace(/\/$/, "")}/stream`, []);
+  const inboundUrl = useMemo(() => `${chatApiBase.replace(/\/$/, "")}/inbound`, []);
   const eventSourceRef = useRef<EventSource | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
@@ -103,7 +104,12 @@ export function RightPanel({ project, session, contextInfo }: RightPanelProps = 
       const res = await fetch(inboundUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "USER_MESSAGE", content: text }),
+        body: JSON.stringify({
+          type: "USER_MESSAGE",
+          content: text,
+          project,
+          session,
+        }),
       });
       if (!res.ok) {
         throw new Error(`Inbound failed (${res.status})`);
@@ -121,9 +127,10 @@ export function RightPanel({ project, session, contextInfo }: RightPanelProps = 
   };
 
   return (
-    <aside className="col-span-12 lg:col-span-3 bg-white/90 border-l border-slate-200/70">
+    <aside className="h-full bg-white/90 border-l border-slate-200/70">
       <div className="h-full flex flex-col">
-        <div className="px-4 py-3 border-b border-slate-200/70 bg-gradient-to-r from-slate-50 to-white">
+        {/* Header - Fixed at top */}
+        <div className="flex-shrink-0 px-4 py-3 border-b border-slate-200/70 bg-gradient-to-r from-slate-50 to-white">
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-semibold text-slate-900">AI Assistant</h3>
             <span
@@ -147,7 +154,9 @@ export function RightPanel({ project, session, contextInfo }: RightPanelProps = 
             AG-UI stream {connected ? "connected" : "connecting…"}
           </p>
         </div>
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+
+        {/* Messages - Scrollable area */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
           {messages.map((msg, idx) => (
             <div
               key={idx}
@@ -167,14 +176,25 @@ export function RightPanel({ project, session, contextInfo }: RightPanelProps = 
           ))}
           <div ref={bottomRef} />
         </div>
-        {status && <div className="px-4 py-2 text-xs text-amber-700 bg-amber-50 border-t border-amber-100">{status}</div>}
-        <form onSubmit={handleSend} className="p-4 border-t border-slate-200/70 bg-white/80">
+
+        {/* Status bar - Fixed above input */}
+        {status && <div className="flex-shrink-0 px-4 py-2 text-xs text-amber-700 bg-amber-50 border-t border-amber-100">{status}</div>}
+
+        {/* Input form - Fixed at bottom */}
+        <form onSubmit={handleSend} className="flex-shrink-0 p-4 border-t border-slate-200/70 bg-white/80">
           <div className="flex items-end gap-2">
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Type a message..."
-              className="flex-1 rounded-2xl border border-slate-200/70 bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              onKeyDown={(e) => {
+                // Submit on Ctrl+Enter or Cmd+Enter
+                if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                  e.preventDefault();
+                  handleSend(e as any);
+                }
+              }}
+              placeholder="Type a message... (Ctrl+Enter to send)"
+              className="flex-1 rounded-2xl border border-slate-200/70 bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 resize-none"
               rows={2}
             />
             <button

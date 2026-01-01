@@ -203,9 +203,15 @@ class GitService:
             }
 
         except GithubException as e:
+            # Extract clean error message from GithubException
+            if isinstance(e.data, dict):
+                error_msg = e.data.get('message', str(e.data))
+            else:
+                error_msg = str(e.data) if e.data else str(e)
+
             return {
                 "success": False,
-                "error": f"{e.status}: {e.data}",
+                "error": f"{e.status}: {error_msg}",
                 "session_id": session_id,
                 "project": project
             }
@@ -251,9 +257,19 @@ class GitService:
             }
 
         except GithubException as e:
+            # Extract clean error message from GithubException
+            if hasattr(e, 'status') and hasattr(e, 'data'):
+                if isinstance(e.data, dict):
+                    error_msg = e.data.get('message', str(e.data))
+                else:
+                    error_msg = str(e.data) if e.data else str(e)
+                error_msg = f"{e.status}: {error_msg}"
+            else:
+                error_msg = str(e)
+
             return {
                 "success": False,
-                "error": str(e)
+                "error": error_msg
             }
 
     def check_repo_status(self) -> Dict[str, Any]:
@@ -290,9 +306,19 @@ class GitService:
             }
 
         except GithubException as e:
+            # Extract clean error message from GithubException
+            if hasattr(e, 'status') and hasattr(e, 'data'):
+                if isinstance(e.data, dict):
+                    error_msg = e.data.get('message', str(e.data))
+                else:
+                    error_msg = str(e.data) if e.data else str(e)
+                error_msg = f"{e.status}: {error_msg}"
+            else:
+                error_msg = str(e)
+
             return {
                 "success": False,
-                "error": str(e)
+                "error": error_msg
             }
 
     def trigger_repository_dispatch(
@@ -340,9 +366,19 @@ class GitService:
             }
 
         except GithubException as e:
+            # Extract clean error message from GithubException
+            if hasattr(e, 'status') and hasattr(e, 'data'):
+                if isinstance(e.data, dict):
+                    error_msg = e.data.get('message', str(e.data))
+                else:
+                    error_msg = str(e.data) if e.data else str(e)
+                error_msg = f"{e.status}: {error_msg}"
+            else:
+                error_msg = str(e)
+
             return {
                 "success": False,
-                "error": str(e)
+                "error": error_msg
             }
 
     def create_branch(self, branch_name: str, from_branch: Optional[str] = None) -> Dict[str, Any]:
@@ -373,9 +409,19 @@ class GitService:
             }
 
         except GithubException as e:
+            # Extract clean error message from GithubException
+            if hasattr(e, 'status') and hasattr(e, 'data'):
+                if isinstance(e.data, dict):
+                    error_msg = e.data.get('message', str(e.data))
+                else:
+                    error_msg = str(e.data) if e.data else str(e)
+                error_msg = f"{e.status}: {error_msg}"
+            else:
+                error_msg = str(e)
+
             return {
                 "success": False,
-                "error": str(e)
+                "error": error_msg
             }
 
     def _generate_commit_message(

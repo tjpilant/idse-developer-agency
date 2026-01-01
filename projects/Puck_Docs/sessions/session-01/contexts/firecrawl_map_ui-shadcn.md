@@ -1,0 +1,65 @@
+# Source map: https://ui.shadcn.com/docs/components
+
+Discovered URLs:
+
+- https://ui.shadcn.com/docs/components/popover — Popover - shadcn/ui
+- https://ui.shadcn.com/docs/components/input-group — Input Group - shadcn/ui
+- https://ui.shadcn.com/docs/components/breadcrumb — Breadcrumb - shadcn/ui
+- https://ui.shadcn.com/docs/components/sidebar — Sidebar - shadcn/ui
+- https://ui.shadcn.com/docs/components/input — Input - shadcn/ui
+- https://ui.shadcn.com/docs/components/chart — Chart - shadcn/ui
+- https://ui.shadcn.com/docs/components/context-menu — Context Menu - shadcn/ui
+- https://ui.shadcn.com/docs/components/table — Table - shadcn/ui
+- https://ui.shadcn.com/docs/components/button-group — Button Group - shadcn/ui
+- https://ui.shadcn.com/docs/components/aspect-ratio — Aspect Ratio - shadcn/ui
+- https://ui.shadcn.com/docs/components/scroll-area — Scroll Area - shadcn/ui
+- https://ui.shadcn.com/docs/components/input-otp — Input OTP - shadcn/ui
+- https://ui.shadcn.com/docs/components/date-picker — Date Picker - shadcn/ui
+- https://ui.shadcn.com/docs/components/alert-dialog — Alert Dialog - shadcn/ui
+- https://ui.shadcn.com/docs/components/select — Select - shadcn/ui
+- https://ui.shadcn.com/docs/components/radio-group — Radio Group - shadcn/ui
+- https://ui.shadcn.com/docs/components/collapsible — Collapsible - shadcn/ui
+- https://ui.shadcn.com/docs/components/field — Field - shadcn/ui
+- https://ui.shadcn.com/docs/components/alert — Alert - shadcn/ui
+- https://ui.shadcn.com/docs/components/badge — Badge - shadcn/ui
+- https://ui.shadcn.com/docs/components/carousel — Carousel - shadcn/ui
+- https://ui.shadcn.com/docs/components/switch — Switch - shadcn/ui
+- https://ui.shadcn.com/docs/components/tooltip — Tooltip - shadcn/ui
+- https://ui.shadcn.com/docs/components/sheet — Sheet - shadcn/ui
+- https://ui.shadcn.com/docs/components/card — Card - shadcn/ui
+- https://ui.shadcn.com/docs/components/toggle-group — Toggle Group - shadcn/ui
+- https://ui.shadcn.com/docs/components/form — Form - shadcn/ui
+- https://ui.shadcn.com/docs/components/checkbox — Checkbox - shadcn/ui
+- https://ui.shadcn.com/docs/components/dropdown-menu — Dropdown Menu - shadcn/ui
+- https://ui.shadcn.com/docs/components/skeleton — Skeleton - shadcn/ui
+- https://ui.shadcn.com/docs/components/menubar — Menubar - shadcn/ui
+- https://ui.shadcn.com/docs/components/button — Button - shadcn/ui
+- https://ui.shadcn.com/docs/components/toast — Toast - shadcn/ui
+- https://ui.shadcn.com/docs/components/dialog — Dialog - shadcn/ui
+- https://ui.shadcn.com/docs/components/calendar — Calendar - shadcn/ui
+- https://ui.shadcn.com/docs/components/combobox — Combobox - shadcn/ui
+- https://ui.shadcn.com/docs/components/kbd — Kbd - shadcn/ui
+- https://ui.shadcn.com/docs/components/accordion — Accordion - shadcn/ui
+- https://ui.shadcn.com/docs/components/spinner — Spinner - shadcn/ui
+- https://ui.shadcn.com/docs/components/tabs — Tabs - shadcn/ui
+- https://ui.shadcn.com/docs/components/command — Command - shadcn/ui
+- https://ui.shadcn.com/docs/components/avatar — Avatar - shadcn/ui
+- https://ui.shadcn.com/docs/components/native-select — Native Select - shadcn/ui
+- https://ui.shadcn.com/docs/components/data-table — Data Table - shadcn/ui
+- https://ui.shadcn.com/docs/components/progress — Progress - shadcn/ui
+- https://ui.shadcn.com/docs/components/drawer — Drawer - shadcn/ui
+- https://ui.shadcn.com/docs/components/separator — Separator - shadcn/ui
+- https://ui.shadcn.com/docs/components/hover-card — Hover Card - shadcn/ui
+- https://ui.shadcn.com/docs/components/toggle — Toggle - shadcn/ui
+- https://ui.shadcn.com/docs/components/item — Item - shadcn/ui
+- https://ui.shadcn.com/docs/components/typography — Typography - shadcn/ui
+- https://ui.shadcn.com/docs/components/navigation-menu — Navigation Menu - shadcn/ui
+- https://ui.shadcn.com/docs/components/empty — Empty - shadcn/ui
+- https://ui.shadcn.com/docs/components/textarea — Textarea - shadcn/ui
+- https://ui.shadcn.com/docs/components/resizable — Resizable - shadcn/ui
+- https://ui.shadcn.com/docs/components/slider — Slider - shadcn/ui
+- https://ui.shadcn.com/docs/components/pagination — Pagination - shadcn/ui
+- https://ui.shadcn.com/docs/components/label — Label - shadcn/ui
+- https://ui.shadcn.com/docs/components/sonner — Sonner - shadcn/ui
+
+Total discovered: 73

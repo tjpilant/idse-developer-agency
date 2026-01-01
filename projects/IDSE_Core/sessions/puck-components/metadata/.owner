@@ -1,1 +1,40 @@
-interactive-user
+# Owner Information
+
+**Project**: IDSE_Core
+**Session**: puck-components
+**Current Phase**: Handoff to Codex (Implementation Phase 0 pending)
+
+## Ownership History
+
+### IDSE Developer Agency (Claude) - Documentation Phase
+**Period**: 2026-01-01 (Documentation Complete)
+**Role**: IDSE pipeline documentation
+**Deliverables**: Intent, Context, Spec, Plan, Tasks, Implementation/README.md
+**Status**: ✅ Complete
+
+### Codex Implementation Team (IDE) - Implementation Phase
+**Period**: 2026-01-01 onwards
+**Role**: Production code implementation
+**Deliverables**: 52 tasks across 4 phases (Phase 0 → 1 → 2 → 3)
+**Status**: 🔄 Phase 0 foundations in progress (documentation-only)
+**Contact**: codex_gpt (IDE) — codex_gpt@idse.local
+
+## Current Owner
+
+**Team**: Codex Implementation Team
+**Contact**: codex_gpt (IDE) — codex_gpt@idse.local
+**Started**: 2026-01-01
+
+## Handoff Summary
+
+- **Handoff Date**: 2026-01-01
+- **From**: IDSE Developer Agency (Claude)
+- **To**: Codex Implementation Team
+- **Handoff Document**: [../implementation/README.md](../implementation/README.md)
+- **Feedback Record**: [../feedback/feedback.md](../feedback/feedback.md)
+
+## Notes
+
+This session follows the IDSE pipeline (Intent → Context → Spec → Plan → Tasks → Implementation).
+All documentation artifacts are complete. Implementation phase begins with Phase 0 (8 foundation tasks).
+Production code should be written in `frontend/widget/src/`, NOT in `implementation/`.

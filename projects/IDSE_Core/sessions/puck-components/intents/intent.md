@@ -1,36 +1,48 @@
-# Intent: Puck Components
+# Intent: Puck Components — Block-First Component Library with Nesting, Radix UI primitives, shadcn patterns, and Tailwind Styling
 
 ## Overview
-Create a set of reusable Puck editor UI components and integration helpers to support embedding Puck-based page editing and PageData import/export within the IDSE Admin dashboard. Components should be library-quality, documented, and test-covered so other workspaces (Puck editor, admin dashboard) can consume them.
 
-## Goal
-- Provide a small component library and integration layer so teams can embed Puck editing, PageData import/export, and basic page previews.
+Build a library-quality, well-documented set of block-first UI components and integration helpers for embedding the Puck editor and PageData import/export within the IDSE Admin dashboard. The goal is to produce documentation, API descriptions, Storybook examples, and test examples that enable the frontend team to implement production-quality components. The work prioritizes small, composable block primitives that support nesting/slots (to match Puck’s block model), use Radix unstyled primitives implemented following shadcn/ui patterns, and are styled with Tailwind CSS and CSS variables. All outputs from this agent are documentation-only; production code will be implemented by the engineering team.
 
-## Scope
-- In-scope:
-  - Reusable React components for Puck editor container, PageData serializer/deserializer, Import/Export dialogs, and Preview panel.
-  - TypeScript types and zod schemas for PageData validation (schema_versioned).
-  - Unit tests and storybook examples for components.
-  - Documentation: spec.md, plan.md, tasks.md, and context.md scaffolds.
-- Out-of-scope:
-  - Full CRDT collaboration, backend PageData storage (beyond file-first examples), and advanced editor plugins.
+Summary
 
-## Success Criteria
-- Components published under frontend/packages/puck-components and importable by dashboard.
-- zod schemas validate sample PageData fixtures and tests pass in CI.
-- Storybook showcases core components with examples for import/export and preview.
+Build a library-quality, well-documented set of block-first UI components and integration helpers for embedding the Puck editor and PageData import/export within the IDSE Admin dashboard. Components will be small, composable block primitives that can be assembled into page-level blocks (PageBuilder). Styling will use Radix UI primitives implemented following shadcn/ui patterns and styled with Tailwind CSS and CSS variables. The work includes schemas, tests, Storybook examples, and a research phase to fully understand Puck editor block model and conventions.
 
-## Constraints & Assumptions
-- Frontend stack: React 18 + TypeScript + Vite; follow existing repo patterns for packages.
-- File-first persistence in workspace for examples; DB-backed storage deferred.
-- Team will provide sample PageData fixtures for schema development.
+Objectives
 
-## Stakeholders
-- Requester: interactive-user
-- Owners: frontend team / component maintainers
+- Provide a reusable block-first component library that follows Radix APIs and shadcn/ui implementation patterns.
+- Implement styled primitives (composition, cn() utility, Tailwind classes, CSS variables) that align with existing repo patterns.
+- Support nesting and slots to reflect Puck’s block model and enable PageData import/export helpers for the IDSE Admin dashboard.
+- Produce documentation, Storybook stories with usage notes, unit tests, and packaging guidance for component maintainers.
 
-## Deliverables
-- frontend/packages/puck-components (components, types, tests, stories)
-- spec.md, plan.md, tasks.md under session-scoped paths
+Scope
 
-If this intent is correct I will use it as the canonical intent for the session. Reply "derive context" to have me scaffold context.md from this intent and the IDSE docs, or reply here to request edits before I write the intent to the session path.
+In-scope:
+- Component design and documentation (Radix-based unstyled primitives + shadcn-style styled implementations).
+- Block-first composition patterns, nesting/slot support, and PageData import/export helper documentation.
+- Storybook stories, unit test examples, schemas for component props, and developer-facing implementation notes.
+
+Out-of-scope:
+- Writing production application code beyond documentation and illustrative examples.
+- Third-party CMS integration (removed from scope).
+- Modifying IDSE constitutional artifacts.
+
+Success criteria
+
+- Intent clearly expresses goals, scope, and owner for component library work.
+- Intent enables the spec to derive component requirements, Slot APIs, and validation steps (stories/tests) without relying on external CMS integrations.
+- Context.md will record provenance and scraped sources used for research (Puck docs, shadcn patterns, repo examples).
+
+Constraints & Assumptions
+
+- Documentation-only deliverables; no production code will be created by this agent.
+- Preserve provenance: source URLs and scraped artifacts will be recorded in context.md (not embedded here).
+- Assume Next.js + Tailwind v4 and Radix primitives as the target stack for examples.
+
+Owner
+
+Front-end team / component maintainers
+
+Next actions
+
+- Derive/update projects/IDSE_Core/sessions/puck-components/contexts/context.md from this intent and existing scraped artifacts.

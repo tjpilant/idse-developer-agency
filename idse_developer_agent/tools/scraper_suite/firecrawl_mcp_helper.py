@@ -30,9 +30,7 @@ def call_firecrawl_scrape(
     target = url
     payload = {
         "url": target,
-        "crawl": False,
-        "mco": include_mco,
-        "includeHtml": False,
+        "formats": ["markdown", "html"] if include_mco else ["markdown"],
     }
     headers = {
         "Authorization": f"Bearer {api_key}",

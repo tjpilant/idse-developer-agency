@@ -23,8 +23,8 @@ export function DashboardLayout({
         {centerCanvas}
       </div>
 
-      {/* Right Panel (Chat) */}
-      <div className="bg-white border-l border-slate-200 overflow-y-auto">
+      {/* Right Panel (Chat) - No overflow here, RightPanel handles its own scroll */}
+      <div className="bg-white border-l border-slate-200 overflow-hidden">
         {rightPanel}
       </div>
     </div>

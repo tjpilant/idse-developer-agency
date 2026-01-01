@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { DashboardLayout } from "./DashboardLayout";
 import { LeftNav } from "./LeftNav";
 import { WelcomeView } from "./WelcomeView";
@@ -7,6 +7,7 @@ import { MDWorkspace } from "./MDWorkspace";
 import { RightPanel } from "../puck/components/RightPanel";
 
 const MILKDOWN_TOKEN = (import.meta as any).env?.VITE_MILKDOWN_AUTH_TOKEN;
+const API_BASE = (import.meta as any).env?.VITE_API_BASE ?? "http://localhost:8000";
 
 export interface DashboardState {
   activeWorkspace: "welcome" | "puck" | "md";
@@ -42,6 +43,67 @@ export function AdminDashboard() {
       mdSubView: workspace === "md" ? (subView as any) : null,
     }));
   };
+
+  const handleSessionChange = useCallback(async (project: string, session: string) => {
+    console.log("[AdminDashboard] Session change requested:", { project, session });
+
+    // Update local state immediately for UI responsiveness
+    setState((prev) => ({
+      ...prev,
+      currentSession: { project, session },
+    }));
+
+    // Persist to backend
+    try {
+      const url = `${API_BASE}/api/projects/active/session`;
+      console.log("[AdminDashboard] Persisting session to:", url);
+      const response = await fetch(url, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ project, session }),
+      });
+
+      console.log("[AdminDashboard] Persist response status:", response.status);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("[AdminDashboard] Failed to persist session change:", errorText);
+      } else {
+        console.log("[AdminDashboard] Session persisted successfully");
+      }
+    } catch (error) {
+      console.error("[AdminDashboard] Failed to persist session change:", error);
+    }
+  }, []);
+
+  // Load active session on mount
+  useEffect(() => {
+    const loadActiveSession = async () => {
+      try {
+        const url = `${API_BASE}/api/projects/active/session`;
+        console.log("[AdminDashboard] Loading active session from:", url);
+        const response = await fetch(url);
+        console.log("[AdminDashboard] Load response status:", response.status);
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log("[AdminDashboard] Loaded session data:", data);
+          setState((prev) => ({
+            ...prev,
+            currentSession: {
+              project: data.project || "IDSE_Core",
+              session: data.session_id || "milkdown-crepe",
+            },
+          }));
+          console.log("[AdminDashboard] State updated with session:", data.project, "/", data.session_id);
+        }
+      } catch (error) {
+        console.error("[AdminDashboard] Failed to load active session:", error);
+        // Keep default values on error
+      }
+    };
+
+    loadActiveSession();
+  }, []);
 
   const renderCenterCanvas = () => {
     if (state.activeWorkspace === "welcome") {
@@ -98,7 +160,10 @@ export function AdminDashboard() {
         <LeftNav
           activeWorkspace={state.activeWorkspace}
           activeSubView={state.puckSubView || state.mdSubView}
+          currentProject={state.currentSession.project}
+          currentSession={state.currentSession.session}
           onWorkspaceChange={handleWorkspaceChange}
+          onSessionChange={handleSessionChange}
         />
       }
       centerCanvas={renderCenterCanvas()}

@@ -85,16 +85,42 @@ async def inbound(payload: Dict[str, Any]):
     """
     Accept user messages and emit assistant replies to the SSE stream.
 
-    Expected payload: { "type": "USER_MESSAGE", "content": "<text>" }
+    Expected payload: { "type": "USER_MESSAGE", "content": "<text>", "project": "...", "session": "..." }
     """
     message_type = payload.get("type")
     content = payload.get("content")
+    project = payload.get("project")
+    session = payload.get("session")
+
     if message_type != "USER_MESSAGE" or not content:
         raise HTTPException(status_code=400, detail="Payload must include type=USER_MESSAGE and content.")
+
+    # If project/session provided, temporarily update the active session
+    original_session = None
+    if project and session:
+        from SessionManager import SessionManager
+        try:
+            original_session = SessionManager.get_active_session()
+            # Create a temporary session entry for this request
+            import json
+            from pathlib import Path
+            active_file = Path(__file__).resolve().parent.parent.parent / ".idse_active_session.json"
+            temp_session = {
+                "session_id": session,
+                "name": session,
+                "created_at": original_session.created_at,
+                "owner": original_session.owner,
+                "project": project,
+            }
+            active_file.write_text(json.dumps(temp_session, indent=2), encoding="utf-8")
+        except Exception as e:
+            logger.warning(f"Failed to update session context: {e}")
 
     try:
         # Run the sync Agency call off the event loop to avoid asyncio.run() conflicts
         await enqueue_event({"type": "SYSTEM_MESSAGE", "content": "Agent is thinking…"})
+        # Small delay to ensure the "thinking" message is delivered before blocking
+        await asyncio.sleep(0.1)
         response_text = await asyncio.to_thread(agency.get_response_sync, content)
         # Ensure the response is serializable
         response_str = response_text if isinstance(response_text, str) else str(response_text)
@@ -109,10 +135,23 @@ async def inbound(payload: Dict[str, Any]):
         response_str = "\n".join(cleaned_lines).strip() or response_str
 
         await enqueue_event({"type": "TEXT_MESSAGE_CONTENT", "content": response_str, "from": "assistant"})
+        # Small delay to ensure the response is delivered before the "finished" message
+        await asyncio.sleep(0.1)
         await enqueue_event({"type": "SYSTEM_MESSAGE", "content": "Agent finished."})
     except Exception as e:
         logger.exception("AG-UI inbound processing failed")
         await enqueue_event({"type": "SYSTEM_MESSAGE", "content": f"Agent error: {e}"})
         raise HTTPException(status_code=500, detail="Agent processing failed") from e
+    finally:
+        # Restore original session if we changed it
+        if original_session:
+            try:
+                from pathlib import Path
+                import json
+                from dataclasses import asdict
+                active_file = Path(__file__).resolve().parent.parent.parent / ".idse_active_session.json"
+                active_file.write_text(json.dumps(asdict(original_session), indent=2), encoding="utf-8")
+            except Exception as e:
+                logger.warning(f"Failed to restore original session: {e}")
 
     return {"status": "ok"}

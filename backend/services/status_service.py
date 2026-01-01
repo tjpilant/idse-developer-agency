@@ -59,10 +59,11 @@ class StatusService:
         self.root = ROOT
 
     def list_projects(self) -> List[str]:
-        intents_dir = self.root / "intents" / "projects"
-        if not intents_dir.exists():
+        # Use canonical projects-root structure
+        projects_dir = self.root / "projects"
+        if not projects_dir.exists():
             return []
-        return sorted([p.name for p in intents_dir.iterdir() if p.is_dir()])
+        return sorted([p.name for p in projects_dir.iterdir() if p.is_dir()])
 
     def _load_history(self) -> Dict[str, Dict[str, str]]:
         if not HISTORY_FILE.exists():
@@ -75,13 +76,35 @@ class StatusService:
 
     def _get_meta_for_session(self, project: str, session_id: str) -> Dict[str, Optional[str]]:
         history = self._load_history()
-        meta = history.get(project, {})
-        if meta.get("session_id") == session_id:
+        project_entry = history.get(project, {})
+
+        # Check if the project entry itself matches this session (old format)
+        if project_entry.get("session_id") == session_id:
             return {
-                "name": meta.get("name"),
-                "created_at": meta.get("created_at"),
-                "owner": meta.get("owner"),
+                "name": project_entry.get("name"),
+                "created_at": project_entry.get("created_at"),
+                "owner": project_entry.get("owner"),
             }
+
+        # Check if session is nested inside project entry (new format)
+        if session_id in project_entry:
+            session_meta = project_entry[session_id]
+            return {
+                "name": session_meta.get("name", session_id),
+                "created_at": session_meta.get("created_at"),
+                "owner": session_meta.get("owner"),
+            }
+
+        # Fallback: check directory timestamps as last resort
+        session_dir = self.root / "projects" / project / "sessions" / session_id
+        if session_dir.exists():
+            created_at = session_dir.stat().st_mtime
+            return {
+                "name": session_id,
+                "created_at": created_at,
+                "owner": None,
+            }
+
         return {"name": session_id, "created_at": None, "owner": None}
 
     def count_requires_input(self, file_path: Path) -> int:

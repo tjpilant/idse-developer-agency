@@ -71,5 +71,19 @@
       "owner": "tjpilant",
       "status": "active"
     }
+  },
+  "Puck_Editor_Research": {
+    "session_id": "session-1767221303",
+    "name": "session-1767221303",
+    "created_at": 1767221303.0,
+    "owner": "tjpilant",
+    "project": "Puck_Editor_Research"
+  },
+  "Puck_Docs": {
+    "session_id": "session-1767235212",
+    "name": "session-1767235212",
+    "created_at": 1767235212.0,
+    "owner": "tjpilant",
+    "project": "Puck_Docs"
   }
 }
