@@ -200,8 +200,95 @@ export const GridBlock: ComponentConfig<GridProps> = {
 };
 ```
 
+## Auto-Generating Fields from CVA (Shared Schema Pattern)
+
+**⭐ RECOMMENDED**: Use the shared schema pattern to auto-generate Puck field definitions from CVA variants, ensuring DRY compliance and type safety.
+
+See: [patterns/shared-schema-pattern.md](patterns/shared-schema-pattern.md) for complete implementation guide.
+
+### Benefits
+
+- **Single source of truth**: CVA variants define field options automatically
+- **Type safety**: Adding a CVA variant requires corresponding Tailwind mapping
+- **Consistency**: Field options stay in sync with component variant definitions
+- **Less code**: No manual duplication of variant options in field configs
+
+### Example: Auto-Generated Fields
+
+**Traditional approach** (manual duplication):
+
+```typescript
+export const ButtonPrimitive: ComponentConfig<ButtonProps> = {
+  fields: {
+    variant: {
+      type: 'select',
+      label: 'Variant',
+      options: [
+        { label: 'Default', value: 'default' },
+        { label: 'Destructive', value: 'destructive' },
+        { label: 'Outline', value: 'outline' },
+        // ... must manually keep in sync with CVA variants
+      ],
+    },
+  },
+};
+```
+
+**Shared schema approach** (auto-generated):
+
+```typescript
+import { buttonVariants } from "./button.config"; // CVA source of truth
+import { cvaVariantsToPuckFields } from "@/puck/utils/cva-to-puck";
+
+export const ButtonPrimitive: ComponentConfig<ButtonProps> = {
+  fields: {
+    label: { type: 'text', label: 'Label' },
+    // Auto-generate variant and size fields from CVA
+    ...cvaVariantsToPuckFields(buttonVariants, {
+      variant: { label: "Button Style", type: "select" },
+      size: { label: "Button Size" },
+    }),
+  },
+};
+```
+
+**Result**: Adding `variant: "warning"` to CVA automatically updates Puck fields (and Storybook argTypes).
+
+### Utility Implementation
+
+```typescript
+// src/puck/utils/cva-to-puck.ts
+import type { Field } from "@measured/puck";
+
+export function cvaVariantsToPuckFields<T extends Record<string, Record<string, any>>>(
+  cvaConfig: { variants: T },
+  fieldOverrides: Partial<Record<keyof T, { label?: string; type?: string }>> = {}
+): Record<keyof T, Field> {
+  const fields: Record<string, Field> = {};
+
+  for (const [variantName, variantOptions] of Object.entries(cvaConfig.variants)) {
+    const override = fieldOverrides[variantName] || {};
+    const options = Object.keys(variantOptions).map((key) => ({
+      label: key.charAt(0).toUpperCase() + key.slice(1),
+      value: key,
+    }));
+
+    fields[variantName] = {
+      type: override.type || "radio",
+      label: override.label || variantName.charAt(0).toUpperCase() + variantName.slice(1),
+      options,
+    };
+  }
+
+  return fields as Record<keyof T, Field>;
+}
+```
+
+---
+
 ## Notes
 
 - Interfaces align with Puck 0.19.3 (`frontend/widget` current dependency); inline/Slot examples keep forward compatibility with 0.20.x.
 - Use `Fields` definitions to drive both editor sidebar config and TypeScript prop inference across primitives/blocks.
+- **⭐ DRY Pattern**: For components with CVA variants, use `cvaVariantsToPuckFields()` to auto-generate field configs (see [patterns/shared-schema-pattern.md](patterns/shared-schema-pattern.md)).
 - Acceptance: includes interface definition and three complete examples (Hero, Card, Grid) showing fields, defaults, and render usage per Task 0.2.

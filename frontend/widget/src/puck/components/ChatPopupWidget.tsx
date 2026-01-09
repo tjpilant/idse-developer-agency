@@ -6,7 +6,7 @@ type ChatPopupProps = ChatWidgetProps & {
   buttonLabel: string;
 };
 
-export const ChatPopupWidget: ComponentConfig<ChatPopupProps> = {
+export const ChatPopupWidget: ComponentConfig<{ props: ChatPopupProps }> = {
   label: "Chat Popup (Modal)",
   fields: {
     title: { type: "text", label: "Title" },

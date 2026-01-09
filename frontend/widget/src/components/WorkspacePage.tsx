@@ -15,10 +15,20 @@ export function WorkspacePage({
   const [tab, setTab] = useState<"puck" | "docs">("docs");
   const [editorOpen, setEditorOpen] = useState(false);
   const token = useMemo(
-    () =>
-      (typeof localStorage !== "undefined" && localStorage.getItem("auth_token")) ||
-      (import.meta as any).env?.VITE_MILKDOWN_AUTH_TOKEN ||
-      "",
+    () => {
+      // Force use env token in development (clears stale localStorage)
+      const envToken = (import.meta as any).env?.VITE_MILKDOWN_AUTH_TOKEN || "";
+      if (envToken && typeof localStorage !== "undefined") {
+        const localToken = localStorage.getItem("auth_token");
+        if (localToken && localToken !== envToken) {
+          console.log("Clearing stale auth_token from localStorage");
+          localStorage.removeItem("auth_token");
+        }
+      }
+      return envToken || 
+        (typeof localStorage !== "undefined" && localStorage.getItem("auth_token")) || 
+        "";
+    },
     []
   );
 

@@ -4,6 +4,7 @@ import authMiddleware from '../middleware/auth';
 import { requireRole } from '../middleware/acl';
 import { RenderRequestSchema, RenderResponseSchema } from '../validators/schemas';
 import { renderMarkdown } from '../render/pipeline';
+import { config } from '../config';
 
 const routes: FastifyPluginAsync = async (fastify) => {
   const app = fastify.withTypeProvider<ZodTypeProvider>();
@@ -11,7 +12,7 @@ const routes: FastifyPluginAsync = async (fastify) => {
   app.post(
     '/sessions/:project/:session/render',
     {
-      preHandler: [authMiddleware, requireRole('reader')],
+      preHandler: config.DISABLE_AUTH ? [] : [authMiddleware, requireRole('reader')],
       schema: {
         body: RenderRequestSchema,
         response: {

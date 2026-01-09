@@ -3,7 +3,9 @@ import { useEffect, useState } from "react";
 import { PuckRenderer } from "./puck/PuckRenderer";
 import { AdminDashboard } from "./components/AdminDashboard";
 
-const apiBase = (import.meta as any).env?.VITE_API_BASE ?? "http://localhost:8000";
+const apiBase =
+  (import.meta as any).env?.VITE_API_BASE ??
+  (typeof window !== "undefined" ? window.location.origin : "http://localhost:8000");
 
 function RendererLanding() {
   const [pages, setPages] = useState<Array<{ slug: string; title?: string }>>([]);

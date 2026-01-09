@@ -19,8 +19,9 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
 from agency_swarm import Agency
+from agency_swarm.tools.send_message import SendMessageHandoff
 from agency_swarm.ui.core.agui_adapter import AguiAdapter
-from idse_developer_agent import idse_developer_agent
+from idse_developer_agent import idse_developer_agent, component_designer_agent
 
 logger = logging.getLogger(__name__)
 
@@ -29,13 +30,19 @@ router = APIRouter()
 # Simple pub-sub for SSE events (one queue per subscriber)
 subscribers: Set[asyncio.Queue[Dict[str, Any]]] = set()
 
-# Initialize Agency + adapter for synchronous replies
+# Initialize Agency + adapter for synchronous replies with proper communication flows
+communication_flows = [
+    (idse_developer_agent, component_designer_agent),  # Delegation
+    (component_designer_agent, idse_developer_agent),  # Return handoff
+]
+
 adapter = AguiAdapter()
 agency = Agency(
     idse_developer_agent,
-    communication_flows=[],
+    communication_flows=communication_flows,
     name="IDSEDeveloperAgency",
     shared_instructions="shared_instructions.md",
+    send_message_tool_class=SendMessageHandoff,
 )
 
 

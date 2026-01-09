@@ -14,12 +14,14 @@ const rolesArg = process.argv[3] || 'owner,collaborator,reader';
 const roles = rolesArg.split(',').map(r => r.trim());
 const secret = 'dev-secret';
 
+// Build payload - omit sessionId for global access across all sessions
+const payload = {
+  userId,
+  roles,
+};
+
 const token = jwt.sign(
-  {
-    userId,
-    roles,
-    sessionId: 'IDSE_Core/milkdown-crepe',
-  },
+  payload,
   secret,
   { expiresIn: '30d' } // 30 day expiration for dev
 );

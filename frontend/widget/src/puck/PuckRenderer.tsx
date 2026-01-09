@@ -3,7 +3,9 @@ import { Render, type Data } from "@measured/puck";
 import { puckConfig } from "./config";
 import { useParams, Link } from "react-router-dom";
 
-const apiBase = (import.meta as any).env?.VITE_API_BASE ?? "http://localhost:8000";
+const apiBase =
+  (import.meta as any).env?.VITE_API_BASE ??
+  (typeof window !== "undefined" ? window.location.origin : "http://localhost:8000");
 
 interface PuckRendererProps {
   pageSlug?: string;

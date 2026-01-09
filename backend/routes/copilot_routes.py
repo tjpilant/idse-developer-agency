@@ -11,7 +11,8 @@ import logging
 import uuid
 
 from agency_swarm import Agency
-from idse_developer_agent import idse_developer_agent
+from agency_swarm.tools.send_message import SendMessageHandoff
+from idse_developer_agent import idse_developer_agent, component_designer_agent
 from backend.adapters.copilot_adapter import CopilotAdapter
 
 logger = logging.getLogger(__name__)
@@ -19,12 +20,18 @@ logger = logging.getLogger(__name__)
 # Create router
 router = APIRouter()
 
-# Create agency instance for CopilotKit interactions
+# Create agency instance for CopilotKit interactions with proper communication flows
+communication_flows = [
+    (idse_developer_agent, component_designer_agent),  # Delegation
+    (component_designer_agent, idse_developer_agent),  # Return handoff
+]
+
 agency = Agency(
     idse_developer_agent,
-    communication_flows=[],
+    communication_flows=communication_flows,
     name="IDSEDeveloperAgency",
     shared_instructions="shared_instructions.md",
+    send_message_tool_class=SendMessageHandoff,
 )
 
 # Initialize CopilotKit adapter

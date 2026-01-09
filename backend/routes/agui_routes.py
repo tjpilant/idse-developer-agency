@@ -18,7 +18,8 @@ except ImportError:
     )
 
 from agency_swarm import Agency
-from idse_developer_agent import idse_developer_agent
+from agency_swarm.tools.send_message import SendMessageHandoff
+from idse_developer_agent import idse_developer_agent, component_designer_agent
 
 logger = logging.getLogger(__name__)
 
@@ -28,12 +29,18 @@ router = APIRouter()
 # Initialize AG-UI adapter
 adapter = AguiAdapter()
 
-# Create agency instance for AG-UI interactions
+# Create agency instance for AG-UI interactions with proper communication flows
+communication_flows = [
+    (idse_developer_agent, component_designer_agent),  # Delegation
+    (component_designer_agent, idse_developer_agent),  # Return handoff
+]
+
 agency = Agency(
     idse_developer_agent,
-    communication_flows=[],
+    communication_flows=communication_flows,
     name="IDSEDeveloperAgency",
     shared_instructions="shared_instructions.md",
+    send_message_tool_class=SendMessageHandoff,
 )
 
 

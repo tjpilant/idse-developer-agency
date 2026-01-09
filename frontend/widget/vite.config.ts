@@ -18,6 +18,22 @@ export default defineConfig({
     port: 4173,
     host: "0.0.0.0",
   },
+  build: {
+    chunkSizeWarningLimit: 1500,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+          const parts = id.split("node_modules/")[1].split("/");
+          const scopeOrName = parts[0];
+          const pkg = scopeOrName.startsWith("@")
+            ? `${scopeOrName}/${parts[1]}`
+            : scopeOrName;
+          return pkg.replace(/[@/]/g, "-");
+        },
+      },
+    },
+  },
   test: {
     environment: "jsdom",
     setupFiles: "./vitest.setup.ts",

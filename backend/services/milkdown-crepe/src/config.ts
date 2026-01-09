@@ -11,6 +11,7 @@ const configSchema = z.object({
   FRONTEND_URL: z.string().url().optional(),
   ROLE_PROVIDER: z.enum(['memory', 'static', 'file']).default('file'),
   ROLE_MAP: z.string().optional(), // JSON map for static provider, e.g. {"user:session": "owner"}
+  DISABLE_AUTH: z.coerce.boolean().default(false), // Set to true to disable auth for local dev
 });
 
 export const config = configSchema.parse(process.env);

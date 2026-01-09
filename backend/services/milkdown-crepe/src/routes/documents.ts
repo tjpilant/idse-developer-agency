@@ -117,7 +117,7 @@ const routes: FastifyPluginAsync = async (fastify) => {
   app.get(
     '/files/tree',
     {
-      preHandler: [authMiddleware, requireRole('reader')],
+      preHandler: config.DISABLE_AUTH ? [] : [authMiddleware, requireRole('reader')],
       schema: {
         response: {
           200: FileTreeResponseSchema,
@@ -138,7 +138,7 @@ const routes: FastifyPluginAsync = async (fastify) => {
   app.get(
     '/sessions/:project/:session/documents',
     {
-      preHandler: [authMiddleware, requireRole('reader')],
+      preHandler: config.DISABLE_AUTH ? [] : [authMiddleware, requireRole('reader')],
       schema: {
         querystring: DocumentPathSchema,
         response: {
@@ -172,7 +172,7 @@ const routes: FastifyPluginAsync = async (fastify) => {
   app.put(
     '/sessions/:project/:session/documents',
     {
-      preHandler: [authMiddleware, requireRole('collaborator')],
+      preHandler: config.DISABLE_AUTH ? [] : [authMiddleware, requireRole('collaborator')],
       schema: {
         body: PutDocumentSchema,
         response: {

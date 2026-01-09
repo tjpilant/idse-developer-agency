@@ -11,7 +11,7 @@ export interface ChatWidgetProps {
   placeholder: string;
 }
 
-export const ChatWidget: ComponentConfig<ChatWidgetProps> = {
+export const ChatWidget: ComponentConfig<{ props: ChatWidgetProps }> = {
   label: "Chat Widget",
   fields: {
     title: { type: "text", label: "Title" },

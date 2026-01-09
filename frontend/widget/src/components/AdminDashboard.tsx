@@ -22,8 +22,8 @@ export interface DashboardState {
 
 export function AdminDashboard() {
   const [state, setState] = useState<DashboardState>({
-    activeWorkspace: "welcome",
-    puckSubView: null,
+    activeWorkspace: "puck",
+    puckSubView: "blocks",
     mdSubView: null,
     mdCurrentPath: null,
     currentSession: {
@@ -113,7 +113,15 @@ export function AdminDashboard() {
     if (state.activeWorkspace === "puck" && state.puckSubView) {
       return (
         <div className="flex flex-col h-full">
-          <PuckWorkspace activeSubView={state.puckSubView} />
+          <PuckWorkspace
+            activeSubView={state.puckSubView}
+            onChangeSubView={(view) =>
+              setState((prev) => ({
+                ...prev,
+                puckSubView: view,
+              }))
+            }
+          />
         </div>
       );
     }

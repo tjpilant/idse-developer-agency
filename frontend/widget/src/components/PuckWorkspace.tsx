@@ -4,7 +4,7 @@ import { puckConfig } from "../puck/config";
 import { PublishDialog } from "../puck/PublishDialog";
 import { ControlPanel } from "./ControlPanel";
 import { Button } from "@/components/ui/button";
-import { Save, FileText, Plus } from "lucide-react";
+import { Save, FileText, Plus, Copy } from "lucide-react";
 
 const apiBase = (import.meta as any).env?.VITE_API_BASE ?? "http://localhost:8000";
 
@@ -18,11 +18,14 @@ const seedContent: Data = {
   slug: "",
 };
 
+type PuckSubView = "blocks" | "fields" | "outline" | "pages";
+
 interface PuckWorkspaceProps {
-  activeSubView: "blocks" | "fields" | "outline" | "pages";
+  activeSubView: PuckSubView;
+  onChangeSubView?: (view: PuckSubView) => void;
 }
 
-export function PuckWorkspace({ activeSubView }: PuckWorkspaceProps) {
+export function PuckWorkspace({ activeSubView, onChangeSubView }: PuckWorkspaceProps) {
   const migrateZones = (page: any) => {
     if (!page || typeof page !== "object" || !page.zones) return page;
     const newZones: Record<string, any> = {};
@@ -212,6 +215,16 @@ export function PuckWorkspace({ activeSubView }: PuckWorkspaceProps) {
     setStatus("New page created");
   };
 
+  const handleCopyLink = () => {
+    const slug = slugInput || (data as any).slug;
+    const base = window.location.origin;
+    const url = slug ? `${base}/${slug}` : base;
+    navigator.clipboard
+      .writeText(url)
+      .then(() => setStatus(`Copied link: ${url}`))
+      .catch(() => setStatus("Copy failed"));
+  };
+
   return (
     <>
       {/* Toolbar */}
@@ -230,6 +243,14 @@ export function PuckWorkspace({ activeSubView }: PuckWorkspaceProps) {
           <Button onClick={handleCreateNew} variant="outline" size="sm">
             <Plus className="h-4 w-4 mr-2" />
             New Page
+          </Button>
+          <Button onClick={() => onChangeSubView?.("pages")} variant="outline" size="sm">
+            <FileText className="h-4 w-4 mr-2" />
+            Pages
+          </Button>
+          <Button onClick={handleCopyLink} variant="outline" size="sm">
+            <Copy className="h-4 w-4 mr-2" />
+            Copy Link
           </Button>
           <Button onClick={openPublishDialog} size="sm" disabled={saving}>
             <Save className="h-4 w-4 mr-2" />

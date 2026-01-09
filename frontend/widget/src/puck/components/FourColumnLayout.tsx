@@ -13,7 +13,7 @@ export interface FourColumnLayoutProps {
   gap: string;
 }
 
-export const FourColumnLayout: ComponentConfig<FourColumnLayoutProps> = {
+export const FourColumnLayout: ComponentConfig<{ props: FourColumnLayoutProps }> = {
   label: "Four Column Layout",
   fields: {
     // Slots require Puck v0.19+. Each slot is its own drop target.

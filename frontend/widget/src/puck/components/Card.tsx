@@ -1,24 +1,35 @@
 import { ComponentConfig } from "@measured/puck";
+import { cvaVariantsToPuckFields } from "../utils/cva-to-puck";
+import { cardVariantOptions, cardVariants, type CardVariant } from "./card.config";
+import { cn } from "@/lib/utils";
 
 export interface CardProps {
+  id: string;
   title: string;
   description: string;
   icon?: string;
+  variant: CardVariant;
 }
 
-export const Card: ComponentConfig<CardProps> = {
+export const Card: ComponentConfig<{ props: CardProps }> = {
   fields: {
+    id: { type: "text", label: "ID" },
     title: { type: "text", label: "Title" },
     description: { type: "textarea", label: "Description" },
     icon: { type: "text", label: "Icon (emoji or URL)" },
+    ...cvaVariantsToPuckFields({ variants: cardVariantOptions }, {
+      variant: { label: "Variant", type: "select" },
+    }),
   },
   defaultProps: {
+    id: "card_1",
     title: "Feature Title",
     description: "Describe what this feature unlocks for the user.",
     icon: "🚀",
+    variant: "default",
   },
-  render: ({ title, description, icon }) => (
-    <div className="group relative overflow-hidden rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-[0_20px_60px_-40px_rgba(15,23,42,0.35)] transition hover:-translate-y-0.5 hover:shadow-[0_28px_70px_-45px_rgba(15,23,42,0.5)]">
+  render: ({ title, description, icon, variant }) => (
+    <div className={cn(cardVariants({ variant }))}>
       {icon && (
         <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
           {icon.startsWith("http") ? (

@@ -8,7 +8,7 @@ export interface HeroProps {
   backgroundImage?: string;
 }
 
-export const Hero: ComponentConfig<HeroProps> = {
+export const Hero: ComponentConfig<{ props: HeroProps }> = {
   fields: {
     heading: { type: "text", label: "Heading" },
     subheading: { type: "textarea", label: "Subheading" },
@@ -35,8 +35,12 @@ export const Hero: ComponentConfig<HeroProps> = {
       <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-indigo-500/30 blur-3xl" aria-hidden />
       <div className="absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-violet-500/30 blur-3xl" aria-hidden />
       <div className="relative max-w-4xl mx-auto px-6">
-        <h1 className="text-4xl md:text-5xl font-semibold mb-4 drop-shadow-sm">{heading}</h1>
-        <p className="text-lg md:text-xl text-indigo-50/90 max-w-2xl mb-8 leading-relaxed">{subheading}</p>
+        <h1 className="text-4xl md:text-5xl font-semibold mb-4 drop-shadow-sm">
+          {heading}
+        </h1>
+        <p className="text-lg md:text-xl text-indigo-50/90 max-w-2xl mb-8 leading-relaxed">
+          {subheading}
+        </p>
         <a
           href={ctaLink}
           className="inline-flex items-center gap-2 rounded-full bg-white/90 text-indigo-700 px-6 py-3 font-semibold shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"

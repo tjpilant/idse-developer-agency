@@ -8,8 +8,9 @@ sys.stdout.reconfigure(line_buffering=True)
 
 from dotenv import load_dotenv
 from agency_swarm import Agency
+from agency_swarm.tools.send_message import SendMessageHandoff
 
-from idse_developer_agent import idse_developer_agent
+from idse_developer_agent import component_designer_agent, idse_developer_agent
 from SessionManager import SessionManager
 
 WELCOME = """
@@ -73,6 +74,37 @@ def run_simple_cli(agency: Agency) -> None:
         if user_msg.lower() in {"/menu", "menu"}:
             print(MENU, flush=True)
             continue
+        if user_msg.lower() == "/who":
+            last_name = globals().get("_last_agent_name", None)
+            if last_name:
+                print(f"Last agent to respond: {last_name}", flush=True)
+            else:
+                print("No agent responses yet.", flush=True)
+            continue
+        if user_msg.lower().startswith("/component"):
+            # Directly route to ComponentDesigner for debugging/bypass (async call)
+            payload = user_msg[len("/component"):].strip()
+            if not payload:
+                print("Usage: /component <message>", flush=True)
+                continue
+            import asyncio
+            try:
+                print("Routing to ComponentDesigner…", flush=True)
+                response = asyncio.run(component_designer_agent.get_response(payload))
+                globals()["_last_agent_name"] = getattr(component_designer_agent, "name", "ComponentDesigner")
+                print(f"👀 Last agent: {globals().get('_last_agent_name')}", flush=True)
+                print(f"Agent: {response}\n", flush=True)
+            except Exception as exc:
+                print(f"\n[Error routing to ComponentDesigner] {exc}\n", flush=True)
+            continue
+        if user_msg.lower() == "/debug-agents":
+            try:
+                names = [getattr(component_designer_agent, "name", "ComponentDesigner"),
+                         getattr(idse_developer_agent, "name", "IDSE Developer Agent")]
+                print("Agents registered: " + ", ".join(names), flush=True)
+            except Exception as exc:
+                print(f"Failed to inspect agents: {exc}", flush=True)
+            continue
 
         try:
             print("Agent is thinking…", flush=True)
@@ -97,17 +129,40 @@ def run_simple_cli(agency: Agency) -> None:
                         break
                     cleaned_lines.append(line)
                 response = "\n".join(cleaned_lines).strip() or response
+            else:
+                # Attempt to surface last agent name when available
+                last_agent_name = getattr(getattr(response, "last_agent", None), "name", None)
+                if last_agent_name:
+                    globals()["_last_agent_name"] = last_agent_name
+                    print(f"👀 Last agent: {last_agent_name}", flush=True)
             print(f"Agent: {response}\n", flush=True)
         except Exception as exc:  # pragma: no cover - interactive path
+            import traceback
             print(f"\n[Error] {exc}\n", flush=True)
+            traceback.print_exc()
 
 # do not remove this method, it is used in the main.py file to deploy the agency (it has to be a method)
 def create_agency(load_threads_callback=None):
+    # Communication flows define agent collaboration patterns
+    # Format: (sender_agent, receiver_agent) enables sender to delegate to receiver
+    #
+    # IDSEDeveloper ↔ ComponentDesigner (bi-directional):
+    #   - Forward: IDSEDeveloper delegates CVA component design tasks to ComponentDesigner
+    #             (triggers: "design ui component", "define component variants",
+    #              "create tailwind variant map", "generate storybook args", "cms field config")
+    #   - Return: ComponentDesigner sends completed configs back to IDSEDeveloper
+    #             (trigger: "component config complete")
+    communication_flows = [
+        (idse_developer_agent, component_designer_agent),  # Delegation
+        (component_designer_agent, idse_developer_agent),  # Return handoff
+    ]
+
     agency = Agency(
-        idse_developer_agent,
-        communication_flows=[],
+        idse_developer_agent,  # Entry point
+        communication_flows=communication_flows,
         name="IDSEDeveloperAgency",
         shared_instructions="shared_instructions.md",
+        send_message_tool_class=SendMessageHandoff,
         load_threads_callback=load_threads_callback,
     )
 

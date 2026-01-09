@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear Auth Token</title>
+</head>
+<body>
+    <h1>Clear Authentication Token</h1>
+    <button onclick="clearAuth()">Clear localStorage auth_token</button>
+    <div id="result"></div>
+    
+    <script>
+        function clearAuth() {
+            localStorage.removeItem('auth_token');
+            document.getElementById('result').innerHTML = '<p style="color: green;">✓ Cleared auth_token from localStorage. Refresh your app!</p>';
+        }
+        
+        // Auto-clear on load
+        window.addEventListener('load', () => {
+            const oldToken = localStorage.getItem('auth_token');
+            if (oldToken) {
+                document.getElementById('result').innerHTML = `<p>Found old token: ${oldToken.substring(0, 20)}...</p>`;
+            } else {
+                document.getElementById('result').innerHTML = '<p>No token in localStorage</p>';
+            }
+        });
+    </script>
+</body>
+</html>

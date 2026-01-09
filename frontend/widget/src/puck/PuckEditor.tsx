@@ -4,11 +4,19 @@ import { puckConfig } from "./config";
 import { PublishDialog } from "./PublishDialog";
 import { useSearchParams } from "react-router-dom";
 import { ApplicationShell } from "./ApplicationShell";
-import { RightPanel } from "./components/RightPanel";
 
-const apiBase = (import.meta as any).env?.VITE_API_BASE ?? "http://localhost:8000";
+const apiBase =
+  (import.meta as any).env?.VITE_API_BASE ??
+  (typeof window !== "undefined" ? window.location.origin : "http://localhost:8000");
 
-const seedContent: Data = {
+// Extended Data type to include custom fields
+type ExtendedData = Data & {
+  slug?: string;
+  title?: string;
+  schemaVersion?: number;
+};
+
+const seedContent: ExtendedData = {
   content: [],
   root: {
     props: {
@@ -75,7 +83,7 @@ export function PuckEditor({ hideEmbeddedChat = false }: { hideEmbeddedChat?: bo
   };
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const [data, setData] = useState<Data>(sanitizeData(seedContent));
+  const [data, setData] = useState<ExtendedData>(sanitizeData(seedContent) as ExtendedData);
   const [status, setStatus] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [loadNonce, setLoadNonce] = useState(0);
@@ -85,7 +93,6 @@ export function PuckEditor({ hideEmbeddedChat = false }: { hideEmbeddedChat?: bo
   const [titleInput, setTitleInput] = useState<string>(seedContent.root?.props?.title ?? "Untitled");
   const [slugInput, setSlugInput] = useState<string>("");
   const [showPublishDialog, setShowPublishDialog] = useState(false);
-  const [activeTab, setActiveTab] = useState<"blocks" | "fields" | "outline">("blocks");
 
   const apiUrl = useMemo(() => `${apiBase.replace(/\/$/, "")}/api/status-pages`, []);
 
@@ -282,80 +289,21 @@ export function PuckEditor({ hideEmbeddedChat = false }: { hideEmbeddedChat?: bo
         onLoadPage={handleLoad}
         onCreateNewPage={handleCreateNew}
       >
-        <Puck
-          key={`puck-editor-${loadNonce}`}
-          config={puckConfig}
-          data={data}
-          onChange={setData}
-          viewports={[
-            { width: 360, label: "Mobile" },
-            { width: 768, label: "Tablet" },
-            { width: 1440, label: "Wide" },
-            { width: 1920, label: "Full" },
-          ]}
-          iframe={{ enabled: false }}
-        >
-          <div
-            className="flex h-full min-h-0"
-            style={{ height: "calc(100vh - 96px)" }} // keep all panels visible after rerenders
-          >
-            {/* Nav column (commands) */}
-            <aside className="hidden lg:flex flex-col bg-white border-r border-slate-200 shadow-sm w-[146px] px-2 shrink-0">
-              <div className="flex items-center justify-center h-16 border-b border-slate-200">
-                <div className="h-9 w-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold">
-                  ID
-                </div>
-              </div>
-              <nav className="px-2 py-3 space-y-1 text-sm font-medium text-slate-900">
-                {[
-                  { key: "blocks", label: "Blocks", icon: "🧱" },
-                  { key: "fields", label: "Fields", icon: "💬" },
-                  { key: "outline", label: "Outline", icon: "📦" },
-                ].map((item) => (
-                  <button
-                    key={item.key}
-                    className={`w-full flex items-center gap-2 rounded-lg px-2 py-2 hover:bg-slate-50 transition ${
-                      activeTab === item.key
-                        ? "bg-slate-100 text-indigo-700 border border-indigo-100"
-                        : "text-slate-900"
-                    }`}
-                    onClick={() => setActiveTab(item.key as typeof activeTab)}
-                    title={item.label}
-                  >
-                    <span className="text-xl leading-none" style={{ color: "#0f172a" }}>
-                      {item.icon}
-                    </span>
-                    <span className="text-sm font-semibold" style={{ color: "#0f172a" }}>
-                      {item.label}
-                    </span>
-                  </button>
-                ))}
-              </nav>
-            </aside>
-
-            {/* Controls panel */}
-            <div className="w-[315px] min-w-[315px] shrink-0 bg-white border-r border-slate-200 overflow-y-auto">
-              {activeTab === "blocks" && <Puck.Components />}
-              {activeTab === "fields" && <Puck.Fields />}
-              {activeTab === "outline" && <Puck.Outline />}
-            </div>
-
-            {/* Center Panel - Puck Canvas */}
-            <main className="flex-1 min-w-0 bg-slate-50 overflow-auto min-h-0">
-              <div className="mx-auto my-4 w-full">
-                <Puck.Preview />
-              </div>
-            </main>
-
-            {/* Right Panel - chat unless hidden */}
-            {!hideEmbeddedChat && (
-              <div className="w-[590px] min-w-[590px] shrink-0 bg-white border-l border-slate-200 overflow-y-auto">
-                <RightPanel />
-              </div>
-            )}
-          </div>
-        </Puck>
-
+        <div style={{ height: "calc(100vh - 96px)" }}>
+          <Puck
+            key={`puck-editor-${loadNonce}`}
+            config={puckConfig}
+            data={data}
+            onChange={setData}
+            viewports={[
+              { width: 360, label: "Mobile" },
+              { width: 768, label: "Tablet" },
+              { width: 1440, label: "Wide" },
+              { width: 1920, label: "Full" },
+            ]}
+            iframe={{ enabled: false }}
+          />
+        </div>
       </ApplicationShell>
 
       <PublishDialog

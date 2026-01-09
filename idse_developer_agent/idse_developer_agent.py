@@ -1,7 +1,7 @@
 import os
 import asyncio
 
-from agency_swarm import Agent, ModelSettings, HostedMCPTool
+from agency_swarm import Agent, HostedMCPTool, ModelSettings
 from openai.types.shared import Reasoning
 from dotenv import load_dotenv
 
@@ -10,21 +10,21 @@ from .guardrails import (
     instruction_leakage_guardrail,
     idse_boundary_guardrail,
 )
-
 load_dotenv()
 
 _firecrawl_api_key = os.getenv("FIRECRAWL_API_KEY", "")
-firecrawl_mcp = HostedMCPTool(
-    tool_config={
-        "type": "mcp",
-        "server_label": "firecrawl",
-        "server_url": "https://mcp.firecrawl.dev/mcp",
-        "require_approval": "never",
-        "headers": {
-            "Authorization": f"Bearer {_firecrawl_api_key}",
-        },
-    }
-)
+# Temporarily disabled due to service availability issues (HTTP 424)
+# firecrawl_mcp = HostedMCPTool(
+#     tool_config={
+#         "type": "mcp",
+#         "server_label": "firecrawl",
+#         "server_url": "https://mcp.firecrawl.dev/mcp",
+#         "require_approval": "never",
+#         "headers": {
+#             "Authorization": f"Bearer {_firecrawl_api_key}",
+#         },
+#     }
+# )
 
 
 idse_developer_agent = Agent(
@@ -33,11 +33,10 @@ idse_developer_agent = Agent(
     instructions="./instructions.md",
     files_folder="./files",
     tools_folder="./tools",
-    tools=[firecrawl_mcp],  # BaseTools are auto-adapted from tools_folder
-    model="gpt-5-mini",
+    # Handoffs managed by Agency communication_flows - creates transfer_to_ComponentDesigner tool
+    model="gpt-4o-mini",
     model_settings=ModelSettings(
         max_output_tokens=400,
-        reasoning=Reasoning(effort="medium", summary="auto"),
     ),
     # Guardrails: Instruction protection and boundary enforcement
     input_guardrails=[

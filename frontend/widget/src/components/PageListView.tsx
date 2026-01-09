@@ -3,7 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Loader2, RefreshCw } from "lucide-react";
 
-const apiBase = (import.meta as any).env?.VITE_API_BASE ?? "http://localhost:8000";
+const apiBase =
+  (import.meta as any).env?.VITE_API_BASE ??
+  (typeof window !== "undefined" ? window.location.origin : "http://localhost:8000");
 
 interface PageSummary {
   slug: string;
@@ -28,7 +30,13 @@ export function PageListView({ onLoadPage }: PageListViewProps) {
         throw new Error(`Failed to fetch pages (${res.status})`);
       }
       const json = await res.json();
-      setPages(json.pages ?? []);
+      if (Array.isArray((json as any).pages)) {
+        setPages((json as any).pages);
+      } else if ((json as any).page) {
+        setPages([(json as any).page]);
+      } else {
+        setPages([]);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load pages");
     } finally {

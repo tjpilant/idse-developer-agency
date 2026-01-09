@@ -1,7 +1,20 @@
+const fs = require("fs");
+const path = require("path");
+
+const safelistPath = path.join(__dirname, "tailwind.safelist.txt");
+const safelist = fs.existsSync(safelistPath)
+  ? fs
+      .readFileSync(safelistPath, "utf-8")
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line && !line.startsWith("#"))
+  : [];
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
     darkMode: ["class"],
     content: ["./index.html", "./src/**/*.{ts,tsx}"],
+    safelist,
   theme: {
   	extend: {
   		borderRadius: {
