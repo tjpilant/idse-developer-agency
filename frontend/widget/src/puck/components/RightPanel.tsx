@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { useChatHistory, ChatMessage as PersistedChatMessage } from "../../hooks/useChatHistory";
 
 type ChatMessage = { role: "user" | "assistant" | "system"; content: string };
 
@@ -20,9 +21,17 @@ interface RightPanelProps {
 }
 
 export function RightPanel({ project, session, contextInfo }: RightPanelProps = {}) {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: "assistant", content: "Hi! I'm your IDSE Assistant. Ask me about IDSE, page building, or workflows." },
-  ]);
+  // Use chat history hook for persistence (defaults to "default"/"default" if not provided)
+  const effectiveProject = project || "default";
+  const effectiveSession = session || "default";
+  const {
+    messages: persistedMessages,
+    loading: historyLoading,
+    saveMessage
+  } = useChatHistory(effectiveProject, effectiveSession);
+
+  // Local messages state (combines persisted + in-flight messages)
+  const [localMessages, setLocalMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [connected, setConnected] = useState(false);
@@ -32,9 +41,30 @@ export function RightPanel({ project, session, contextInfo }: RightPanelProps = 
   const eventSourceRef = useRef<EventSource | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
+  // Sync persisted messages to local state when they load
+  useEffect(() => {
+    if (persistedMessages.length > 0) {
+      setLocalMessages(persistedMessages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      })));
+    } else if (!historyLoading) {
+      // First time, show welcome message
+      setLocalMessages([
+        { role: "assistant", content: "Hi! I'm your IDSE Assistant. Ask me about IDSE, page building, or workflows." }
+      ]);
+    }
+  }, [persistedMessages, historyLoading]);
+
   // Helper to append messages and keep scroll pinned to bottom.
-  const pushMessage = (msg: ChatMessage) => {
-    setMessages((prev) => [...prev, msg]);
+  const pushMessage = async (msg: ChatMessage) => {
+    setLocalMessages((prev) => [...prev, msg]);
+
+    // Persist assistant messages (user messages already persisted in handleSend)
+    if (msg.role === "assistant") {
+      await saveMessage("assistant", msg.content);
+    }
+
     // Scroll after the state flushes.
     requestAnimationFrame(() => {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -99,7 +129,13 @@ export function RightPanel({ project, session, contextInfo }: RightPanelProps = 
     if (!text) return;
     setInput("");
     setSending(true);
-    pushMessage({ role: "user", content: text });
+
+    // Add user message to local state
+    setLocalMessages((prev) => [...prev, { role: "user", content: text }]);
+
+    // Persist user message (note: /inbound also persists, but this ensures immediate save)
+    await saveMessage("user", text);
+
     try {
       const res = await fetch(inboundUrl, {
         method: "POST",
@@ -107,8 +143,8 @@ export function RightPanel({ project, session, contextInfo }: RightPanelProps = 
         body: JSON.stringify({
           type: "USER_MESSAGE",
           content: text,
-          project,
-          session,
+          project: effectiveProject,
+          session: effectiveSession,
         }),
       });
       if (!res.ok) {
@@ -157,7 +193,12 @@ export function RightPanel({ project, session, contextInfo }: RightPanelProps = 
 
         {/* Messages - Scrollable area */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
-          {messages.map((msg, idx) => (
+          {historyLoading && (
+            <div className="text-center text-xs text-slate-500 py-2">
+              Loading chat history...
+            </div>
+          )}
+          {localMessages.map((msg, idx) => (
             <div
               key={idx}
               className={`rounded-2xl border px-3 py-2 text-sm shadow-sm ${

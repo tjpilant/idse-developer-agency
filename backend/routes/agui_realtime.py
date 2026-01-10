@@ -25,6 +25,29 @@ from idse_developer_agent import idse_developer_agent, component_designer_agent
 
 logger = logging.getLogger(__name__)
 
+# Chat persistence helper
+async def persist_message_best_effort(project: str, session: str, role: str, content: str) -> None:
+    """
+    Persist a chat message to Supabase using best-effort strategy.
+
+    This function NEVER raises exceptions - failures are logged but don't block chat.
+    """
+    try:
+        from backend.services.supabase_client import get_supabase_client
+        supabase = get_supabase_client()
+
+        supabase.table("chat_messages").insert({
+            "project_id": project,
+            "session_id": session,
+            "role": role,
+            "content": content,
+            "metadata": {}
+        }).execute()
+
+        logger.info(f"✅ Persisted {role} message for {project}/{session}")
+    except Exception as e:
+        logger.warning(f"⚠️ Failed to persist {role} message (chat continues): {e}")
+
 router = APIRouter()
 
 # Simple pub-sub for SSE events (one queue per subscriber)
@@ -102,6 +125,10 @@ async def inbound(payload: Dict[str, Any]):
     if message_type != "USER_MESSAGE" or not content:
         raise HTTPException(status_code=400, detail="Payload must include type=USER_MESSAGE and content.")
 
+    # Persist user message to Supabase (best-effort)
+    if project and session:
+        await persist_message_best_effort(project, session, "user", content)
+
     # If project/session provided, temporarily update the active session
     original_session = None
     if project and session:
@@ -140,6 +167,10 @@ async def inbound(payload: Dict[str, Any]):
                 break
             cleaned_lines.append(line)
         response_str = "\n".join(cleaned_lines).strip() or response_str
+
+        # Persist assistant response to Supabase (best-effort)
+        if project and session:
+            await persist_message_best_effort(project, session, "assistant", response_str)
 
         await enqueue_event({"type": "TEXT_MESSAGE_CONTENT", "content": response_str, "from": "assistant"})
         # Small delay to ensure the response is delivered before the "finished" message
