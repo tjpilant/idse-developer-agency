@@ -1,18 +1,20 @@
 import { useState, useCallback, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "./DashboardLayout";
 import { LeftNav } from "./LeftNav";
 import { WelcomeView } from "./WelcomeView";
 import { PuckWorkspace } from "./PuckWorkspace";
 import { MDWorkspace } from "./MDWorkspace";
 import { RightPanel } from "../puck/components/RightPanel";
+import { IDSEProjectsDashboard } from "./IDSEProjectsDashboard";
 
 const MILKDOWN_TOKEN = (import.meta as any).env?.VITE_MILKDOWN_AUTH_TOKEN;
 const API_BASE = (import.meta as any).env?.VITE_API_BASE ?? "http://localhost:8000";
 
 export interface DashboardState {
-  activeWorkspace: "welcome" | "puck" | "md";
+  activeWorkspace: "welcome" | "puck" | "md" | "projects";
   puckSubView: "blocks" | "fields" | "outline" | "pages" | null;
-  mdSubView: "open" | "intent" | "spec" | "plan" | "tasks" | "context" | null;
+  mdSubView: "open" | "intent" | "spec" | "plan" | "tasks" | "context" | "implementation" | "feedback" | null;
   mdCurrentPath: string | null;
   currentSession: {
     project: string;
@@ -20,9 +22,14 @@ export interface DashboardState {
   };
 }
 
-export function AdminDashboard() {
+interface AdminDashboardProps {
+  initialWorkspace?: DashboardState["activeWorkspace"];
+}
+
+export function AdminDashboard({ initialWorkspace }: AdminDashboardProps) {
+  const navigate = useNavigate();
   const [state, setState] = useState<DashboardState>({
-    activeWorkspace: "puck",
+    activeWorkspace: initialWorkspace ?? "puck",
     puckSubView: "blocks",
     mdSubView: null,
     mdCurrentPath: null,
@@ -33,9 +40,15 @@ export function AdminDashboard() {
   });
 
   const handleWorkspaceChange = (
-    workspace: "puck" | "md",
+    workspace: DashboardState["activeWorkspace"],
     subView?: string
   ) => {
+    if (workspace === "projects") {
+      navigate("/admin/projects");
+    } else {
+      navigate("/admin");
+    }
+
     setState((prev) => ({
       ...prev,
       activeWorkspace: workspace,
@@ -141,6 +154,10 @@ export function AdminDashboard() {
       );
     }
 
+    if (state.activeWorkspace === "projects") {
+      return <IDSEProjectsDashboard apiBase={API_BASE} onProjectSelect={handleProjectSelect} />;
+    }
+
     return <WelcomeView />;
   };
 
@@ -155,12 +172,57 @@ export function AdminDashboard() {
       }
       return `MD Editor - ${state.mdSubView || ""}`;
     }
+    if (state.activeWorkspace === "projects") {
+      return "IDSE Projects Dashboard";
+    }
     return undefined;
   };
 
   const handleMDPathChange = useCallback((path: string | null) => {
     setState((prev) => ({ ...prev, mdCurrentPath: path }));
   }, []);
+
+  const handleProjectSelect = useCallback(async (projectName: string, projectId: string) => {
+    console.log("[AdminDashboard] Project selected from dashboard:", { projectName, projectId });
+
+    // Look up the latest session for this project
+    try {
+      const response = await fetch(`${API_BASE}/api/chat/latest-session/${projectName}`);
+      if (response.ok) {
+        const data = await response.json();
+        const sessionId = data.session_id || "default";
+        console.log("[AdminDashboard] Latest session for project:", sessionId);
+
+        // Update session state
+        await handleSessionChange(projectName, sessionId);
+
+        // Switch to MD workspace to show the chat
+        setState((prev) => ({
+          ...prev,
+          activeWorkspace: "md",
+          mdSubView: "intent",
+        }));
+      } else {
+        console.error("[AdminDashboard] Failed to fetch latest session");
+        // Fallback to "default" session
+        await handleSessionChange(projectName, "default");
+        setState((prev) => ({
+          ...prev,
+          activeWorkspace: "md",
+          mdSubView: "intent",
+        }));
+      }
+    } catch (error) {
+      console.error("[AdminDashboard] Error fetching latest session:", error);
+      // Fallback behavior
+      await handleSessionChange(projectName, "default");
+      setState((prev) => ({
+        ...prev,
+        activeWorkspace: "md",
+        mdSubView: "intent",
+      }));
+    }
+  }, [handleSessionChange]);
 
   return (
     <DashboardLayout
