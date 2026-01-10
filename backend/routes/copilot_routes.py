@@ -9,16 +9,30 @@ from fastapi import APIRouter, WebSocket, HTTPException, Query
 from typing import Dict, Any
 import logging
 import uuid
+import os
 
 from agency_swarm import Agency
 from agency_swarm.tools.send_message import SendMessageHandoff
 from idse_developer_agent import idse_developer_agent, component_designer_agent
+from SessionManager import SessionManager
 from backend.adapters.copilot_adapter import CopilotAdapter
 
 logger = logging.getLogger(__name__)
 
 # Create router
 router = APIRouter()
+
+# Load active session and surface to environment (match agency.py)
+try:
+    meta = SessionManager.get_active_session()
+except Exception:
+    SessionManager.create_session("web")
+    meta = SessionManager.get_active_session()
+
+os.environ["IDSE_PROJECT"] = getattr(meta, "project", "")
+os.environ["IDSE_SESSION_ID"] = getattr(meta, "session_id", "")
+os.environ["IDSE_SESSION_NAME"] = getattr(meta, "name", "")
+os.environ["IDSE_OWNER"] = getattr(meta, "owner", "")
 
 # Create agency instance for CopilotKit interactions with proper communication flows
 communication_flows = [

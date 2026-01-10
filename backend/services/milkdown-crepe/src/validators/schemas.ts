@@ -9,7 +9,7 @@ export const DocumentPathSchema = z.object({
 
 export const PutDocumentSchema = z.object({
   path: z.string().min(1).regex(pathPattern),
-  content: z.string().min(1),
+  content: z.string(), // Allow empty content for new/cleared documents
   commitMessage: z.string().optional(),
   branch: z.string().optional(),
 });

@@ -1,7 +1,7 @@
 {
-  "active_llm": "claude_code",
+  "active_llm": "codex_gpt",
   "awaiting_handoff": false,
-  "handoff_cycle_id": "2026-01-08T02-20-16Z",
+  "handoff_cycle_id": "2026-01-10T16-30-00Z",
   "layer_scope": "implementation",
   "enforced_paths": [
     "frontend/widget/src/puck/components/",
@@ -15,10 +15,10 @@
   },
   "active_stage": "Production",
   "last_handoff": {
-    "from": "codex_gpt",
-    "to": "claude_code",
-    "timestamp": "2026-01-08T02:20:16.515633+00:00",
-    "notes": "Agent check "
+    "from": "claude_code",
+    "to": "codex_gpt",
+    "timestamp": "2026-01-10T16:30:00Z",
+    "notes": "Supabase MCP + dashboard handoff to Codex"
   },
-  "last_checked": "2026-01-08T02:20:16.515633+00:00"
+  "last_checked": "2026-01-10T16:30:00Z"
 }

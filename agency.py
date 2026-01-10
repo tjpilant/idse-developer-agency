@@ -143,6 +143,17 @@ def run_simple_cli(agency: Agency) -> None:
 
 # do not remove this method, it is used in the main.py file to deploy the agency (it has to be a method)
 def create_agency(load_threads_callback=None):
+    # Ensure active session is loaded and surfaced to the environment so agents can reference it
+    try:
+        meta = SessionManager.get_active_session()
+    except Exception:
+        SessionManager.create_session("cli")
+        meta = SessionManager.get_active_session()
+    os.environ["IDSE_PROJECT"] = getattr(meta, "project", "")
+    os.environ["IDSE_SESSION_ID"] = getattr(meta, "session_id", "")
+    os.environ["IDSE_SESSION_NAME"] = getattr(meta, "name", "")
+    os.environ["IDSE_OWNER"] = getattr(meta, "owner", "")
+
     # Communication flows define agent collaboration patterns
     # Format: (sender_agent, receiver_agent) enables sender to delegate to receiver
     #

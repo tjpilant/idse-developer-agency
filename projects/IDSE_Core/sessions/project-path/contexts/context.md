@@ -1,3 +1,1 @@
-# Context
-
-Placeholder context for project-path session.
+✅ Local docs scraped (7 file(s)) and saved to /home/tjpilant/projects/idse-developer-agency/projects/IDSE_Core/sessions/supabase/contexts/local_docs.json.

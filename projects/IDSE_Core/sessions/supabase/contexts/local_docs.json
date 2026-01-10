@@ -1,0 +1,1043 @@
+{
+  "source": "/home/tjpilant/projects/idse-developer-agency/projects/IDSE_Core/sessions/supabase",
+  "files": [
+    {
+      "file": "/home/tjpilant/projects/idse-developer-agency/projects/IDSE_Core/sessions/supabase/contexts/context.md",
+      "content": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Context"
+        },
+        {
+          "type": "paragraph",
+          "text": "Intent reference: projects/IDSE_Core/sessions/supabase/intents/intent.md -> # Intent for Supabase Integration "
+        },
+        {
+          "type": "paragraph",
+          "text": "Use this template to capture the environment, constraints, and risks that shape architecture, plans, and tasks. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "1. Environment"
+        },
+        {
+          "type": "paragraph",
+          "text": "- **Product / Project:** What product or project does this feature belong to? - **Domain:** Which business or technical domain does it operate in? - **Users / Actors:** Who will use or be affected by this feature (roles, personas)? "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "2. Stack"
+        },
+        {
+          "type": "paragraph",
+          "text": "Describe only the portions of the stack that influence design decisions. "
+        },
+        {
+          "type": "paragraph",
+          "text": "- **Frontend:** Frameworks, state management, styling. - **Backend / API:** Languages, frameworks, hosting. - **Database / Storage:** Primary databases, queues, caching. - **Infrastructure:** Cloud, orchestration, serverless. - **Integrations:** External APIs, services, systems to communicate with. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "3. Constraints"
+        },
+        {
+          "type": "paragraph",
+          "text": "Explicit constraints that influence the solution (technical, organizational, regulatory, business). "
+        },
+        {
+          "type": "paragraph",
+          "text": "- **Scale:** Expected users, data volumes, throughput. - **Performance:** Latency targets, throughput goals. - **Compliance / Security:** Residency (e.g., GDPR), encryption, auth protocols. - **Team Capabilities:** Skills and time availability. - **Deadlines:** Delivery timelines or releases. - **Legacy Considerations:** Systems/APIs that cannot change. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "4. Risks & Unknowns"
+        },
+        {
+          "type": "paragraph",
+          "text": "Identify risks and unknowns early to mitigate or research. "
+        },
+        {
+          "type": "paragraph",
+          "text": "- **Technical Risks:** Unfamiliar tech, scalability, coupling. - **Operational Risks:** Deployment complexity, monitoring, backup/restore. - **Regulatory Risks:** Privacy concerns, certification needs. - **Unknowns:** Areas needing research, PoCs, or stakeholder clarification. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Technical Environment"
+        },
+        {
+          "type": "paragraph",
+          "text": "- Supabase as the backend service. - Considerations for authentication and query performance. "
+        }
+      ]
+    },
+    {
+      "file": "/home/tjpilant/projects/idse-developer-agency/projects/IDSE_Core/sessions/supabase/feedback/feedback.md",
+      "content": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Feedback Documentation"
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Initial feedback on Supabase integration:"
+        },
+        {
+          "type": "paragraph",
+          "text": "- Ensure authentication is tested thoroughly. - Review document storage migration process for issues. "
+        }
+      ]
+    },
+    {
+      "file": "/home/tjpilant/projects/idse-developer-agency/projects/IDSE_Core/sessions/supabase/implementation/README.md",
+      "content": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Implementation Scaffold"
+        },
+        {
+          "type": "paragraph",
+          "text": "Source tasks: /home/tjpilant/projects/idse-developer-agency/projects/IDSE_Core/sessions/supabase/tasks/tasks.md "
+        },
+        {
+          "type": "paragraph",
+          "text": "Use this template to translate a specification into a concrete implementation plan. Each section should be tailored to the feature or project and stay aligned with the IDSE constitution. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "1. Architecture Summary"
+        },
+        {
+          "type": "paragraph",
+          "text": "Provide a high-level overview of the system/feature. Describe major components and how they interact. Link to diagrams (SVG, sequence, component) if helpful. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "2. Components"
+        },
+        {
+          "type": "paragraph",
+          "text": "List services, modules, libraries, or functions. For each, note responsibility, boundaries, and interactions. "
+        },
+        {
+          "type": "paragraph",
+          "text": "| Component | Responsibility | Interfaces / Dependencies | | --- | --- | --- | | ... | ... | ... | "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "3. Data Model"
+        },
+        {
+          "type": "paragraph",
+          "text": "List entities and relationships. Include schemas (SQL/NoSQL), indexes, and normalization/denormalization choices. For event-driven designs, include event schemas. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "4. API Contracts"
+        },
+        {
+          "type": "paragraph",
+          "text": "Define public APIs (HTTP/GraphQL/gRPC/WebSocket). "
+        },
+        {
+          "type": "paragraph",
+          "text": "- Endpoint / Method / Path - Description - Request: URL, headers, body (required/optional fields) - Response: status codes, headers, body (types) - Error handling: codes/messages - Security: authn/authz, rate limits "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "5. Test Strategy"
+        },
+        {
+          "type": "paragraph",
+          "text": "IDSE mandates test-first; describe validation before implementation: "
+        },
+        {
+          "type": "paragraph",
+          "text": "- Unit: modules/functions with mocks. - Contract: API schemas and backward compatibility. - Integration: component/service/DB interactions. - End-to-end: user workflows. - Performance: scalability/latency under load. - Security: auth flows, input validation. "
+        },
+        {
+          "type": "paragraph",
+          "text": "Include environments/tooling (e.g., Jest, PyTest, Postman, Cypress) and success criteria. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "6. Phases"
+        },
+        {
+          "type": "paragraph",
+          "text": "Break work into phases; each should deliver incremental value and be independent where possible. "
+        },
+        {
+          "type": "paragraph",
+          "text": "- Phase 0: Foundations (architecture decisions, documented schemas, API contracts). - Phase 1: Core behavior (documented implementation approach). - Phase 2: NFRs (scale, security, resilience strategies). - Phase 3: Cleanup/Hardening (refinements, additional validation). "
+        },
+        {
+          "type": "paragraph",
+          "text": "**Note:** This plan is **documentation** that guides the IDE/development team. The actual code, schemas, and configurations will be created by the development team in the appropriate codebase directories (src/, backend/, frontend/, etc.). "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Tasks Reference"
+        },
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Tasks"
+        },
+        {
+          "type": "paragraph",
+          "text": "Source plan: /home/tjpilant/projects/idse-developer-agency/projects/IDSE_Core/sessions/supabase/plans/plan.md "
+        },
+        {
+          "type": "paragraph",
+          "text": "[P] = parallel safe "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Instructions"
+        },
+        {
+          "type": "paragraph",
+          "text": "- Derive tasks directly from the implementation plan and contracts. - For each task, note owner, dependencies, and acceptance/validation notes. - Keep tasks independent and testable; mark parallelizable tasks with [P]. - **These tasks guide the IDE/development team** - they describe what needs to be done, not where code should be written. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Phase 0 \u2013 Foundations"
+        },
+        {
+          "type": "paragraph",
+          "text": "- [ ] Task 0.1 \u2013 ... (Owner: ...) (Deps: ...) (Acceptance: ...) - [ ] Task 0.2 \u2013 ... "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Phase 1 \u2013 Core Behavior"
+        },
+        {
+          "type": "paragraph",
+          "text": "- [ ] Task 1.1 \u2013 ... - [ ] Task 1.2 \u2013 ... "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Phase 2 \u2013 NFRs / Hardening"
+        },
+        {
+          "type": "paragraph",
+          "text": "- [ ] Task 2.1 \u2013 ... - [ ] Task 2.2 \u2013 ... "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Plan Reference"
+        },
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Implementation Plan"
+        },
+        {
+          "type": "paragraph",
+          "text": "Source spec: /home/tjpilant/projects/idse-developer-agency/projects/IDSE_Core/sessions/supabase/specs/spec.md "
+        },
+        {
+          "type": "paragraph",
+          "text": "Use this template to translate a specification into a concrete implementation plan. Each section should be tailored to the feature or project and stay aligned with the IDSE constitution. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "1. Architecture Summary"
+        },
+        {
+          "type": "paragraph",
+          "text": "Provide a high-level overview of the system/feature. Describe major components and how they interact. Link to diagrams (SVG, sequence, component) if helpful. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "2. Components"
+        },
+        {
+          "type": "paragraph",
+          "text": "List services, modules, libraries, or functions. For each, note responsibility, boundaries, and interactions. "
+        },
+        {
+          "type": "paragraph",
+          "text": "| Component | Responsibility | Interfaces / Dependencies | | --- | --- | --- | | ... | ... | ... | "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "3. Data Model"
+        },
+        {
+          "type": "paragraph",
+          "text": "List entities and relationships. Include schemas (SQL/NoSQL), indexes, and normalization/denormalization choices. For event-driven designs, include event schemas. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "4. API Contracts"
+        },
+        {
+          "type": "paragraph",
+          "text": "Define public APIs (HTTP/GraphQL/gRPC/WebSocket). "
+        },
+        {
+          "type": "paragraph",
+          "text": "- Endpoint / Method / Path - Description - Request: URL, headers, body (required/optional fields) - Response: status codes, headers, body (types) - Error handling: codes/messages - Security: authn/authz, rate limits "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "5. Test Strategy"
+        },
+        {
+          "type": "paragraph",
+          "text": "IDSE mandates test-first; describe validation before implementation: "
+        },
+        {
+          "type": "paragraph",
+          "text": "- Unit: modules/functions with mocks. - Contract: API schemas and backward compatibility. - Integration: component/service/DB interactions. - End-to-end: user workflows. - Performance: scalability/latency under load. - Security: auth flows, input validation. "
+        },
+        {
+          "type": "paragraph",
+          "text": "Include environments/tooling (e.g., Jest, PyTest, Postman, Cypress) and success criteria. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "6. Phases"
+        },
+        {
+          "type": "paragraph",
+          "text": "Break work into phases; each should deliver incremental value and be independent where possible. "
+        },
+        {
+          "type": "paragraph",
+          "text": "- Phase 0: Foundations (architecture decisions, documented schemas, API contracts). - Phase 1: Core behavior (documented implementation approach). - Phase 2: NFRs (scale, security, resilience strategies). - Phase 3: Cleanup/Hardening (refinements, additional validation). "
+        },
+        {
+          "type": "paragraph",
+          "text": "**Note:** This plan is **documentation** that guides the IDE/development team. The actual code, schemas, and configurations will be created by the development team in the appropriate codebase directories (src/, backend/, frontend/, etc.). "
+        }
+      ]
+    },
+    {
+      "file": "/home/tjpilant/projects/idse-developer-agency/projects/IDSE_Core/sessions/supabase/intents/intent.md",
+      "content": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Intent for Supabase Integration"
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Goal"
+        },
+        {
+          "type": "paragraph",
+          "text": "To set up a new session for Supabase integration within the IDSE Core project. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Key Tasks"
+        },
+        {
+          "type": "paragraph",
+          "text": "1. Define Supabase schema. 2. Set up authentication and authorization. 3. Integrate Supabase with the application. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Success Criteria"
+        },
+        {
+          "type": "paragraph",
+          "text": "- Successful connection to Supabase. - Auth works as expected. - New data can be inserted and queried. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Overview"
+        },
+        {
+          "type": "paragraph",
+          "text": "This session aims to integrate Supabase into the IDSE Core project, focusing on schema setup, authentication, and data handling. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Context and Rationale"
+        },
+        {
+          "type": "paragraph",
+          "text": "Integrating Supabase as the backend solution aligns with our goal of simplifying authentication and document storage in our application. By leveraging Supabase\u2019s capabilities, we aim to enhance user experience through seamless authentication, real-time data interactions, and robust document management. This integration will facilitate team collaboration and streamline our development process. "
+        },
+        {
+          "type": "heading",
+          "level": 3,
+          "text": "Constraints and Requirements"
+        },
+        {
+          "type": "paragraph",
+          "text": "- **Technical Constraints**: Ensure compatibility with existing architecture and dependencies. - **Legal Compliance**: Adhere to data protection regulations such as GDPR when handling user data. - **Timeframe**: Target completion within the next sprint (4 weeks). "
+        },
+        {
+          "type": "heading",
+          "level": 3,
+          "text": "Stakeholders"
+        },
+        {
+          "type": "paragraph",
+          "text": "- **Project Owner**: [Name] - **Lead Developer**: [Name] - **QA Engineer**: [Name] - **Product Manager**: [Name] "
+        },
+        {
+          "type": "heading",
+          "level": 3,
+          "text": "Risks and Mitigations"
+        },
+        {
+          "type": "paragraph",
+          "text": "- **Risk**: Potential downtime during migration to Supabase. - **Mitigation**: Schedule migration during off-peak hours and implement fallback options. - **Risk**: User acceptance of the new authentication method. - **Mitigation**: Conduct training sessions and provide documentation prior to the rollout. "
+        }
+      ]
+    },
+    {
+      "file": "/home/tjpilant/projects/idse-developer-agency/projects/IDSE_Core/sessions/supabase/metadata/changelog.md",
+      "content": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Changelog"
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "[Unreleased]"
+        },
+        {
+          "type": "paragraph",
+          "text": "- Created initial specs and plans for Supabase integration. "
+        }
+      ]
+    },
+    {
+      "file": "/home/tjpilant/projects/idse-developer-agency/projects/IDSE_Core/sessions/supabase/metadata/project-readme.md",
+      "content": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Supabase Integration Project"
+        },
+        {
+          "type": "paragraph",
+          "text": "This project includes the integration of Supabase for document storage and authentication. "
+        }
+      ]
+    },
+    {
+      "file": "/home/tjpilant/projects/idse-developer-agency/projects/IDSE_Core/sessions/supabase/metadata/review-checklist.md",
+      "content": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Review Checklist"
+        },
+        {
+          "type": "paragraph",
+          "text": "- [ ] Check Supabase connectivity. - [ ] Validate schema configurations. - [ ] Ensure authentication works correctly. "
+        }
+      ]
+    },
+    {
+      "file": "/home/tjpilant/projects/idse-developer-agency/projects/IDSE_Core/sessions/supabase/plans/plan.md",
+      "content": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Implementation Plan"
+        },
+        {
+          "type": "paragraph",
+          "text": "Source spec: /home/tjpilant/projects/idse-developer-agency/projects/IDSE_Core/sessions/supabase/specs/spec.md "
+        },
+        {
+          "type": "paragraph",
+          "text": "Use this template to translate a specification into a concrete implementation plan. Each section should be tailored to the feature or project and stay aligned with the IDSE constitution. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "1. Architecture Summary"
+        },
+        {
+          "type": "paragraph",
+          "text": "Provide a high-level overview of the system/feature. Describe major components and how they interact. Link to diagrams (SVG, sequence, component) if helpful. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "2. Components"
+        },
+        {
+          "type": "paragraph",
+          "text": "List services, modules, libraries, or functions. For each, note responsibility, boundaries, and interactions. "
+        },
+        {
+          "type": "paragraph",
+          "text": "| Component | Responsibility | Interfaces / Dependencies | | --- | --- | --- | | ... | ... | ... | "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "3. Data Model"
+        },
+        {
+          "type": "paragraph",
+          "text": "List entities and relationships. Include schemas (SQL/NoSQL), indexes, and normalization/denormalization choices. For event-driven designs, include event schemas. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "4. API Contracts"
+        },
+        {
+          "type": "paragraph",
+          "text": "Define public APIs (HTTP/GraphQL/gRPC/WebSocket). "
+        },
+        {
+          "type": "paragraph",
+          "text": "- Endpoint / Method / Path - Description - Request: URL, headers, body (required/optional fields) - Response: status codes, headers, body (types) - Error handling: codes/messages - Security: authn/authz, rate limits "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "5. Test Strategy"
+        },
+        {
+          "type": "paragraph",
+          "text": "IDSE mandates test-first; describe validation before implementation: "
+        },
+        {
+          "type": "paragraph",
+          "text": "- Unit: modules/functions with mocks. - Contract: API schemas and backward compatibility. - Integration: component/service/DB interactions. - End-to-end: user workflows. - Performance: scalability/latency under load. - Security: auth flows, input validation. "
+        },
+        {
+          "type": "paragraph",
+          "text": "Include environments/tooling (e.g., Jest, PyTest, Postman, Cypress) and success criteria. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "6. Phases"
+        },
+        {
+          "type": "paragraph",
+          "text": "Break work into phases; each should deliver incremental value and be independent where possible. "
+        },
+        {
+          "type": "paragraph",
+          "text": "- Phase 0: Foundations (architecture decisions, documented schemas, API contracts). - Phase 1: Core behavior (documented implementation approach). - Phase 2: NFRs (scale, security, resilience strategies). - Phase 3: Cleanup/Hardening (refinements, additional validation). "
+        },
+        {
+          "type": "paragraph",
+          "text": "**Note:** This plan is **documentation** that guides the IDE/development team. The actual code, schemas, and configurations will be created by the development team in the appropriate codebase directories (src/, backend/, frontend/, etc.). "
+        }
+      ]
+    },
+    {
+      "file": "/home/tjpilant/projects/idse-developer-agency/projects/IDSE_Core/sessions/supabase/plans/test-plan.md",
+      "content": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Test Plan"
+        },
+        {
+          "type": "paragraph",
+          "text": "Source spec: /home/tjpilant/projects/idse-developer-agency/projects/IDSE_Core/sessions/supabase/specs/spec.md "
+        },
+        {
+          "type": "paragraph",
+          "text": "Testing is first-class in IDSE. Use this template to define the test plan before implementation. It ensures requirements are verifiable and each component has clear acceptance criteria. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "1. Overview"
+        },
+        {
+          "type": "paragraph",
+          "text": "- Goal of the feature and what this plan covers. - In-scope components and out-of-scope areas. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "2. Test Objectives"
+        },
+        {
+          "type": "paragraph",
+          "text": "List objectives, e.g.: "
+        },
+        {
+          "type": "paragraph",
+          "text": "- Verify notifications reach the correct user within 2 seconds. - Ensure unauthenticated requests are rejected. - Confirm migrations create the correct schema. - Validate reconnection logic fetches missed notifications. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "3. Test Types and Approach"
+        },
+        {
+          "type": "paragraph",
+          "text": "Describe the types of tests and tools/frameworks to be used. "
+        },
+        {
+          "type": "heading",
+          "level": 3,
+          "text": "Unit Tests"
+        },
+        {
+          "type": "paragraph",
+          "text": "- Focus on individual functions/classes; use mocks/stubs to isolate deps; target critical logic coverage. "
+        },
+        {
+          "type": "heading",
+          "level": 3,
+          "text": "Contract Tests"
+        },
+        {
+          "type": "paragraph",
+          "text": "- Define API schemas (OpenAPI, GraphQL). Test that responses match contract and cover error conditions. "
+        },
+        {
+          "type": "heading",
+          "level": 3,
+          "text": "Integration Tests"
+        },
+        {
+          "type": "paragraph",
+          "text": "- Verify components work together; connect to real or in-memory DBs, brokers, external services; cover end-to-end event flows. "
+        },
+        {
+          "type": "heading",
+          "level": 3,
+          "text": "End-to-End (E2E) Tests"
+        },
+        {
+          "type": "paragraph",
+          "text": "- Simulate user behavior through UI/backend (e.g., Cypress, Playwright, Selenium). Validate acceptance criteria. "
+        },
+        {
+          "type": "heading",
+          "level": 3,
+          "text": "Performance Tests"
+        },
+        {
+          "type": "paragraph",
+          "text": "- Measure performance under load (e.g., k6, Locust); set baselines; find bottlenecks. "
+        },
+        {
+          "type": "heading",
+          "level": 3,
+          "text": "Security Tests"
+        },
+        {
+          "type": "paragraph",
+          "text": "- Check authentication, authorization, input validation; include static/dynamic analysis where applicable. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "4. Test Environment"
+        },
+        {
+          "type": "paragraph",
+          "text": "- Describe environment versions (languages, frameworks, DBs). - Note differences from production and any required services. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "5. Test Data"
+        },
+        {
+          "type": "paragraph",
+          "text": "- Define needed data: sample API payloads, DB fixtures, environment variables for secrets. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "6. Success Criteria"
+        },
+        {
+          "type": "paragraph",
+          "text": "- Define measurable success, e.g.: - All tests pass in CI before merge. - Performance: median latency <2 seconds at target load. - No unhandled exceptions in logs during integration runs. - E2E acceptance scenarios all pass. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "7. Reporting"
+        },
+        {
+          "type": "paragraph",
+          "text": "- How results are reported (CI dashboards, badges, JUnit reports). - How failures are triaged and communicated. "
+        },
+        {
+          "type": "paragraph",
+          "text": "Use this plan before writing code to align developers, testers, and stakeholders on verification and quality standards. "
+        }
+      ]
+    },
+    {
+      "file": "/home/tjpilant/projects/idse-developer-agency/projects/IDSE_Core/sessions/supabase/specs/spec.md",
+      "content": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Specification"
+        },
+        {
+          "type": "paragraph",
+          "text": "Intent source: projects/IDSE_Core/sessions/supabase/intents/intent.md Context source: projects/IDSE_Core/sessions/supabase/contexts/context.md "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Intent"
+        },
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Intent for Supabase Integration"
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Goal"
+        },
+        {
+          "type": "paragraph",
+          "text": "To set up a new session for Supabase integration within the IDSE Core project. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Key Tasks"
+        },
+        {
+          "type": "paragraph",
+          "text": "1. Define Supabase schema. 2. Set up authentication and authorization. 3. Integrate Supabase with the application. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Success Criteria"
+        },
+        {
+          "type": "paragraph",
+          "text": "- Successful connection to Supabase. - Auth works as expected. - New data can be inserted and queried. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Context"
+        },
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Context"
+        },
+        {
+          "type": "paragraph",
+          "text": "Intent reference: projects/IDSE_Core/sessions/supabase/intents/intent.md -> # Intent for Supabase Integration "
+        },
+        {
+          "type": "paragraph",
+          "text": "Use this template to capture the environment, constraints, and risks that shape architecture, plans, and tasks. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "1. Environment"
+        },
+        {
+          "type": "paragraph",
+          "text": "- **Product / Project:** What product or project does this feature belong to? - **Domain:** Which business or technical domain does it operate in? - **Users / Actors:** Who will use or be affected by this feature (roles, personas)? "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "2. Stack"
+        },
+        {
+          "type": "paragraph",
+          "text": "Describe only the portions of the stack that influence design decisions. "
+        },
+        {
+          "type": "paragraph",
+          "text": "- **Frontend:** Frameworks, state management, styling. - **Backend / API:** Languages, frameworks, hosting. - **Database / Storage:** Primary databases, queues, caching. - **Infrastructure:** Cloud, orchestration, serverless. - **Integrations:** External APIs, services, systems to communicate with. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "3. Constraints"
+        },
+        {
+          "type": "paragraph",
+          "text": "Explicit constraints that influence the solution (technical, organizational, regulatory, business). "
+        },
+        {
+          "type": "paragraph",
+          "text": "- **Scale:** Expected users, data volumes, throughput. - **Performance:** Latency targets, throughput goals. - **Compliance / Security:** Residency (e.g., GDPR), encryption, auth protocols. - **Team Capabilities:** Skills and time availability. - **Deadlines:** Delivery timelines or releases. - **Legacy Considerations:** Systems/APIs that cannot change. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "4. Risks & Unknowns"
+        },
+        {
+          "type": "paragraph",
+          "text": "Identify risks and unknowns early to mitigate or research. "
+        },
+        {
+          "type": "paragraph",
+          "text": "- **Technical Risks:** Unfamiliar tech, scalability, coupling. - **Operational Risks:** Deployment complexity, monitoring, backup/restore. - **Regulatory Risks:** Privacy concerns, certification needs. - **Unknowns:** Areas needing research, PoCs, or stakeholder clarification. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Overview"
+        },
+        {
+          "type": "paragraph",
+          "text": "- Summary and link back to intent/context. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "User Stories"
+        },
+        {
+          "type": "paragraph",
+          "text": "- As a ..., I want ..., so that ... "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Functional Requirements"
+        },
+        {
+          "type": "paragraph",
+          "text": "- FR-1 ... - FR-2 ... "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Non-Functional Requirements"
+        },
+        {
+          "type": "paragraph",
+          "text": "- Performance (e.g., p95 latency, throughput) - Scale (e.g., concurrent users, data volume) - Compliance/security (e.g., residency, authz, logging) - Reliability/resilience targets "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Acceptance Criteria"
+        },
+        {
+          "type": "paragraph",
+          "text": "- AC-1 ... - AC-2 ... "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Assumptions / Constraints / Dependencies"
+        },
+        {
+          "type": "paragraph",
+          "text": "- Assumptions: - Constraints: - Dependencies: "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Open Questions"
+        },
+        {
+          "type": "paragraph",
+          "text": "- [REQUIRES INPUT] ... "
+        }
+      ]
+    },
+    {
+      "file": "/home/tjpilant/projects/idse-developer-agency/projects/IDSE_Core/sessions/supabase/tasks/tasks.md",
+      "content": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Tasks"
+        },
+        {
+          "type": "paragraph",
+          "text": "Source plan: /home/tjpilant/projects/idse-developer-agency/projects/IDSE_Core/sessions/supabase/plans/plan.md "
+        },
+        {
+          "type": "paragraph",
+          "text": "[P] = parallel safe "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Instructions"
+        },
+        {
+          "type": "paragraph",
+          "text": "- Derive tasks directly from the implementation plan and contracts. - For each task, note owner, dependencies, and acceptance/validation notes. - Keep tasks independent and testable; mark parallelizable tasks with [P]. - **These tasks guide the IDE/development team** - they describe what needs to be done, not where code should be written. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Phase 0 \u2013 Foundations"
+        },
+        {
+          "type": "paragraph",
+          "text": "- [ ] Task 0.1 \u2013 ... (Owner: ...) (Deps: ...) (Acceptance: ...) - [ ] Task 0.2 \u2013 ... "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Phase 1 \u2013 Core Behavior"
+        },
+        {
+          "type": "paragraph",
+          "text": "- [ ] Task 1.1 \u2013 ... - [ ] Task 1.2 \u2013 ... "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Phase 2 \u2013 NFRs / Hardening"
+        },
+        {
+          "type": "paragraph",
+          "text": "- [ ] Task 2.1 \u2013 ... - [ ] Task 2.2 \u2013 ... "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Plan Reference"
+        },
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Implementation Plan"
+        },
+        {
+          "type": "paragraph",
+          "text": "Source spec: /home/tjpilant/projects/idse-developer-agency/projects/IDSE_Core/sessions/supabase/specs/spec.md "
+        },
+        {
+          "type": "paragraph",
+          "text": "Use this template to translate a specification into a concrete implementation plan. Each section should be tailored to the feature or project and stay aligned with the IDSE constitution. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "1. Architecture Summary"
+        },
+        {
+          "type": "paragraph",
+          "text": "Provide a high-level overview of the system/feature. Describe major components and how they interact. Link to diagrams (SVG, sequence, component) if helpful. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "2. Components"
+        },
+        {
+          "type": "paragraph",
+          "text": "List services, modules, libraries, or functions. For each, note responsibility, boundaries, and interactions. "
+        },
+        {
+          "type": "paragraph",
+          "text": "| Component | Responsibility | Interfaces / Dependencies | | --- | --- | --- | | ... | ... | ... | "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "3. Data Model"
+        },
+        {
+          "type": "paragraph",
+          "text": "List entities and relationships. Include schemas (SQL/NoSQL), indexes, and normalization/denormalization choices. For event-driven designs, include event schemas. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "4. API Contracts"
+        },
+        {
+          "type": "paragraph",
+          "text": "Define public APIs (HTTP/GraphQL/gRPC/WebSocket). "
+        },
+        {
+          "type": "paragraph",
+          "text": "- Endpoint / Method / Path - Description - Request: URL, headers, body (required/optional fields) - Response: status codes, headers, body (types) - Error handling: codes/messages - Security: authn/authz, rate limits "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "5. Test Strategy"
+        },
+        {
+          "type": "paragraph",
+          "text": "IDSE mandates test-first; describe validation before implementation: "
+        },
+        {
+          "type": "paragraph",
+          "text": "- Unit: modules/functions with mocks. - Contract: API schemas and backward compatibility. - Integration: component/service/DB interactions. - End-to-end: user workflows. - Performance: scalability/latency under load. - Security: auth flows, input validation. "
+        },
+        {
+          "type": "paragraph",
+          "text": "Include environments/tooling (e.g., Jest, PyTest, Postman, Cypress) and success criteria. "
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "6. Phases"
+        },
+        {
+          "type": "paragraph",
+          "text": "Break work into phases; each should deliver incremental value and be independent where possible. "
+        },
+        {
+          "type": "paragraph",
+          "text": "- Phase 0: Foundations (architecture decisions, documented schemas, API contracts). - Phase 1: Core behavior (documented implementation approach). - Phase 2: NFRs (scale, security, resilience strategies). - Phase 3: Cleanup/Hardening (refinements, additional validation). "
+        },
+        {
+          "type": "paragraph",
+          "text": "**Note:** This plan is **documentation** that guides the IDE/development team. The actual code, schemas, and configurations will be created by the development team in the appropriate codebase directories (src/, backend/, frontend/, etc.). "
+        }
+      ]
+    }
+  ]
+}

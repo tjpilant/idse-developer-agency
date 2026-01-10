@@ -9,7 +9,7 @@ import "@milkdown/crepe/theme/common/style.css";
 import "@milkdown/crepe/theme/frame.css";
 
 interface MDWorkspaceProps {
-  activeSubView: "open" | "intent" | "spec" | "plan" | "tasks" | "context" | null;
+  activeSubView: "open" | "intent" | "spec" | "plan" | "tasks" | "context" | "implementation" | "feedback" | null;
   project: string;
   session: string;
   token?: string;
@@ -35,14 +35,50 @@ export function MDWorkspace({
   const [error, setError] = useState<string | null>(null);
   const [showOpenDialog, setShowOpenDialog] = useState(false);
   const [showSaveAsDialog, setShowSaveAsDialog] = useState(false);
+  const [snapshots, setSnapshots] = useState<{ ts: number; content: string }[]>([]);
   const readOnly = role === "reader";
 
   const isDirty = content !== initialContent;
+
+  // Snapshot helpers
+  const shortPath =
+    currentPath?.replace(`projects/${project}/sessions/${session}/`, "") || currentPath;
+  const snapshotKey = currentPath ? `mdsnap:${project}:${session}:${shortPath}` : null;
+
+  const loadSnapshots = (key: string) => {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+      return [];
+    } catch {
+      return [];
+    }
+  };
+
+  const saveSnapshots = (key: string, data: { ts: number; content: string }[]) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(data.slice(0, 5))); // cap at 5
+    } catch {
+      // ignore storage errors
+    }
+  };
 
   // Notify parent when path changes
   useEffect(() => {
     onPathChange?.(currentPath);
   }, [currentPath, onPathChange]);
+
+  // Load snapshots when path changes
+  useEffect(() => {
+    if (snapshotKey) {
+      const loaded = loadSnapshots(snapshotKey);
+      setSnapshots(loaded);
+    } else {
+      setSnapshots([]);
+    }
+  }, [snapshotKey]);
 
   // Quick-load document based on activeSubView
   useEffect(() => {
@@ -54,6 +90,8 @@ export function MDWorkspace({
       plan: `projects/${project}/sessions/${session}/plans/plan.md`,
       tasks: `projects/${project}/sessions/${session}/tasks/tasks.md`,
       context: `projects/${project}/sessions/${session}/contexts/context.md`,
+      implementation: `projects/${project}/sessions/${session}/implementation/README.md`,
+      feedback: `projects/${project}/sessions/${session}/feedback/feedback.md`,
     };
 
     const path = pathMap[activeSubView];
@@ -147,12 +185,50 @@ export function MDWorkspace({
     setSaving(true);
     setError(null);
     try {
+      // Snapshot current content before saving
+      if (snapshotKey) {
+        const currentSnapshot = { ts: Date.now(), content: initialContent };
+        const updatedSnapshots = [currentSnapshot, ...snapshots].slice(0, 5);
+        setSnapshots(updatedSnapshots);
+        saveSnapshots(snapshotKey, updatedSnapshots);
+      }
+
       await putDocument(project, session, currentPath, content, token);
       setInitialContent(content);
     } catch (err: any) {
       setError(err?.message || "Failed to save");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const restoreSnapshot = (ts: number) => {
+    const snap = snapshots.find((s) => s.ts === ts);
+    if (!snap) return;
+
+    if (isDirty && !window.confirm("Restore snapshot? Unsaved changes will be lost.")) {
+      return;
+    }
+
+    setContent(snap.content);
+    setInitialContent(snap.content);
+
+    // Recreate editor with snapshot content
+    if (crepeRef.current && editorRef.current) {
+      crepeRef.current.destroy();
+      const crepe = new Crepe({
+        root: editorRef.current,
+        defaultValue: snap.content,
+      });
+      crepeRef.current = crepe;
+      crepe.create().then(() => {
+        crepe.setReadonly(readOnly);
+        crepe.on((listener) => {
+          listener.markdownUpdated((_, markdown) => {
+            setContent(markdown);
+          });
+        });
+      });
     }
   };
 
@@ -282,6 +358,25 @@ export function MDWorkspace({
             <FolderOpen className="h-4 w-4 mr-2" />
             Open
           </Button>
+          {snapshots.length > 0 && (
+            <div className="flex items-center gap-1">
+              <label className="text-xs text-slate-600">Snapshots:</label>
+              <select
+                className="text-xs border border-slate-300 rounded px-2 py-1"
+                onChange={(e) => restoreSnapshot(Number(e.target.value))}
+                value=""
+              >
+                <option value="" disabled>
+                  Restore…
+                </option>
+                {snapshots.map((s) => (
+                  <option key={s.ts} value={s.ts}>
+                    {new Date(s.ts).toLocaleString()}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           {isDirty && <span className="text-xs text-amber-600 font-semibold">● Unsaved</span>}
           <Button
             onClick={handleSave}

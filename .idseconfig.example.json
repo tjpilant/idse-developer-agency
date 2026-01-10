@@ -1,0 +1,9 @@
+{
+  "mode": "offline",
+  "mcp_endpoint": "https://mcp.idse-agent.io/sync",
+  "supabase_project": "spxovndsgpzvcztbkjel",
+  "supabase_url": "https://spxovndsgpzvcztbkjel.supabase.co",
+  "supabase_token": "stored_in_secret_store_or_env",
+  "project_id": null,
+  "auto_sync": false
+}

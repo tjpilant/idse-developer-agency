@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight, User } from "lucide-react";
+import { ChevronDown, ChevronRight, LayoutDashboard, User } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -6,11 +6,11 @@ import { Separator } from "@/components/ui/separator";
 import { SessionSelector } from "@/components/SessionSelector";
 
 interface LeftNavProps {
-  activeWorkspace: "welcome" | "puck" | "md";
+  activeWorkspace: "welcome" | "puck" | "md" | "projects";
   activeSubView: string | null;
   currentProject: string;
   currentSession: string;
-  onWorkspaceChange: (workspace: "puck" | "md", subView?: string) => void;
+  onWorkspaceChange: (workspace: "puck" | "md" | "projects", subView?: string) => void;
   onSessionChange: (project: string, session: string) => void;
 }
 
@@ -47,6 +47,17 @@ export function LeftNav({
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto p-2">
         <div className="space-y-1">
+          <Button
+            variant="ghost"
+            className={`w-full justify-start text-slate-200 hover:bg-slate-800 hover:text-white ${
+              activeWorkspace === "projects" ? "bg-slate-800 text-white" : ""
+            }`}
+            onClick={() => onWorkspaceChange("projects")}
+          >
+            <LayoutDashboard className="h-4 w-4 mr-2" />
+            IDSE Projects
+          </Button>
+
           {/* Puck Editor */}
           <Collapsible open={puckExpanded} onOpenChange={setPuckExpanded}>
             <CollapsibleTrigger asChild>
@@ -202,6 +213,30 @@ export function LeftNav({
                 onClick={() => onWorkspaceChange("md", "context")}
               >
                 Context
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`w-full justify-start text-sm ${
+                  activeWorkspace === "md" && activeSubView === "implementation"
+                    ? "bg-slate-800 text-white"
+                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                }`}
+                onClick={() => onWorkspaceChange("md", "implementation")}
+              >
+                Implementation
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`w-full justify-start text-sm ${
+                  activeWorkspace === "md" && activeSubView === "feedback"
+                    ? "bg-slate-800 text-white"
+                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                }`}
+                onClick={() => onWorkspaceChange("md", "feedback")}
+              >
+                Feedback
               </Button>
             </CollapsibleContent>
           </Collapsible>

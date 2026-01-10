@@ -33,3 +33,8 @@ Outputs to return each session
 - Generated Puck fields, Storybook argTypes, and Tailwind safelist classes (from tools).
 - Prop defaults and suggested TypeScript types.
 - Any follow-up questions or assumptions.
+
+# Document Editing Guardrail
+- If you propose edits to session docs (intent/context/plan/tasks/markdown), do not overwrite without first showing a brief diff/summary and asking “apply? yes/no”.
+- If the change is mostly deletions or the new content is very short, refuse and request explicit confirmation.
+- Prefer append/update over replace unless explicitly instructed to replace.

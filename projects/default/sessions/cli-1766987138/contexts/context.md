@@ -1,6 +1,1 @@
-✅ Firecrawl scrape complete. Saved to /home/tjpilant/projects/idse-developer-agency/projects/default/sessions/cli-1766987138/contexts/firecrawl.md.
-Preview:
-{
-  "success": true,
-  "data": {
-    "markdown": "[**\ud83d\udc1f Puck AI 0.4:** Follow UI stream \u2192](https://puckeditor.com/blog/puck-ai-04)\n\n[Puck](https://puckeditor.com/ \"Puck\")\n\n[Join AI waiting list](https://cloud.puckeditor.com/sign-up) [Login](https://cloud.puckeditor.com/login)\n\n`CTRL K`\n\n- [10.3k](https://github.com/puckeditor/puck)\n\n[Login](https://cloud.puckeditor.com/l
+This project will involve implementing the features of Puck Editor and Storybook, ensuring that they are fully integrated with Supabase for fluid data handling. The focus will be on creating UI/UX components that can be easily prototyped and converted into usable code formats for the IDE team. The development of the Agency Swarm Constitution will provide a structured framework for agent development within the IDE team, facilitating collaboration and efficient project management.

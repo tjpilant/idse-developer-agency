@@ -78,6 +78,8 @@ function App() {
 
         {/* Admin dashboard */}
         <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/projects" element={<AdminDashboard initialWorkspace="projects" />} />
+        <Route path="/admin/idse-projects" element={<AdminDashboard initialWorkspace="projects" />} />
 
         {/* Legacy routes - redirect to /admin */}
         <Route path="/editor" element={<Navigate to="/admin" replace />} />

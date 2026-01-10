@@ -34,6 +34,36 @@ export function MilkdownEditor({
       readOnly,
     });
   const [initContent, setInitContent] = useState<string>("");
+  const [snapshots, setSnapshots] = useState<{ ts: number; content: string }[]>([]);
+
+  // Snapshot helpers
+  const snapshotKey = `mdsnap:${project}:${session}:${path}`;
+
+  const loadSnapshots = (key: string) => {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+      return [];
+    } catch {
+      return [];
+    }
+  };
+
+  const saveSnapshots = (key: string, data: { ts: number; content: string }[]) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(data.slice(0, 5))); // cap at 5
+    } catch {
+      // ignore storage errors
+    }
+  };
+
+  // Load snapshots when path changes
+  useEffect(() => {
+    const loaded = loadSnapshots(snapshotKey);
+    setSnapshots(loaded);
+  }, [snapshotKey]);
 
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {
@@ -87,9 +117,45 @@ export function MilkdownEditor({
 
   const handleSave = async () => {
     try {
+      // Snapshot current content before saving new version
+      const currentSnapshot = { ts: Date.now(), content: initContent };
+      const updatedSnapshots = [currentSnapshot, ...snapshots].slice(0, 5);
+      setSnapshots(updatedSnapshots);
+      saveSnapshots(snapshotKey, updatedSnapshots);
+
       await save();
     } catch {
       // errors surfaced via state
+    }
+  };
+
+  const restoreSnapshot = (ts: number) => {
+    const snap = snapshots.find((s) => s.ts === ts);
+    if (!snap) return;
+
+    if (dirty && !window.confirm("Restore snapshot? Unsaved changes will be lost.")) {
+      return;
+    }
+
+    setContent(snap.content);
+    setInitContent(snap.content);
+
+    // Recreate editor with snapshot content
+    if (crepeRef.current && editorRef.current) {
+      crepeRef.current.destroy();
+      const crepe = new Crepe({
+        root: editorRef.current,
+        defaultValue: snap.content,
+      });
+      crepeRef.current = crepe;
+      crepe.create().then(() => {
+        crepe.setReadonly(readOnly);
+        crepe.on((listener) => {
+          listener.markdownUpdated((_, markdown) => {
+            setContent(markdown);
+          });
+        });
+      });
     }
   };
 
@@ -107,6 +173,25 @@ export function MilkdownEditor({
           >
             {role}
           </span>
+          {snapshots.length > 0 && (
+            <div className="flex items-center gap-1">
+              <label className="text-xs text-slate-600">Snapshots:</label>
+              <select
+                className="text-xs border border-slate-300 rounded px-2 py-1"
+                onChange={(e) => restoreSnapshot(Number(e.target.value))}
+                value=""
+              >
+                <option value="" disabled>
+                  Restore…
+                </option>
+                {snapshots.map((s) => (
+                  <option key={s.ts} value={s.ts}>
+                    {new Date(s.ts).toLocaleString()}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           {dirty && <span className="text-xs text-amber-600">● Unsaved</span>}
           <button
             className={`px-3 py-1 rounded text-sm font-semibold transition ${

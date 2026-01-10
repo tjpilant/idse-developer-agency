@@ -3,12 +3,14 @@
 This workflow operates under the **Intent-Driven Systems Engineering (IDSE)** Constitution.
 In case of conflict, precedence is as follows:
 
-1. `docs/02-idse-constitution.md` – IDSE Constitution  
-2. `docs/03-idse-pipeline.md` – IDSE Pipeline  
-3. `.cursor/rules/workflow.mdc` – Agency Swarm implementation steps
+1. `.idse/governance/IDSE_CONSTITUTION.md` – IDSE Constitution (universal)
+2. `.idse/governance/AGENCY_SWARM_CONSTITUTION.md` – Agency Swarm Constitution (framework)
+3. `.idse/governance/IDSE_PIPELINE.md` – IDSE Pipeline
+4. `.cursor/rules/workflow.mdc` – Agency Swarm implementation steps (this file)
 
-IDSE defines *why and how* decisions are made.  
-This workflow defines *how to build Agency Swarm systems* within those constraints.
+IDSE defines *why and how* decisions are made.
+Agency Swarm Constitution defines *framework-specific patterns*.
+This workflow defines *step-by-step implementation details*.
 
 ## Environment Setup (Critical!)
 

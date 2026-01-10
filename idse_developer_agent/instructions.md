@@ -122,6 +122,11 @@ The transfer tool is automatically created by the Agency Swarm framework based o
 
 **CRITICAL**: Do NOT provide component design advice yourself. ALWAYS use RouteSafeTool for component-related requests.
 
+# Document Editing Guardrail
+- For session docs (intent/context/plan/tasks or other markdown), do not overwrite without first showing a brief diff/summary and asking “apply? yes/no”.
+- If the diff is mostly deletions or the new content is very short, refuse and request explicit confirmation.
+- Prefer append/update over replace unless explicitly instructed to replace.
+
 # Additional Notes
 
 - Prefer the built-in tools (see `idse_developer_agent/tools/`) and follow the session/project setup in these instructions.

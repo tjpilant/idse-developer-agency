@@ -33,9 +33,35 @@ export function MarkdownEditorModal({
   const [error, setError] = useState<string | null>(null);
   const [showOpenDialog, setShowOpenDialog] = useState(!initialPath);
   const [showSaveAsDialog, setShowSaveAsDialog] = useState(false);
+  const [snapshots, setSnapshots] = useState<{ ts: number; content: string }[]>([]);
   const readOnly = role === "reader";
 
   const isDirty = content !== initialContent;
+
+  const loadSnapshots = (key: string) => {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+      return [];
+    } catch {
+      return [];
+    }
+  };
+
+  const saveSnapshots = (key: string, data: { ts: number; content: string }[]) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(data.slice(0, 5))); // cap at 5
+      console.log("Saved snapshots", { key, count: data.length });
+    } catch {
+      // ignore storage errors
+    }
+  };
+
+  const snapshotKey = currentPath
+    ? `mdsnap:${project}:${session}:${currentPath}`
+    : null;
 
   // Load document when path changes
   useEffect(() => {
@@ -74,6 +100,18 @@ export function MarkdownEditorModal({
       cancelled = true;
     };
   }, [currentPath, project, session, token, isOpen]);
+
+  // Load snapshots when document changes
+  useEffect(() => {
+    if (snapshotKey) {
+      const loaded = loadSnapshots(snapshotKey);
+      console.log('[Snapshot] Loading for key:', snapshotKey);
+      console.log('[Snapshot] Found snapshots:', loaded.length);
+      setSnapshots(loaded);
+    } else {
+      setSnapshots([]);
+    }
+  }, [snapshotKey]);
 
   // Create Crepe editor when modal opens and document loads
   useLayoutEffect(() => {
@@ -119,9 +157,21 @@ export function MarkdownEditorModal({
 
   const handleSave = async () => {
     if (!currentPath || readOnly) return;
+    const ok = window.confirm(
+      `Apply changes to ${currentPath}? A snapshot of the previous version will be saved locally.`
+    );
+    if (!ok) return;
     setSaving(true);
     setError(null);
     try {
+      // snapshot previous content before overwrite (even if empty)
+      if (snapshotKey) {
+        const prev = initialContent ?? "";
+        const next = [{ ts: Date.now(), content: prev }, ...snapshots];
+        console.log('[Snapshot] Saving snapshot:', { key: snapshotKey, count: next.length });
+        setSnapshots(next.slice(0, 5));
+        saveSnapshots(snapshotKey, next);
+      }
       await putDocument(project, session, currentPath, content, token);
       setInitialContent(content);
     } catch (err: any) {
@@ -136,6 +186,11 @@ export function MarkdownEditorModal({
     setSaving(true);
     setError(null);
     try {
+      if (snapshotKey) {
+        const prev = initialContent ?? "";
+        const next = [{ ts: Date.now(), content: prev }, ...snapshots];
+        saveSnapshots(snapshotKey, next);
+      }
       await putDocument(project, session, newPath, content, token);
       setCurrentPath(newPath);
       setInitialContent(content);
@@ -144,6 +199,26 @@ export function MarkdownEditorModal({
       setError(err?.message || "Failed to save");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const restoreSnapshot = (ts: number) => {
+    const snap = snapshots.find((s) => s.ts === ts);
+    if (!snap) return;
+    if (
+      isDirty &&
+      !window.confirm("Restore snapshot? Unsaved changes will be replaced in the editor.")
+    ) {
+      return;
+    }
+    setContent(snap.content);
+    setInitialContent(snap.content);
+    try {
+      // Best-effort to push content into the editor without full reinit
+      // @ts-ignore - setMarkdown may exist on Crepe instance
+      crepeRef.current?.setMarkdown?.(snap.content);
+    } catch {
+      // ignore if not supported
     }
   };
 
@@ -180,25 +255,46 @@ export function MarkdownEditorModal({
           <div className="text-sm font-semibold text-slate-800 truncate flex-1">
             {currentPath || "Untitled"}
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowOpenDialog(true)}
-              className="px-3 py-1 text-sm rounded bg-slate-100 hover:bg-slate-200 text-slate-700"
-            >
-              Open…
-            </button>
-            <button
-              onClick={() => setShowSaveAsDialog(true)}
-              className="px-3 py-1 text-sm rounded bg-slate-100 hover:bg-slate-200 text-slate-700"
-              disabled={readOnly}
-            >
-              Save As…
-            </button>
-            {isDirty && <span className="text-xs text-amber-600">● Unsaved</span>}
-            <button
-              onClick={handleSave}
-              className={`px-3 py-1 rounded text-sm font-semibold ${
-                readOnly || !currentPath
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowOpenDialog(true)}
+            className="px-3 py-1 text-sm rounded bg-slate-100 hover:bg-slate-200 text-slate-700"
+          >
+            Open…
+          </button>
+          <button
+            onClick={() => setShowSaveAsDialog(true)}
+            className="px-3 py-1 text-sm rounded bg-slate-100 hover:bg-slate-200 text-slate-700"
+            disabled={readOnly}
+          >
+            Save As…
+          </button>
+          {snapshots.length > 0 ? (
+            <div className="flex items-center gap-1">
+              <label className="text-xs text-slate-600">Snapshots ({snapshots.length}):</label>
+              <select
+                className="text-xs border border-slate-300 rounded px-2 py-1"
+                onChange={(e) => restoreSnapshot(Number(e.target.value))}
+                value=""
+              >
+                <option value="" disabled>
+                  Restore…
+                </option>
+                {snapshots.map((s) => (
+                  <option key={s.ts} value={s.ts}>
+                    {new Date(s.ts).toLocaleString()}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <span className="text-xs text-slate-400">No snapshots yet</span>
+          )}
+          {isDirty && <span className="text-xs text-amber-600">● Unsaved</span>}
+          <button
+            onClick={handleSave}
+            className={`px-3 py-1 rounded text-sm font-semibold ${
+              readOnly || !currentPath
                   ? "bg-slate-100 text-slate-500 cursor-not-allowed"
                   : "bg-indigo-600 text-white hover:bg-indigo-700"
               }`}
@@ -271,20 +367,9 @@ function FileOpenDialog({
       return short;
     }
 
-    // Parse short path format: "intents/intent.md" or just "intent.md"
-    const parts = short.split('/');
-    let folder = 'intents'; // default
-    let filename = short;
-
-    if (parts.length === 2) {
-      folder = parts[0];
-      filename = parts[1];
-    } else if (parts.length === 1) {
-      // Just a filename like "intent.md"
-      filename = parts[0];
-    }
-
-    const fullPath = `${folder}/projects/${project}/sessions/${session}/${filename}`;
+    // Normalize to: projects/<project>/sessions/<session>/<shortpath>
+    // where shortpath is like "intents/intent.md" or "specs/spec.md"
+    const fullPath = `projects/${project}/sessions/${session}/${short}`;
     console.log('buildFullPath output:', fullPath);
     return fullPath;
   };
