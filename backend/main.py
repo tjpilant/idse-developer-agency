@@ -77,6 +77,8 @@ def register_routes():
             status_routes,
             status_pages,
             files_routes,
+            mcp_routes,
+            chat_routes,
         )
 
         status_enabled = (
@@ -98,6 +100,12 @@ def register_routes():
         app.include_router(agui_realtime.router, tags=["AG-UI Realtime"])
         app.include_router(
             files_routes.router, prefix="/api", tags=["File Browser"]
+        )
+        app.include_router(
+            mcp_routes.router, tags=["MCP Sync"]
+        )
+        app.include_router(
+            chat_routes.router, tags=["Chat History"]
         )
 
         if status_enabled:
