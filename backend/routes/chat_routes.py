@@ -134,11 +134,15 @@ async def save_chat_message(request: SaveMessageRequest):
     """
     Save a single chat message to Supabase.
 
+    BEST-EFFORT PERSISTENCE: This endpoint never raises exceptions to avoid
+    blocking the chat UI if Supabase is unavailable. Failures are logged
+    but the chat continues with in-memory state.
+
     Args:
         request: SaveMessageRequest with project, session, role, content
 
     Returns:
-        MessageResponse with created message ID and timestamp
+        MessageResponse with created message ID and timestamp (or error placeholder)
     """
     try:
         supabase = get_supabase_client()
@@ -162,7 +166,7 @@ async def save_chat_message(request: SaveMessageRequest):
         created_message = response.data[0]
 
         logger.info(
-            f"Saved {request.role} message for {request.project}/{request.session}"
+            f"✅ Saved {request.role} message for {request.project}/{request.session}"
         )
 
         return MessageResponse(
@@ -171,14 +175,68 @@ async def save_chat_message(request: SaveMessageRequest):
         )
 
     except Exception as e:
-        logger.error(f"Error saving chat message: {e}")
-        # Don't raise - allow chat to continue even if persistence fails
-        # Return a placeholder response
+        logger.warning(
+            f"⚠️ Failed to persist {request.role} message (chat continues): {e}"
+        )
+        # CRITICAL: Don't raise - allow chat to continue even if persistence fails
+        # Return a placeholder response so frontend doesn't break
         return MessageResponse(
-            id="error",
+            id=f"error-{datetime.now().timestamp()}",
             created_at=datetime.now().isoformat(),
             status="failed"
         )
+
+
+@router.get("/api/chat/latest-session/{project}")
+async def get_latest_session(project: str):
+    """
+    Get the most recent session ID for a project based on chat activity.
+
+    This is used when navigating from the dashboard to avoid hardcoding "latest".
+
+    Args:
+        project: Project identifier
+
+    Returns:
+        Dict with session_id and last_message_at
+    """
+    try:
+        supabase = get_supabase_client()
+
+        # Find most recent session with chat messages
+        response = (
+            supabase.table("chat_messages")
+            .select("session_id, created_at")
+            .eq("project_id", project)
+            .order("created_at", desc=True)
+            .limit(1)
+            .execute()
+        )
+
+        if response.data and len(response.data) > 0:
+            latest = response.data[0]
+            return {
+                "session_id": latest["session_id"],
+                "last_message_at": latest["created_at"],
+                "source": "chat_history"
+            }
+        else:
+            # No chat history - return fallback
+            logger.info(f"No chat history found for {project}, using fallback")
+            return {
+                "session_id": "default",
+                "last_message_at": None,
+                "source": "fallback"
+            }
+
+    except Exception as e:
+        logger.error(f"Error fetching latest session for {project}: {e}")
+        # Return fallback instead of raising
+        return {
+            "session_id": "default",
+            "last_message_at": None,
+            "source": "error_fallback"
+        }
 
 
 @router.delete("/api/chat/history/{project}/{session}")
