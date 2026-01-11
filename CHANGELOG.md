@@ -1,5 +1,49 @@
 # Changelog
 
+## 2026-01-11
+
+### Agent Session Context Fix
+
+**Session:** IDSE_Core/status-browser-integration
+
+#### Problem
+Agent was unable to determine its current session context, responding with "I don't have an active session" even when:
+- `.idse_active_session.json` was correctly set
+- Backend `SessionManager` was working
+- Frontend was sending project/session data
+
+**Root Causes:**
+1. Agent instructions only checked session when running tools, not for general responses
+2. Agent couldn't execute Python code from instructions alone
+3. Session context wasn't explicitly passed to agent in messages
+4. Agency instance initialized once with stale environment variables
+
+#### Solution: Context Injection in Message Payload
+
+**Implementation:**
+- Modified `backend/routes/agui_realtime.py` (lines 160-165) to inject session context prefix into all messages
+- Format: `[Context: You are working in project 'X', session 'Y']\n\n{user_message}`
+- Also updates environment variables (`IDSE_PROJECT`, `IDSE_SESSION_ID`, etc.) on each request
+
+**Why This Works:**
+- Session context becomes part of the actual message the agent receives
+- No reliance on agent executing code or reading environment variables
+- Works immediately with every message, even when switching sessions
+- Agent naturally references this context in responses
+
+**Files Modified:**
+- `backend/routes/agui_realtime.py` - Context injection (lines 160-165) and env var updates (lines 147-150)
+- `idse_developer_agent/instructions.md` - Added Session Awareness section (lines 5-19) for documentation
+- `/home/tjpilant/.claude/plans/crystalline-kindling-lovelace.md` - Documented solution and test results
+
+**Test Results:**
+- ✅ Agent correctly identifies session after switching from `puck-components` to `status-browser-integration`
+- ✅ Session context visible in agent responses
+- ✅ No errors or confusion about current working context
+- ✅ Works across all session switches
+
+---
+
 ## 2025-12-31
 
 ### Full Repository Access & AG-UI Restoration

@@ -85,13 +85,13 @@ export function MDWorkspace({
     if (!activeSubView || activeSubView === "open") return;
 
     const pathMap: Record<string, string> = {
-      intent: `projects/${project}/sessions/${session}/intents/intent.md`,
-      spec: `projects/${project}/sessions/${session}/specs/spec.md`,
-      plan: `projects/${project}/sessions/${session}/plans/plan.md`,
-      tasks: `projects/${project}/sessions/${session}/tasks/tasks.md`,
-      context: `projects/${project}/sessions/${session}/contexts/context.md`,
-      implementation: `projects/${project}/sessions/${session}/implementation/README.md`,
-      feedback: `projects/${project}/sessions/${session}/feedback/feedback.md`,
+      intent: `intents/intent.md`,
+      spec: `specs/spec.md`,
+      plan: `plans/plan.md`,
+      tasks: `tasks/tasks.md`,
+      context: `contexts/context.md`,
+      implementation: `implementation/README.md`,
+      feedback: `feedback/feedback.md`,
     };
 
     const path = pathMap[activeSubView];
@@ -118,8 +118,9 @@ export function MDWorkspace({
       try {
         const res = await getDocument(project, session, currentPath, token);
         if (cancelled) return;
-        setContent(res.content);
-        setInitialContent(res.content);
+        const body = res.content ?? "";
+        setContent(body);
+        setInitialContent(body);
         setShowOpenDialog(false);
       } catch (err: any) {
         if (cancelled) return;
@@ -145,7 +146,7 @@ export function MDWorkspace({
 
   // Create Crepe editor when document loads
   useLayoutEffect(() => {
-    if (!editorRef.current || loading || showOpenDialog || showSaveAsDialog) return;
+    if (!editorRef.current || loading || showOpenDialog || showSaveAsDialog || error) return;
 
     // Destroy existing editor if any
     if (crepeRef.current) {
@@ -193,8 +194,12 @@ export function MDWorkspace({
         saveSnapshots(snapshotKey, updatedSnapshots);
       }
 
-      await putDocument(project, session, currentPath, content, token);
-      setInitialContent(content);
+      await putDocument(project, session, currentPath, content || "\n", token);
+      setInitialContent(content || "\n");
+      // Refresh snapshots after save
+      if (snapshotKey) {
+        saveSnapshots(snapshotKey, [{ ts: Date.now(), content: content || "\n" }]);
+      }
     } catch (err: any) {
       setError(err?.message || "Failed to save");
     } finally {
@@ -381,7 +386,7 @@ export function MDWorkspace({
           <Button
             onClick={handleSave}
             size="sm"
-            disabled={readOnly || saving || !currentPath || !isDirty}
+            disabled={readOnly || saving || !currentPath}
           >
             <Save className="h-4 w-4 mr-2" />
             {saving ? "Saving..." : "Save"}

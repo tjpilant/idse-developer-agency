@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useChatHistory, ChatMessage as PersistedChatMessage } from "../../hooks/useChatHistory";
 
 type ChatMessage = { role: "user" | "assistant" | "system"; content: string };
@@ -11,16 +11,25 @@ type AguiEvent =
   | { type: "TOOL_CALL_END"; tool_name?: string }
   | { type: string; [key: string]: unknown };
 
-// Use separate base URL for agency chat (defaults to 8000, not the main API at 5004)
-const chatApiBase = (import.meta as any).env?.VITE_CHAT_API_BASE ?? "http://localhost:8000";
+// Use chat API base (falls back to API base or current origin)
+const chatApiBase =
+  ((import.meta as any).env?.VITE_CHAT_API_BASE ??
+    (import.meta as any).env?.VITE_API_BASE ??
+    (typeof window !== "undefined" ? window.location.origin : ""))?.replace(/\/$/, "") || "";
 
 interface RightPanelProps {
   project?: string;
   session?: string;
   contextInfo?: string; // Additional context like current page slug or document path
+  onJumpToDashboard?: () => void;
 }
 
-export function RightPanel({ project, session, contextInfo }: RightPanelProps = {}) {
+export function RightPanel({
+  project,
+  session,
+  contextInfo,
+  onJumpToDashboard
+}: RightPanelProps = {}) {
   // Use chat history hook for persistence (defaults to "default"/"default" if not provided)
   const effectiveProject = project || "default";
   const effectiveSession = session || "default";
@@ -36,8 +45,8 @@ export function RightPanel({ project, session, contextInfo }: RightPanelProps = 
   const [sending, setSending] = useState(false);
   const [connected, setConnected] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
-  const streamUrl = useMemo(() => `${chatApiBase.replace(/\/$/, "")}/stream`, []);
-  const inboundUrl = useMemo(() => `${chatApiBase.replace(/\/$/, "")}/inbound`, []);
+  const streamUrl = useMemo(() => `${chatApiBase}/stream`, []);
+  const inboundUrl = useMemo(() => `${chatApiBase}/inbound`, []);
   const eventSourceRef = useRef<EventSource | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
@@ -57,19 +66,22 @@ export function RightPanel({ project, session, contextInfo }: RightPanelProps = 
   }, [persistedMessages, historyLoading]);
 
   // Helper to append messages and keep scroll pinned to bottom.
-  const pushMessage = async (msg: ChatMessage) => {
-    setLocalMessages((prev) => [...prev, msg]);
+  const pushMessage = useCallback(
+    async (msg: ChatMessage) => {
+      setLocalMessages((prev) => [...prev, msg]);
 
-    // Persist assistant messages (user messages already persisted in handleSend)
-    if (msg.role === "assistant") {
-      await saveMessage("assistant", msg.content);
-    }
+      // Persist assistant messages (user messages already persisted in handleSend)
+      if (msg.role === "assistant") {
+        await saveMessage("assistant", msg.content);
+      }
 
-    // Scroll after the state flushes.
-    requestAnimationFrame(() => {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    });
-  };
+      // Scroll after the state flushes.
+      requestAnimationFrame(() => {
+        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      });
+    },
+    [saveMessage]
+  );
 
   // Connect to AG-UI event stream (SSE).
   useEffect(() => {
@@ -121,7 +133,7 @@ export function RightPanel({ project, session, contextInfo }: RightPanelProps = 
       es.close();
       eventSourceRef.current = null;
     };
-  }, [streamUrl]);
+  }, [streamUrl, effectiveProject, effectiveSession, pushMessage]);
 
   const handleSend = async (e: FormEvent) => {
     e.preventDefault();
@@ -186,9 +198,20 @@ export function RightPanel({ project, session, contextInfo }: RightPanelProps = 
               <span className="font-medium">Context:</span> {contextInfo}
             </div>
           )}
-          <p className="text-xs text-slate-500 mt-1">
-            AG-UI stream {connected ? "connected" : "connecting…"}
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-slate-500 mt-1">
+              AG-UI stream {connected ? "connected" : "connecting…"}
+            </p>
+            {onJumpToDashboard && (
+              <button
+                onClick={onJumpToDashboard}
+                className="text-[11px] text-cyan-700 hover:underline"
+                type="button"
+              >
+                Jump to dashboard →
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Messages - Scrollable area */}

@@ -31,6 +31,38 @@ class SessionMeta:
 
 class SessionManager:
     @staticmethod
+    def set_active_session(project: str, session: str, owner: Optional[str] = None, created_at: Optional[float] = None) -> SessionMeta:
+        """
+        Explicitly set the active session and update history.
+
+        Args:
+            project: Project name
+            session: Session identifier
+            owner: Optional owner (defaults to current user)
+            created_at: Optional timestamp (defaults to now)
+        """
+        owner_val = owner or getpass.getuser()
+        ts = created_at or time.time()
+        meta = SessionMeta(
+            session_id=session,
+            name=session,
+            created_at=float(ts),
+            owner=owner_val,
+            project=project or "default",
+        )
+        ACTIVE_FILE.write_text(json.dumps(asdict(meta), indent=2), encoding="utf-8")
+
+        history = {}
+        if HISTORY_FILE.exists():
+            try:
+                history = json.loads(HISTORY_FILE.read_text(encoding="utf-8"))
+            except Exception:
+                history = {}
+        history[meta.project] = asdict(meta)
+        HISTORY_FILE.write_text(json.dumps(history, indent=2), encoding="utf-8")
+        return meta
+
+    @staticmethod
     def create_session(name: Optional[str] = None, project: str = "default") -> str:
         """
         Create a new session and record it as active.
@@ -96,6 +128,13 @@ class SessionManager:
             return meta
         SessionManager.create_session(project=project)
         return SessionManager.get_active_session()
+
+    @staticmethod
+    def update_active_session(project: str, session: str) -> SessionMeta:
+        """
+        Prefer explicit setter when project/session is known externally.
+        """
+        return SessionManager.set_active_session(project=project, session=session)
 
     @staticmethod
     def build_path(stage: str, filename: str) -> Path:

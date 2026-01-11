@@ -15,7 +15,10 @@ export interface ChatMessage {
   created_at: string;
 }
 
-const API_BASE = (import.meta as any)?.env?.VITE_API_BASE ?? 'http://localhost:8000';
+const apiBaseRaw =
+  (import.meta as any)?.env?.VITE_API_BASE ??
+  (typeof window !== "undefined" ? window.location.origin : "");
+const API_BASE = apiBaseRaw ? apiBaseRaw.replace(/\/$/, "") : "";
 
 export function useChatHistory(project: string, session: string) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -34,9 +37,8 @@ export function useChatHistory(project: string, session: string) {
     setError(null);
 
     try {
-      const response = await fetch(
-        `${API_BASE}/api/chat/history/${project}/${session}`
-      );
+      const url = `${API_BASE || ""}/api/chat/history/${project}/${session}`;
+      const response = await fetch(url);
 
       if (!response.ok) {
         throw new Error(`Failed to load chat history: ${response.status}`);
@@ -65,7 +67,8 @@ export function useChatHistory(project: string, session: string) {
   const saveMessage = useCallback(
     async (role: 'user' | 'assistant' | 'system', content: string) => {
       try {
-        const response = await fetch(`${API_BASE}/api/chat/messages`, {
+        const url = `${API_BASE || ""}/api/chat/messages`;
+        const response = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -107,10 +110,8 @@ export function useChatHistory(project: string, session: string) {
 
   const clearHistory = useCallback(async () => {
     try {
-      const response = await fetch(
-        `${API_BASE}/api/chat/history/${project}/${session}`,
-        { method: 'DELETE' }
-      );
+      const url = `${API_BASE || ""}/api/chat/history/${project}/${session}`;
+      const response = await fetch(url, { method: 'DELETE' });
 
       if (!response.ok) {
         throw new Error(`Failed to clear history: ${response.status}`);

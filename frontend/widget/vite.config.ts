@@ -22,6 +22,14 @@ export default defineConfig({
         target: "http://localhost:8000",
         changeOrigin: true,
       },
+      "/stream": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+      },
+      "/inbound": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+      },
     },
   },
   preview: {

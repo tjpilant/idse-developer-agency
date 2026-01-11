@@ -27,7 +27,9 @@ type ProjectStatus = {
 };
 
 const STAGE_ORDER = ["intent", "context", "spec", "plan", "tasks", "implementation", "feedback"];
-const DEFAULT_API_BASE = (import.meta as any)?.env?.VITE_API_BASE ?? "http://localhost:8000";
+const DEFAULT_API_BASE =
+  ((import.meta as any)?.env?.VITE_API_BASE ??
+    (typeof window !== "undefined" ? window.location.origin : ""))?.replace(/\/$/, "") || "";
 
 function calculateProgress(stages?: StageState) {
   const values = Object.values(stages ?? {});

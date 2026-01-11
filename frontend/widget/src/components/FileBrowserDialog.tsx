@@ -50,7 +50,8 @@ export function FileBrowserDialog({
     const fetchFileTree = async () => {
       try {
         setLoading(true);
-        const response = await fetch("http://localhost:5004/api/files/tree");
+        const API_BASE = (import.meta as any).env?.VITE_API_BASE || "http://localhost:8000";
+        const response = await fetch(`${API_BASE}/api/files/tree`);
         if (!response.ok) {
           throw new Error(`Failed to fetch file tree: ${response.statusText}`);
         }

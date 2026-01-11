@@ -1,7 +1,11 @@
 import { DocumentResponse, RenderResponse, SaveResponse } from "../types/milkdown";
 
 const API_BASE =
-  (import.meta as any).env?.VITE_MILKDOWN_API_URL || "http://localhost:8001";
+  (import.meta as any).env?.VITE_MILKDOWN_API_URL ||
+  (import.meta as any).env?.VITE_API_BASE ||
+  (typeof window !== "undefined" ? window.location.origin : "");
+
+const NORMALIZED_API_BASE = API_BASE ? API_BASE.replace(/\/$/, "") : "";
 
 function withAuth(token?: string): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -14,7 +18,7 @@ export async function getDocument(
   token?: string
 ): Promise<DocumentResponse> {
   const res = await fetch(
-    `${API_BASE}/api/sessions/${project}/${session}/documents?path=${encodeURIComponent(
+    `${NORMALIZED_API_BASE}/api/sessions/${project}/${session}/documents?path=${encodeURIComponent(
       path
     )}`,
     {
@@ -38,7 +42,7 @@ export async function putDocument(
   content: string,
   token?: string
 ): Promise<SaveResponse> {
-  const res = await fetch(`${API_BASE}/api/sessions/${project}/${session}/documents`, {
+  const res = await fetch(`${NORMALIZED_API_BASE}/api/sessions/${project}/${session}/documents`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -61,7 +65,7 @@ export async function renderMarkdown(
   content: string,
   token?: string
 ): Promise<RenderResponse> {
-  const res = await fetch(`${API_BASE}/api/sessions/${project}/${session}/render`, {
+  const res = await fetch(`${NORMALIZED_API_BASE}/api/sessions/${project}/${session}/render`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -89,7 +93,7 @@ export async function listFiles(
   token?: string
 ): Promise<FileItem[]> {
   const res = await fetch(
-    `${API_BASE}/api/sessions/${project}/${session}/files?path=${encodeURIComponent(path)}`,
+    `${NORMALIZED_API_BASE}/api/sessions/${project}/${session}/files?path=${encodeURIComponent(path)}`,
     {
       headers: {
         ...withAuth(token),

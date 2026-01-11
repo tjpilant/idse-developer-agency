@@ -15,12 +15,16 @@ interface SessionSelectorProps {
   currentProject: string;
   currentSession: string;
   onSessionChange: (project: string, session: string) => void;
+  onViewProjects?: () => void;
+  projectCount?: number;
 }
 
 export function SessionSelector({
   currentProject,
   currentSession,
   onSessionChange,
+  onViewProjects,
+  projectCount = 0,
 }: SessionSelectorProps) {
   const { projects, loading: projectsLoading } = useProjects();
   const [selectedProject, setSelectedProject] = useState(currentProject);
@@ -146,6 +150,20 @@ export function SessionSelector({
             {selectedProject}/{selectedSession}
           </span>
         </div>
+        {onViewProjects && (
+          <button
+            type="button"
+            onClick={onViewProjects}
+            className="mt-2 inline-flex items-center gap-2 rounded-md bg-slate-800 px-3 py-1 text-[11px] font-semibold text-cyan-200 hover:bg-slate-700"
+          >
+            View projects dashboard
+            {projectCount > 0 && (
+              <span className="rounded-full bg-cyan-100 px-2 py-0.5 text-[10px] font-semibold text-cyan-800">
+                {projectCount}
+              </span>
+            )}
+          </button>
+        )}
       </div>
     </div>
   );

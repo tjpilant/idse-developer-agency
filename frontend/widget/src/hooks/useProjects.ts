@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 
-const apiBase = (import.meta as any).env?.VITE_API_BASE ?? 'http://localhost:8000';
+const apiBaseRaw =
+  (import.meta as any).env?.VITE_API_BASE ??
+  (typeof window !== "undefined" ? window.location.origin : "");
+const apiBase = apiBaseRaw ? apiBaseRaw.replace(/\/$/, "") : "";
 
 export interface StageStatus {
   exists: boolean;
@@ -29,7 +32,7 @@ export function useProjects() {
   useEffect(() => {
     async function fetchProjects() {
       try {
-        const response = await fetch(`${apiBase}/api/projects/`);
+        const response = await fetch(`${apiBase || ""}/api/projects/`);
         if (!response.ok) {
           throw new Error(`Failed to fetch projects: ${response.statusText}`);
         }
@@ -64,7 +67,7 @@ export function useProjectSessions(projectId: string | null) {
     async function fetchSessions() {
       setLoading(true);
       try {
-        const response = await fetch(`${apiBase}/api/projects/${projectId}/sessions`);
+        const response = await fetch(`${apiBase || ""}/api/projects/${projectId}/sessions`);
         if (!response.ok) {
           throw new Error(`Failed to fetch sessions: ${response.statusText}`);
         }

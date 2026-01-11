@@ -7,16 +7,11 @@
     "project": "default"
   },
   "IDSE_Core": {
-    "session_id": "Puck_Components-1766800898",
-    "name": "Puck_Components",
-    "created_at": 1766800898.0,
+    "session_id": "puck-components",
+    "name": "puck-components",
+    "created_at": 1768167203.2779796,
     "owner": "tjpilant",
-    "project": "IDSE_Core",
-    "milkdown-crepe-v2": {
-      "created_at": 1767192192.756277,
-      "owner": "tjpilant",
-      "status": "active"
-    }
+    "project": "IDSE_Core"
   },
   "Project_Status_Browser": {
     "session_id": "session-1765832163",
@@ -26,9 +21,9 @@
     "project": "Project_Status_Browser"
   },
   "project-research-tools": {
-    "session_id": "session-1765977053",
-    "name": "session-1765977053",
-    "created_at": 1765977053.0,
+    "session_id": "status-browser-integration",
+    "name": "status-browser-integration",
+    "created_at": 1768126056.4605744,
     "owner": "tjpilant",
     "project": "project-research-tools"
   },
@@ -66,24 +61,31 @@
     }
   },
   "RemapTest": {
-    "remap-session": {
-      "created_at": 1767163921.397807,
-      "owner": "tjpilant",
-      "status": "active"
-    }
+    "session_id": "remap-session",
+    "name": "remap-session",
+    "created_at": 1768167516.2860513,
+    "owner": "tjpilant",
+    "project": "RemapTest"
   },
   "Puck_Editor_Research": {
-    "session_id": "session-1767221303",
-    "name": "session-1767221303",
-    "created_at": 1767221303.0,
+    "session_id": "status-browser-integration",
+    "name": "status-browser-integration",
+    "created_at": 1768168245.166828,
     "owner": "tjpilant",
     "project": "Puck_Editor_Research"
   },
   "Puck_Docs": {
-    "session_id": "session-1767235212",
-    "name": "session-1767235212",
-    "created_at": 1767235212.0,
+    "session_id": "session-01",
+    "name": "session-01",
+    "created_at": 1768164758.292605,
     "owner": "tjpilant",
     "project": "Puck_Docs"
+  },
+  "customer-portal": {
+    "session_id": "status-browser-integration",
+    "name": "status-browser-integration",
+    "created_at": 1768167475.4858155,
+    "owner": "tjpilant",
+    "project": "customer-portal"
   }
 }

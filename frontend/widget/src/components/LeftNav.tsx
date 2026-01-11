@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronRight, LayoutDashboard, User } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
@@ -24,6 +24,28 @@ export function LeftNav({
 }: LeftNavProps) {
   const [puckExpanded, setPuckExpanded] = useState(activeWorkspace === "puck");
   const [mdExpanded, setMdExpanded] = useState(activeWorkspace === "md");
+  const [projectCount, setProjectCount] = useState<number | null>(null);
+  const apiBase =
+    ((import.meta as any).env?.VITE_API_BASE ??
+      (typeof window !== "undefined" ? window.location.origin : ""))?.replace(/\/$/, "") || "";
+  const chatApiBase =
+    ((import.meta as any).env?.VITE_CHAT_API_BASE ??
+      (import.meta as any).env?.VITE_API_BASE ??
+      (typeof window !== "undefined" ? window.location.origin : ""))?.replace(/\/$/, "") || "";
+
+  useEffect(() => {
+    const loadCount = async () => {
+      try {
+        const res = await fetch(`${apiBase || ""}/sync/projects`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setProjectCount(data?.projects?.length ?? 0);
+      } catch (err) {
+        console.warn("[LeftNav] Failed to load project count", err);
+      }
+    };
+    loadCount();
+  }, [apiBase]);
 
   return (
     <div className="flex flex-col h-full bg-slate-900 text-slate-100">
@@ -39,7 +61,17 @@ export function LeftNav({
       <SessionSelector
         currentProject={currentProject}
         currentSession={currentSession}
-        onSessionChange={onSessionChange}
+        onSessionChange={(project, session) => {
+          onSessionChange(project, session);
+          // Persist the active session immediately so backend context follows the selector
+          fetch(`${chatApiBase}/api/chat/active-session`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ project, session }),
+          }).catch((err) => console.warn("[LeftNav] Failed to persist active session", err));
+        }}
+        onViewProjects={() => onWorkspaceChange("projects")}
+        projectCount={projectCount ?? 0}
       />
 
       <Separator className="bg-slate-700" />
@@ -55,7 +87,14 @@ export function LeftNav({
             onClick={() => onWorkspaceChange("projects")}
           >
             <LayoutDashboard className="h-4 w-4 mr-2" />
-            IDSE Projects
+            <span className="flex items-center gap-2">
+              IDSE Projects
+              {projectCount !== null && (
+                <span className="inline-flex items-center rounded-full bg-cyan-100 px-2 py-0.5 text-[11px] font-semibold text-cyan-800">
+                  {projectCount}
+                </span>
+              )}
+            </span>
           </Button>
 
           {/* Puck Editor */}

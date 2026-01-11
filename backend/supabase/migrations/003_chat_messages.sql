@@ -10,7 +10,10 @@
 -- ROLLBACK: To rollback, run:
 --   DROP TABLE IF EXISTS chat_messages CASCADE;
 
--- Check if table already exists
+-- Ensure UUID/digest functions are available
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- Check if table already exists (notice only; creation still uses IF NOT EXISTS)
 DO $$
 BEGIN
   IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'chat_messages') THEN
@@ -32,11 +35,9 @@ CREATE TABLE IF NOT EXISTS chat_messages (
   content TEXT NOT NULL,
   metadata JSONB DEFAULT '{}'::jsonb,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-
-  -- Message hash for deduplication (computed from role + content + timestamp)
-  message_hash TEXT GENERATED ALWAYS AS (
-    md5(role || '||' || content || '||' || EXTRACT(EPOCH FROM created_at)::TEXT)
-  ) STORED
+  content_hash BYTEA GENERATED ALWAYS AS (digest(content, 'sha256')) STORED,
+  created_at_trunc TIMESTAMPTZ,
+  CONSTRAINT chk_project_session_nonempty CHECK (char_length(project_id) > 0 AND char_length(session_id) > 0)
 );
 
 -- Indexes for fast lookup
@@ -49,7 +50,22 @@ CREATE INDEX IF NOT EXISTS idx_chat_messages_created_at
 -- Unique constraint for deduplication (prevents exact duplicates within same second)
 -- Note: This allows same content from different roles or at different times
 CREATE UNIQUE INDEX IF NOT EXISTS idx_chat_messages_dedupe
-  ON chat_messages(session_id, role, md5(content), DATE_TRUNC('second', created_at));
+  ON chat_messages(session_id, role, content_hash, created_at_trunc);
+
+-- Trigger to populate created_at_trunc (immutable alternative to expression indexes)
+CREATE OR REPLACE FUNCTION trg_set_created_at_trunc()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.created_at_trunc := DATE_TRUNC('second', NEW.created_at);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS set_created_at_trunc ON chat_messages;
+CREATE TRIGGER set_created_at_trunc
+  BEFORE INSERT OR UPDATE ON chat_messages
+  FOR EACH ROW
+  EXECUTE FUNCTION trg_set_created_at_trunc();
 
 -- Add comment for documentation
 COMMENT ON TABLE chat_messages IS 'Stores chat message history for IDSE projects, enabling persistent conversations across session changes';
@@ -61,5 +77,5 @@ SELECT
   data_type,
   is_nullable
 FROM information_schema.columns
-WHERE table_name = 'chat_messages'
+WHERE table_schema = 'public' AND table_name = 'chat_messages'
 ORDER BY ordinal_position;

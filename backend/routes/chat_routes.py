@@ -12,6 +12,7 @@ from datetime import datetime
 import logging
 
 from backend.services.supabase_client import get_supabase_client
+from SessionManager import SessionManager
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -50,6 +51,14 @@ class MessageResponse(BaseModel):
     id: str
     created_at: str
     status: str = "saved"
+
+
+class ActiveSessionRequest(BaseModel):
+    """Request to set the active session"""
+    project: str
+    session: str
+    owner: Optional[str] = None
+    created_at: Optional[float] = None
 
 
 @router.get("/api/chat/history/{project}/{session}", response_model=ChatHistoryResponse)
@@ -185,6 +194,29 @@ async def save_chat_message(request: SaveMessageRequest):
             created_at=datetime.now().isoformat(),
             status="failed"
         )
+
+
+@router.put("/api/chat/active-session")
+async def set_active_session(payload: ActiveSessionRequest):
+    """
+    Persist the active project/session to .idse_active_session.json via SessionManager.
+    This does not require sending a chat message.
+    """
+    try:
+        SessionManager.set_active_session(
+            project=payload.project,
+            session=payload.session,
+            owner=payload.owner,
+            created_at=payload.created_at,
+        )
+        return {
+            "status": "ok",
+            "project": payload.project,
+            "session": payload.session,
+        }
+    except Exception as e:
+        logger.error(f"Failed to set active session: {e}")
+        raise HTTPException(status_code=500, detail="Failed to set active session")
 
 
 @router.get("/api/chat/latest-session/{project}")
