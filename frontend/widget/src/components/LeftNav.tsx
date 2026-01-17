@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight, LayoutDashboard, User } from "lucide-react";
+import { ChevronDown, ChevronRight, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -22,7 +22,7 @@ export function LeftNav({
   onWorkspaceChange,
   onSessionChange = () => {}
 }: LeftNavProps) {
-  const [puckExpanded, setPuckExpanded] = useState(activeWorkspace === "puck");
+  const [puckExpanded, setPuckExpanded] = useState(false);
   const [mdExpanded, setMdExpanded] = useState(activeWorkspace === "md");
   const [projectCount, setProjectCount] = useState<number | null>(null);
   const apiBase =
@@ -79,91 +79,6 @@ export function LeftNav({
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto p-2">
         <div className="space-y-1">
-          <Button
-            variant="ghost"
-            className={`w-full justify-start text-slate-200 hover:bg-slate-800 hover:text-white ${
-              activeWorkspace === "projects" ? "bg-slate-800 text-white" : ""
-            }`}
-            onClick={() => onWorkspaceChange("projects")}
-          >
-            <LayoutDashboard className="h-4 w-4 mr-2" />
-            <span className="flex items-center gap-2">
-              IDSE Projects
-              {projectCount !== null && (
-                <span className="inline-flex items-center rounded-full bg-cyan-100 px-2 py-0.5 text-[11px] font-semibold text-cyan-800">
-                  {projectCount}
-                </span>
-              )}
-            </span>
-          </Button>
-
-          {/* Puck Editor */}
-          <Collapsible open={puckExpanded} onOpenChange={setPuckExpanded}>
-            <CollapsibleTrigger asChild>
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-slate-200 hover:bg-slate-800 hover:text-white"
-              >
-                {puckExpanded ? (
-                  <ChevronDown className="h-4 w-4 mr-2" />
-                ) : (
-                  <ChevronRight className="h-4 w-4 mr-2" />
-                )}
-                Puck Editor
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="ml-6 mt-1 space-y-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`w-full justify-start text-sm ${
-                  activeWorkspace === "puck" && activeSubView === "blocks"
-                    ? "bg-slate-800 text-white"
-                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                }`}
-                onClick={() => onWorkspaceChange("puck", "blocks")}
-              >
-                Blocks
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`w-full justify-start text-sm ${
-                  activeWorkspace === "puck" && activeSubView === "fields"
-                    ? "bg-slate-800 text-white"
-                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                }`}
-                onClick={() => onWorkspaceChange("puck", "fields")}
-              >
-                Fields
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`w-full justify-start text-sm ${
-                  activeWorkspace === "puck" && activeSubView === "outline"
-                    ? "bg-slate-800 text-white"
-                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                }`}
-                onClick={() => onWorkspaceChange("puck", "outline")}
-              >
-                Outline
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`w-full justify-start text-sm ${
-                  activeWorkspace === "puck" && activeSubView === "pages"
-                    ? "bg-slate-800 text-white"
-                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                }`}
-                onClick={() => onWorkspaceChange("puck", "pages")}
-              >
-                Published Pages
-              </Button>
-            </CollapsibleContent>
-          </Collapsible>
-
           {/* MD Editor */}
           <Collapsible open={mdExpanded} onOpenChange={setMdExpanded}>
             <CollapsibleTrigger asChild>
@@ -192,6 +107,20 @@ export function LeftNav({
               >
                 Open Document
               </Button>
+              {currentSession === "__blueprint__" && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`w-full justify-start text-sm ${
+                    activeWorkspace === "md" && activeSubView === "meta"
+                      ? "bg-slate-800 text-white"
+                      : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                  }`}
+                  onClick={() => onWorkspaceChange("md", "meta")}
+                >
+                  Meta
+                </Button>
+              )}
               <Separator className="bg-slate-700 my-2" />
               <Button
                 variant="ghost"
@@ -276,6 +205,75 @@ export function LeftNav({
                 onClick={() => onWorkspaceChange("md", "feedback")}
               >
                 Feedback
+              </Button>
+            </CollapsibleContent>
+          </Collapsible>
+
+          <Separator className="bg-slate-700 my-2" />
+
+          {/* Puck Editor */}
+          <Collapsible open={puckExpanded} onOpenChange={setPuckExpanded}>
+            <CollapsibleTrigger asChild>
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-slate-200 hover:bg-slate-800 hover:text-white"
+              >
+                {puckExpanded ? (
+                  <ChevronDown className="h-4 w-4 mr-2" />
+                ) : (
+                  <ChevronRight className="h-4 w-4 mr-2" />
+                )}
+                Puck Editor
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="ml-6 mt-1 space-y-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`w-full justify-start text-sm ${
+                  activeWorkspace === "puck" && activeSubView === "blocks"
+                    ? "bg-slate-800 text-white"
+                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                }`}
+                onClick={() => onWorkspaceChange("puck", "blocks")}
+              >
+                Blocks
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`w-full justify-start text-sm ${
+                  activeWorkspace === "puck" && activeSubView === "fields"
+                    ? "bg-slate-800 text-white"
+                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                }`}
+                onClick={() => onWorkspaceChange("puck", "fields")}
+              >
+                Fields
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`w-full justify-start text-sm ${
+                  activeWorkspace === "puck" && activeSubView === "outline"
+                    ? "bg-slate-800 text-white"
+                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                }`}
+                onClick={() => onWorkspaceChange("puck", "outline")}
+              >
+                Outline
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`w-full justify-start text-sm ${
+                  activeWorkspace === "puck" && activeSubView === "pages"
+                    ? "bg-slate-800 text-white"
+                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                }`}
+                onClick={() => onWorkspaceChange("puck", "pages")}
+              >
+                Published Pages
               </Button>
             </CollapsibleContent>
           </Collapsible>

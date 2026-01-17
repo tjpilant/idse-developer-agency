@@ -42,17 +42,25 @@ class Validator:
         """
         from .project_manager import ProjectManager
 
-        # Auto-detect project
         manager = ProjectManager()
-        project_path = manager.get_current_project()
-
-        if not project_path:
-            return {
-                "valid": False,
-                "checks": [],
-                "errors": ["No IDSE project found. Run 'idse init' first."],
-                "warnings": [],
-            }
+        if project_name:
+            project_path = manager.projects_root / project_name
+            if not project_path.exists():
+                return {
+                    "valid": False,
+                    "checks": [],
+                    "errors": [f"Project '{project_name}' not found at {project_path}"],
+                    "warnings": [],
+                }
+        else:
+            project_path = manager.get_current_project()
+            if not project_path:
+                return {
+                    "valid": False,
+                    "checks": [],
+                    "errors": ["No IDSE project found. Run 'idse init' first or use --project."],
+                    "warnings": [],
+                }
 
         # Get current session
         session_id = manager.get_current_session(project_path)

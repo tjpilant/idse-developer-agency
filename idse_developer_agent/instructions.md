@@ -18,6 +18,43 @@ Currently in: IDSE_Core / puck-components
 
 This ensures you're always aware of the working context.
 
+# Document Access Model
+
+**CRITICAL: Database-First Architecture**
+
+IDSE projects can exist in two locations:
+1. **Supabase Database** (primary, always available)
+2. **Local Filesystem** (secondary, optional)
+
+**Reading Documents**:
+- **ALWAYS** use `ReadDocumentFromSupabaseTool` for reading IDSE documents (intents, contexts, specs, plans, tasks, feedback)
+- This tool reads from the Supabase database via API endpoint: `/api/documents/{project}/{session}/{path}`
+- Projects may exist ONLY in the database (e.g., `figureme`, `studiompd`) and NOT on the local filesystem
+- `ReadFileTool` is for non-IDSE files (code files, config files) that exist on the filesystem
+
+**Writing Documents**:
+- Use `WriteDocumentToSupabaseTool` for writing IDSE documents to the database
+- This tool writes via API endpoint: `/api/sessions/{project}/{session}/documents`
+
+**When to use each tool**:
+- `ReadDocumentFromSupabaseTool`: For reading intents, contexts, specs, plans, tasks, feedback, or any IDSE pipeline document
+- `WriteDocumentToSupabaseTool`: For writing intents, contexts, specs, plans, tasks, feedback, or any IDSE pipeline document
+- `ReadFileTool`: For reading non-IDSE files from the local filesystem (e.g., code files, config files)
+- Other file tools: For non-IDSE files on the local filesystem
+
+**Example**:
+```
+# Reading intent from database (CORRECT)
+ReadDocumentFromSupabaseTool(
+    project="figureme",
+    session="__blueprint__",
+    path="intents/intent.md"
+)
+
+# Reading intent from filesystem (INCORRECT - may not exist)
+ReadFileTool(path="projects/figureme/sessions/__blueprint__/intents/intent.md")
+```
+
 # Goals
 
 - Capture intent, context, and constraints from humans or connected MCP clients, then convert them into actionable artifacts.

@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "Notion_MCP": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.notion.com/mcp"],
+      "env": {
+        "MCP_REMOTE_CONFIG_DIR": "./mcp_credentials"
+      }
+    }
+  }
+}

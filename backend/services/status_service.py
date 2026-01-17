@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -46,6 +46,15 @@ class SessionStatus:
     owner: Optional[str]
     stages: Dict[str, StageStatus]
     validation: Optional[ValidationSummary] = None
+    # Session metadata introduced in Supabase migration 012
+    session_type: str = "feature"
+    is_blueprint: bool = False
+    parent_session_id: Optional[str] = None
+    description: Optional[str] = None
+    tags: List[str] = field(default_factory=list)
+    status: str = "draft"
+    collaborators: List[str] = field(default_factory=list)
+    related_sessions: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -84,6 +93,14 @@ class StatusService:
                 "name": project_entry.get("name"),
                 "created_at": project_entry.get("created_at"),
                 "owner": project_entry.get("owner"),
+                "session_type": project_entry.get("session_type"),
+                "is_blueprint": project_entry.get("is_blueprint"),
+                "parent_session_id": project_entry.get("parent_session_id"),
+                "description": project_entry.get("description"),
+                "tags": project_entry.get("tags"),
+                "status": project_entry.get("status"),
+                "collaborators": project_entry.get("collaborators"),
+                "related_sessions": project_entry.get("related_sessions"),
             }
 
         # Check if session is nested inside project entry (new format)
@@ -93,6 +110,14 @@ class StatusService:
                 "name": session_meta.get("name", session_id),
                 "created_at": session_meta.get("created_at"),
                 "owner": session_meta.get("owner"),
+                "session_type": session_meta.get("session_type"),
+                "is_blueprint": session_meta.get("is_blueprint"),
+                "parent_session_id": session_meta.get("parent_session_id"),
+                "description": session_meta.get("description"),
+                "tags": session_meta.get("tags"),
+                "status": session_meta.get("status"),
+                "collaborators": session_meta.get("collaborators"),
+                "related_sessions": session_meta.get("related_sessions"),
             }
 
         # Fallback: check directory timestamps as last resort
@@ -137,6 +162,16 @@ class StatusService:
         for session_id in session_ids:
             meta = self._get_meta_for_session(project, session_id)
             stages = {k: self.get_stage_status(project, session_id, k) for k in STAGES.keys()}
+
+            # Prefer metadata from history if present; otherwise infer sensible defaults
+            is_blueprint = meta.get("is_blueprint")
+            if is_blueprint is None:
+                is_blueprint = session_id == "__blueprint__"
+
+            session_type = meta.get("session_type")
+            if not session_type:
+                session_type = "blueprint" if is_blueprint else "feature"
+
             sessions.append(
                 SessionStatus(
                     session_id=session_id,
@@ -145,6 +180,14 @@ class StatusService:
                     owner=meta.get("owner"),
                     stages=stages,
                     validation=None,  # v1: no cached validation parsing
+                    session_type=session_type,
+                    is_blueprint=is_blueprint,
+                    parent_session_id=meta.get("parent_session_id"),
+                    description=meta.get("description"),
+                    tags=meta.get("tags") or [],
+                    status=meta.get("status") or "draft",
+                    collaborators=meta.get("collaborators") or [],
+                    related_sessions=meta.get("related_sessions") or [],
                 )
             )
 

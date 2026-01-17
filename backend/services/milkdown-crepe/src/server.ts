@@ -48,7 +48,7 @@ export function buildServer() {
         },
       },
     },
-    async () => ({ status: 'ok' }),
+    async () => ({ status: 'ok' as const }),
   );
 
   server.get(
@@ -60,7 +60,7 @@ export function buildServer() {
         },
       },
     },
-    async () => ({ status: 'ready' }),
+    async () => ({ status: 'ready' as const }),
   );
 
   server.setErrorHandler((error, request, reply) => {

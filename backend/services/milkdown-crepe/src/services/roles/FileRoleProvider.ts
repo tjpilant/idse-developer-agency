@@ -75,14 +75,22 @@ export class FileRoleProvider implements RoleProvider {
     if (!isSessionPath(sessionId)) {
       // Non-session files (e.g., docs/, backend/, README.md)
       // Grant collaborator access (read + write) by default
-      return 'collaborator';
+      throw new ConfigurationError(`Invalid sessionId format: ${sessionId}`);
     }
 
     // Session-scoped access - check session ownership
     const sessionPath = this.resolveSessionPath(sessionId);
 
+    // Validate session path exists
+    if (!(await fileExists(sessionPath))) {
+      throw new ConfigurationError(`Missing .owner file for session: ${sessionId}`);
+    }
+
     // Check session .owner file
     const sessionOwnerPath = path.join(sessionPath, '.owner');
+    if (!(await fileExists(sessionOwnerPath))) {
+      throw new ConfigurationError(`Missing .owner file for session: ${sessionId}`);
+    }
     if (await fileContainsUserId(sessionOwnerPath, userId)) {
       return 'owner'; // Session owner
     }
@@ -109,6 +117,7 @@ export class FileRoleProvider implements RoleProvider {
         `Invalid sessionId format: ${sessionId}. Expected "project:session"`,
       );
     }
-    return path.join(this.workspaceRoot, 'projects', project, 'sessions', session);
+    // Note: test fixtures and existing workspace layout are projects/{project}/{session}/
+    return path.join(this.workspaceRoot, 'projects', project, session);
   }
 }

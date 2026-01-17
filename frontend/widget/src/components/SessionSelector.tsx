@@ -41,16 +41,24 @@ export function SessionSelector({
 
   const handleProjectChange = (project: string) => {
     setSelectedProject(project);
-    // The project change will trigger a fetch of sessions, and we'll auto-select
-    // the first session when they load (handled in useEffect below)
+    // Default to blueprint on project switch so dashboards update immediately
+    setSelectedSession('__blueprint__');
+    onSessionChange(project, '__blueprint__');
   };
 
   // When projectData changes AND the user switched projects, auto-select first session
   useEffect(() => {
     if (projectData && projectData.sessions.length > 0) {
-      const firstSession = projectData.sessions[0].session_id;
-      // Only auto-select if the current session doesn't exist in the new project's sessions
       const sessionExists = projectData.sessions.some(s => s.session_id === selectedSession);
+      const blueprintExists = projectData.sessions.some(s => s.session_id === '__blueprint__');
+
+      // If we already set blueprint and it exists, keep it.
+      if (selectedSession === '__blueprint__' && blueprintExists) {
+        return;
+      }
+
+      // Otherwise pick first available session
+      const firstSession = projectData.sessions[0].session_id;
       if (!sessionExists) {
         setSelectedSession(firstSession);
         onSessionChange(selectedProject, firstSession);
@@ -82,10 +90,10 @@ export function SessionSelector({
           onValueChange={handleProjectChange}
           disabled={projectsLoading}
         >
-          <SelectTrigger className="w-full bg-slate-800 border-slate-600 text-slate-100">
-            <div className="flex items-center gap-2">
-              <FolderOpen className="h-4 w-4 text-slate-400" />
-              <SelectValue placeholder="Select project..." />
+          <SelectTrigger className="w-full bg-slate-800 border-slate-600 text-slate-100 text-sm py-2">
+            <div className="flex items-center gap-2 truncate">
+              <FolderOpen className="h-4 w-4 text-slate-400 shrink-0" />
+              <SelectValue placeholder="Select project..." className="text-sm truncate" />
             </div>
           </SelectTrigger>
           <SelectContent className="bg-slate-800 border-slate-600">
@@ -113,18 +121,20 @@ export function SessionSelector({
           onValueChange={handleSessionChange}
           disabled={sessionsLoading || !projectData}
         >
-          <SelectTrigger className="w-full bg-slate-800 border-slate-600 text-slate-100">
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-slate-400" />
-              <SelectValue placeholder="Select session..." />
+          <SelectTrigger className="w-full bg-slate-800 border-slate-600 text-slate-100 text-sm py-2">
+            <div className="flex items-center gap-2 truncate">
+              <Clock className="h-4 w-4 text-slate-400 shrink-0" />
+              <SelectValue placeholder="Select session..." className="text-sm truncate" />
             </div>
           </SelectTrigger>
           <SelectContent className="bg-slate-800 border-slate-600 max-h-[300px]">
             <SelectGroup>
-              <SelectLabel className="text-slate-400">Available Sessions</SelectLabel>
-              {projectData?.sessions.map((session) => (
-                <SelectItem
-                  key={session.session_id}
+              <SelectLabel className="text-slate-400">Feature Sessions</SelectLabel>
+              {projectData?.sessions
+                .filter(s => s.session_id !== '__blueprint__')
+                .map((session) => (
+                  <SelectItem
+                    key={session.session_id}
                   value={session.session_id}
                   className="text-slate-100 focus:bg-slate-700 focus:text-white"
                 >
@@ -132,7 +142,6 @@ export function SessionSelector({
                     <span className="font-medium">{session.name}</span>
                     <span className="text-xs text-slate-400">
                       {formatTimestamp(session.created_at)}
-                      {session.owner && ` • ${session.owner}`}
                     </span>
                   </div>
                 </SelectItem>
@@ -150,6 +159,18 @@ export function SessionSelector({
             {selectedProject}/{selectedSession}
           </span>
         </div>
+        <p className="mt-1 text-[11px] text-slate-500">
+          Blueprint progress is always shown in the Project Status card.
+        </p>
+        {projectData?.sessions.some((s) => s.session_id === '__blueprint__') && (
+          <button
+            type="button"
+            onClick={() => handleSessionChange('__blueprint__')}
+            className="mt-2 inline-flex items-center gap-2 rounded-md border border-slate-600 bg-slate-800 px-3 py-1 text-[11px] font-semibold text-cyan-200 hover:bg-slate-700"
+          >
+            📘 View Project Blueprint
+          </button>
+        )}
         {onViewProjects && (
           <button
             type="button"

@@ -12,6 +12,16 @@
         "AGENCY_FORCE_TERMINAL": "1"
       },
       "justMyCode": false
+    },
+    {
+      "name": "Node: Test Notion MCP",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/tmp/fetch_notion_session.mjs",
+      "console": "integratedTerminal",
+      "env": {
+        "MCP_REMOTE_CONFIG_DIR": "${workspaceFolder}/mcp_credentials"
+      }
     }
   ]
 }

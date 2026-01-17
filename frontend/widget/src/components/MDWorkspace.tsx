@@ -8,8 +8,28 @@ import { FileBrowserDialog } from "./FileBrowserDialog";
 import "@milkdown/crepe/theme/common/style.css";
 import "@milkdown/crepe/theme/frame.css";
 
+const BLUEPRINT_DOCUMENTS = [
+  { path: "meta/meta.md", label: "Meta", stage: "meta", icon: "📋" },
+  { path: "intents/intent.md", label: "Intent", stage: "intent", icon: "🎯" },
+  { path: "contexts/context.md", label: "Context", stage: "context", icon: "🌍" },
+  { path: "specs/spec.md", label: "Specification", stage: "spec", icon: "📐" },
+  { path: "plans/plan.md", label: "Plan", stage: "plan", icon: "🗺️" },
+  { path: "tasks/tasks.md", label: "Tasks", stage: "tasks", icon: "✅" },
+  { path: "implementation/README.md", label: "Implementation", stage: "implementation", icon: "🔧" },
+  { path: "feedback/feedback.md", label: "Feedback", stage: "feedback", icon: "💬" },
+];
+
+const REGULAR_DOCUMENTS = [
+  { path: "intents/intent.md", label: "Intent", stage: "intent", icon: "🎯" },
+  { path: "contexts/context.md", label: "Context", stage: "context", icon: "🌍" },
+  { path: "specs/spec.md", label: "Specification", stage: "spec", icon: "📐" },
+  { path: "plans/plan.md", label: "Plan", stage: "plan", icon: "🗺️" },
+  { path: "tasks/tasks.md", label: "Tasks", stage: "tasks", icon: "✅" },
+  { path: "feedback/feedback.md", label: "Feedback", stage: "feedback", icon: "💬" },
+];
+
 interface MDWorkspaceProps {
-  activeSubView: "open" | "intent" | "spec" | "plan" | "tasks" | "context" | "implementation" | "feedback" | null;
+  activeSubView: "open" | "intent" | "spec" | "plan" | "tasks" | "context" | "implementation" | "feedback" | "meta" | null;
   project: string;
   session: string;
   token?: string;
@@ -37,6 +57,8 @@ export function MDWorkspace({
   const [showSaveAsDialog, setShowSaveAsDialog] = useState(false);
   const [snapshots, setSnapshots] = useState<{ ts: number; content: string }[]>([]);
   const readOnly = role === "reader";
+  const isBlueprintSession = session === "__blueprint__";
+  const documentsToShow = isBlueprintSession ? BLUEPRINT_DOCUMENTS : REGULAR_DOCUMENTS;
 
   const isDirty = content !== initialContent;
 
@@ -85,20 +107,24 @@ export function MDWorkspace({
     if (!activeSubView || activeSubView === "open") return;
 
     const pathMap: Record<string, string> = {
-      intent: `intents/intent.md`,
-      spec: `specs/spec.md`,
-      plan: `plans/plan.md`,
-      tasks: `tasks/tasks.md`,
-      context: `contexts/context.md`,
-      implementation: `implementation/README.md`,
-      feedback: `feedback/feedback.md`,
+      intent: "intents/intent.md",
+      spec: "specs/spec.md",
+      plan: "plans/plan.md",
+      tasks: "tasks/tasks.md",
+      context: "contexts/context.md",
+      implementation: "implementation/README.md",
+      feedback: "feedback/feedback.md",
     };
+
+    if (isBlueprintSession) {
+      pathMap.meta = "meta/meta.md";
+    }
 
     const path = pathMap[activeSubView];
     if (path) {
       setCurrentPath(path);
     }
-  }, [activeSubView, project, session]);
+  }, [activeSubView, project, session, isBlueprintSession]);
 
   // Show open dialog when "Open Document" is selected
   useEffect(() => {
@@ -125,9 +151,10 @@ export function MDWorkspace({
       } catch (err: any) {
         if (cancelled) return;
         if (err?.status === 404) {
-          // New file
-          setContent("");
-          setInitialContent("");
+          // New file placeholder
+          const placeholder = `# ${currentPath}\n\nThis document hasn't been created yet.`;
+          setContent(placeholder);
+          setInitialContent(placeholder);
           setShowOpenDialog(false);
         } else if (err?.status === 401) {
           setError("Unauthorized - Please provide a valid authentication token");
@@ -404,6 +431,35 @@ export function MDWorkspace({
           {error}
         </div>
       )}
+
+      <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            {isBlueprintSession ? "Blueprint documents" : "Session documents"}
+          </span>
+          {isBlueprintSession && (
+            <span className="text-[11px] text-slate-500 flex items-center gap-1">
+              📘 Project-level meta planning
+            </span>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {documentsToShow.map((doc) => (
+            <button
+              key={doc.path}
+              onClick={() => setCurrentPath(doc.path)}
+              className={`inline-flex items-center gap-2 rounded-md border px-3 py-1 text-xs font-medium transition ${
+                currentPath === doc.path
+                  ? "bg-indigo-50 text-indigo-700 border-indigo-200"
+                  : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+              }`}
+            >
+              <span>{doc.icon}</span>
+              <span>{doc.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* Editor */}
       {loading ? (

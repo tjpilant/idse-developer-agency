@@ -63,7 +63,7 @@ async def get_project_sessions(project_id: str) -> ProjectSessionsResponse:
 
         sess_resp = (
             supabase.table("sessions")
-            .select("session_id, name, owner, created_at")
+            .select("*")  # Select all fields including new metadata
             .eq("project_id", project_uuid)
             .order("created_at", desc=True)
             .execute()
@@ -87,6 +87,15 @@ async def get_project_sessions(project_id: str) -> ProjectSessionsResponse:
                     "created_at": ts,
                     "owner": row.get("owner"),
                     "stages": {},  # Supabase does not track stage files; keep empty placeholder
+                    # New metadata fields from migration 012
+                    "session_type": row.get("session_type", "feature"),
+                    "is_blueprint": row.get("is_blueprint", False),
+                    "parent_session_id": row.get("parent_session_id"),
+                    "description": row.get("description"),
+                    "tags": row.get("tags", []),
+                    "status": row.get("status", "draft"),
+                    "collaborators": row.get("collaborators", []),
+                    "related_sessions": row.get("related_sessions", []),
                 }
             )
 

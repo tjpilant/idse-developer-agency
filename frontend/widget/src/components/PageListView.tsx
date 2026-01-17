@@ -122,19 +122,14 @@ export function PageListView({ onLoadPage }: PageListViewProps) {
               className="hover:shadow-md transition-shadow cursor-pointer"
               onClick={() => onLoadPage(page.slug)}
             >
-              <CardHeader>
-                <div className="flex items-start gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-indigo-100 flex items-center justify-center shrink-0">
-                    <FileText className="h-5 w-5 text-indigo-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <CardTitle className="text-lg truncate">
-                      {page.title || page.slug || "Untitled"}
-                    </CardTitle>
-                    <CardDescription className="truncate">
-                      Slug: {page.slug}
-                    </CardDescription>
-                  </div>
+              <CardHeader className="py-3 px-4">
+                <div className="flex flex-col gap-0.5 min-w-0">
+                  <CardTitle className="text-sm font-semibold text-slate-900 truncate">
+                    {page.title || "Untitled"}
+                  </CardTitle>
+                  <CardDescription className="text-xs text-slate-500 truncate">
+                    /{page.slug || ""}
+                  </CardDescription>
                 </div>
               </CardHeader>
             </Card>

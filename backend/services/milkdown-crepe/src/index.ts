@@ -8,6 +8,16 @@ async function main(){
       mode: 'file',
       workspaceRoot: config.WORKSPACE_ROOT,
     });
+  } else if (
+    config.ROLE_PROVIDER === 'supabase' &&
+    config.SUPABASE_URL &&
+    config.SUPABASE_SERVICE_ROLE_KEY
+  ) {
+    await configureRoleProvider({
+      mode: 'supabase',
+      supabaseUrl: config.SUPABASE_URL,
+      supabaseKey: config.SUPABASE_SERVICE_ROLE_KEY,
+    });
   } else if (config.ROLE_PROVIDER === 'static' && config.ROLE_MAP) {
     try {
       const map = JSON.parse(config.ROLE_MAP) as Record<string, any>;

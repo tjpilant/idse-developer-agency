@@ -1,15 +1,15 @@
 {
   "default": {
-    "session_id": "cli-1766987138",
-    "name": "cli",
-    "created_at": 1766987138.0,
+    "session_id": "__blueprint__",
+    "name": "__blueprint__",
+    "created_at": 1768266895.7509735,
     "owner": "tjpilant",
     "project": "default"
   },
   "IDSE_Core": {
-    "session_id": "puck-components",
-    "name": "puck-components",
-    "created_at": 1768167203.2779796,
+    "session_id": "milkdown-crepe-v2",
+    "name": "milkdown-crepe-v2",
+    "created_at": 1768375697.423873,
     "owner": "tjpilant",
     "project": "IDSE_Core"
   },
@@ -21,9 +21,9 @@
     "project": "Project_Status_Browser"
   },
   "project-research-tools": {
-    "session_id": "status-browser-integration",
-    "name": "status-browser-integration",
-    "created_at": 1768126056.4605744,
+    "session_id": "__blueprint__",
+    "name": "__blueprint__",
+    "created_at": 1768299314.2707987,
     "owner": "tjpilant",
     "project": "project-research-tools"
   },
@@ -54,38 +54,52 @@
     }
   },
   "TestBootstrap": {
-    "canary-test-1": {
-      "created_at": 1767161596.977524,
-      "owner": "tjpilant",
-      "status": "active"
-    }
+    "session_id": "canary-test-1",
+    "name": "canary-test-1",
+    "created_at": 1768366153.5323377,
+    "owner": "tjpilant",
+    "project": "TestBootstrap"
   },
   "RemapTest": {
-    "session_id": "remap-session",
-    "name": "remap-session",
-    "created_at": 1768167516.2860513,
+    "session_id": "__blueprint__",
+    "name": "__blueprint__",
+    "created_at": 1768299378.4264402,
     "owner": "tjpilant",
     "project": "RemapTest"
   },
   "Puck_Editor_Research": {
-    "session_id": "status-browser-integration",
-    "name": "status-browser-integration",
-    "created_at": 1768168245.166828,
+    "session_id": "__blueprint__",
+    "name": "__blueprint__",
+    "created_at": 1768369880.0527422,
     "owner": "tjpilant",
     "project": "Puck_Editor_Research"
   },
   "Puck_Docs": {
     "session_id": "session-01",
     "name": "session-01",
-    "created_at": 1768164758.292605,
+    "created_at": 1768594597.7125103,
     "owner": "tjpilant",
     "project": "Puck_Docs"
   },
   "customer-portal": {
-    "session_id": "status-browser-integration",
-    "name": "status-browser-integration",
-    "created_at": 1768167475.4858155,
+    "session_id": "__blueprint__",
+    "name": "__blueprint__",
+    "created_at": 1768366558.5465233,
     "owner": "tjpilant",
     "project": "customer-portal"
+  },
+  "studiompd": {
+    "session_id": "__blueprint__",
+    "name": "__blueprint__",
+    "created_at": 1768594368.5518134,
+    "owner": "tjpilant",
+    "project": "studiompd"
+  },
+  "figureme": {
+    "session_id": "__blueprint__",
+    "name": "__blueprint__",
+    "created_at": 1768647163.5754764,
+    "owner": "tjpilant",
+    "project": "figureme"
   }
 }

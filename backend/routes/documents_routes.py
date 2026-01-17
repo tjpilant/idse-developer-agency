@@ -124,6 +124,54 @@ async def put_document_legacy(project: str, session: str, payload: LegacyDocumen
     return await upsert_document(project, session, final_path, upsert_payload)
 
 
+@router.get("/{project}/{session}/list_stages")
+async def list_session_documents(project: str, session: str):
+    """
+    List all documents for a session, grouped by stage.
+    """
+    try:
+        supabase = get_supabase_client()
+        project_uuid = _resolve_project_uuid(project)
+
+        resp = (
+            supabase.table("documents")
+            .select("path, stage")
+            .eq("project_id", project_uuid)
+            .eq("session_slug", session)
+            .execute()
+        )
+
+        stages_map = {
+            "intent": {"exists": False, "path": None},
+            "context": {"exists": False, "path": None},
+            "spec": {"exists": False, "path": None},
+            "plan": {"exists": False, "path": None},
+            "tasks": {"exists": False, "path": None},
+            "implementation": {"exists": False, "path": None},
+            "feedback": {"exists": False, "path": None},
+        }
+
+        for doc in (resp.data or []):
+            stage = doc.get("stage")
+            if stage and stage in stages_map:
+                stages_map[stage] = {
+                    "exists": True,
+                    "path": doc.get("path")
+                }
+
+        return {
+            "project": project,
+            "session": session,
+            "stages": stages_map
+        }
+
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Failed to list session documents %s/%s", project, session)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
 @router.get("/{project}/{session}/{doc_path:path}", response_model=DocumentResponse)
 async def get_document(project: str, session: str, doc_path: str):
     """Fetch a document for a project/session/path."""

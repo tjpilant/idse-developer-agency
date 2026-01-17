@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { AlertTriangle, ArrowRight, Clock3, Loader2, RefreshCw, Sparkles } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { AlertTriangle, Loader2, RefreshCw } from "lucide-react";
 
 type StageState = Record<string, string>;
 
@@ -17,14 +17,18 @@ type ProjectRecord = {
   created_at?: string;
 };
 
-type ProjectStatus = {
+interface SessionStatus {
   project_id: string;
   project_name: string;
+  session_id: string;
+  session_name: string;
+  is_blueprint: boolean;
   last_synced?: string;
   created_at?: string;
-  state?: StageState;
+  state: StageState;
   last_agent?: string;
-};
+  progress_percent: number;
+}
 
 const STAGE_ORDER = ["intent", "context", "spec", "plan", "tasks", "implementation", "feedback"];
 const DEFAULT_API_BASE =
@@ -54,17 +58,21 @@ function formatUpdated(timestamp?: string) {
 
 interface IDSEProjectsDashboardProps {
   apiBase?: string;
+  currentProject?: string;
+  currentSession?: string;
   onProjectSelect?: (projectName: string, projectId: string) => void;
 }
 
 export function IDSEProjectsDashboard({
   apiBase = DEFAULT_API_BASE,
-  onProjectSelect
+  currentProject,
+  currentSession,
 }: IDSEProjectsDashboardProps) {
   const baseUrl = (apiBase || DEFAULT_API_BASE).replace(/\/$/, "");
   const [projects, setProjects] = useState<ProjectRecord[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [selectedStatus, setSelectedStatus] = useState<ProjectStatus | null>(null);
+  const [blueprintStatus, setBlueprintStatus] = useState<SessionStatus | null>(null);
+  const [selectedSessionStatus, setSelectedSessionStatus] = useState<SessionStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [statusLoading, setStatusLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,14 +103,14 @@ export function IDSEProjectsDashboard({
     async (projectId: string) => {
       setStatusLoading(true);
       try {
-        const res = await fetch(`${baseUrl}/sync/status/${projectId}`);
+        const res = await fetch(`${baseUrl}/sync/status/${projectId}/__blueprint__`);
         if (!res.ok) {
-          throw new Error(`Failed to load project status (${res.status})`);
+          throw new Error(`Failed to load blueprint status (${res.status})`);
         }
-        const data = (await res.json()) as ProjectStatus;
-        setSelectedStatus(data);
+        const data = (await res.json()) as SessionStatus;
+        setBlueprintStatus(data);
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "Unable to load project status";
+        const msg = err instanceof Error ? err.message : "Unable to load blueprint status";
         setError(msg);
       } finally {
         setStatusLoading(false);
@@ -111,9 +119,68 @@ export function IDSEProjectsDashboard({
     [baseUrl]
   );
 
+  const loadSessionStatus = useCallback(
+    async (projectId: string, sessionId: string) => {
+      if (!sessionId) {
+        setSelectedSessionStatus(null);
+        return;
+      }
+
+      setStatusLoading(true);
+      try {
+        const res = await fetch(`${baseUrl}/sync/status/${projectId}/${sessionId}`);
+        if (!res.ok) {
+          if (res.status === 404) {
+            setSelectedSessionStatus({
+              project_id: projectId,
+              project_name: currentProject || "",
+              session_id: sessionId,
+              session_name: sessionId,
+              is_blueprint: false,
+              state: {},
+              progress_percent: 0,
+            });
+            return;
+          }
+          throw new Error(`Failed to load session status (${res.status})`);
+        }
+        const data = (await res.json()) as SessionStatus;
+        setSelectedSessionStatus(data);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Unable to load session status";
+        setError(msg);
+        setSelectedSessionStatus(null);
+      } finally {
+        setStatusLoading(false);
+      }
+    },
+    [baseUrl, currentProject]
+  );
+
   useEffect(() => {
     loadProjects();
   }, [loadProjects]);
+
+  // Sync selected project with sidebar selection
+  useEffect(() => {
+    if (!projects.length) return;
+
+    // Accept project selection by id, by name, or inferred from currentSession (e.g., "Project/Session" or "Project:Session").
+    const inferredProject =
+      currentSession?.includes("/") ? currentSession.split("/")[0] :
+      currentSession?.includes(":") ? currentSession.split(":")[0] :
+      undefined;
+
+    const key = currentProject || inferredProject;
+
+    const proj =
+      projects.find((p) => p.id === key) ||
+      projects.find((p) => p.name === key);
+
+    if (proj) {
+      setSelectedId(proj.id);
+    }
+  }, [currentProject, currentSession, projects]);
 
   useEffect(() => {
     if (selectedId) {
@@ -121,24 +188,19 @@ export function IDSEProjectsDashboard({
     }
   }, [selectedId, loadStatus]);
 
-  const stats = useMemo(() => {
-    const totalProjects = projects.length;
-    const averageProgress =
-      totalProjects === 0
-        ? 0
-        : Math.round(
-            projects.reduce((acc, project) => {
-              const { percent } = calculateProgress(project.state_json?.stages);
-              return acc + percent;
-            }, 0) / totalProjects
-          );
-    return { totalProjects, averageProgress };
-  }, [projects]);
+  useEffect(() => {
+    if (selectedId && currentSession) {
+      loadSessionStatus(selectedId, currentSession);
+    } else {
+      setSelectedSessionStatus(null);
+    }
+  }, [selectedId, currentSession, loadSessionStatus]);
 
   const selectedProject = projects.find((p) => p.id === selectedId) || null;
-  const stages =
-    selectedStatus?.state || selectedProject?.state_json?.stages || ({} as StageState);
-  const progress = calculateProgress(stages);
+  const blueprintStages = blueprintStatus?.state || ({} as StageState);
+  const progress = calculateProgress(blueprintStages);
+  const sessionStages = selectedSessionStatus?.state || {};
+  const sessionProgress = calculateProgress(sessionStages);
 
   return (
     <div className="h-full overflow-y-auto bg-slate-50">
@@ -146,10 +208,8 @@ export function IDSEProjectsDashboard({
         <header className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-slate-500">MCP Sync</p>
-            <h1 className="text-2xl font-semibold text-slate-900">IDSE Projects Dashboard</h1>
-            <p className="text-sm text-slate-600">
-              Live data from {baseUrl}/sync using Supabase as the source of truth.
-            </p>
+            <h1 className="text-2xl font-semibold text-slate-900">IDSE Project & Session</h1>
+            <p className="text-sm text-slate-600">Driven by sidebar selection.</p>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -160,10 +220,6 @@ export function IDSEProjectsDashboard({
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
               Refresh
             </button>
-            <div className="flex items-center gap-2 rounded-md bg-white px-3 py-2 text-xs font-medium text-slate-700 shadow-sm ring-1 ring-slate-200">
-              <Sparkles className="h-4 w-4 text-cyan-600" />
-              {stats.totalProjects} projects
-            </div>
           </div>
         </header>
 
@@ -174,74 +230,33 @@ export function IDSEProjectsDashboard({
           </div>
         )}
 
-        <div className="grid gap-4 md:grid-cols-2">
-          {loading && projects.length === 0 ? (
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="flex items-center gap-3 text-slate-700">
-                <Loader2 className="h-4 w-4 animate-spin text-cyan-600" />
-                Loading projects…
-              </div>
+        {loading && projects.length === 0 && (
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex items-center gap-3 text-slate-700">
+              <Loader2 className="h-4 w-4 animate-spin text-cyan-600" />
+              Loading projects…
             </div>
-          ) : projects.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 shadow-sm">
-              <p className="text-sm text-slate-700">No projects found.</p>
-              <p className="text-xs text-slate-500 mt-1">
-                Push a project with <code className="px-1 bg-slate-100 rounded">idse sync push</code> to see it here.
-              </p>
-            </div>
-          ) : (
-            projects.map((project) => {
-              const { percent } = calculateProgress(project.state_json?.stages);
-              return (
-                <button
-                  key={project.id}
-                  onClick={() => {
-                    setSelectedId(project.id);
-                    // Trigger navigation to chat with this project
-                    if (onProjectSelect) {
-                      onProjectSelect(project.name, project.id);
-                    }
-                  }}
-                  className={`group w-full rounded-2xl border bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg ${
-                    selectedId === project.id ? "border-cyan-500 shadow-lg" : "border-slate-200"
-                  }`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">{project.name}</p>
-                      <p className="text-xs text-slate-500 mt-1">
-                        {project.stack || "unknown stack"} • {project.framework || "agency-swarm"}
-                      </p>
-                    </div>
-                    <span className="inline-flex items-center gap-2 text-xs font-semibold text-cyan-700">
-                      {percent}% <ArrowRight className="h-4 w-4" />
-                    </span>
-                  </div>
-                  <div className="mt-3 h-2 w-full rounded-full bg-slate-100">
-                    <div
-                      className="h-2 rounded-full bg-gradient-to-r from-cyan-500 to-indigo-500 transition-[width]"
-                      style={{ width: `${percent}%` }}
-                    />
-                  </div>
-                  <div className="mt-3 text-xs text-slate-600 flex items-center gap-2">
-                    <Clock3 className="h-4 w-4 text-slate-400" />
-                    Updated {formatUpdated(project.updated_at)}
-                  </div>
-                </button>
-              );
-            })
-          )}
-        </div>
+          </div>
+        )}
+        {projects.length === 0 && !loading && (
+          <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 shadow-sm">
+            <p className="text-sm text-slate-700">No projects found.</p>
+            <p className="text-xs text-slate-500 mt-1">
+              Push a project with <code className="px-1 bg-slate-100 rounded">idse sync push</code> to see it here.
+            </p>
+          </div>
+        )}
 
         {selectedProject && (
-          <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
+          <div className="grid gap-4 lg:grid-cols-2">
+            {/* Project Status Card (Blueprint) */}
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Status</p>
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Project Blueprint Status</p>
                   <p className="text-lg font-semibold text-slate-900">{selectedProject.name}</p>
                   <p className="text-xs text-slate-500">
-                    Last agent: {selectedStatus?.last_agent || selectedProject.state_json?.last_agent || "Unknown"}
+                    Last agent: {blueprintStatus?.last_agent || "Unknown"}
                   </p>
                 </div>
                 <div className="text-right">
@@ -253,7 +268,7 @@ export function IDSEProjectsDashboard({
               </div>
               <div className="mt-4 grid gap-2 md:grid-cols-3">
                 {STAGE_ORDER.map((stage) => {
-                  const status = stages[stage] || "pending";
+                  const status = blueprintStages[stage] || "pending";
                   const badge =
                     status === "complete" || status === "completed"
                       ? "bg-emerald-50 text-emerald-800 border-emerald-200"
@@ -273,34 +288,88 @@ export function IDSEProjectsDashboard({
                   );
                 })}
               </div>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-slate-900">Sync status</p>
-                {statusLoading && <Loader2 className="h-4 w-4 animate-spin text-cyan-600" />}
-              </div>
-              <dl className="mt-3 space-y-2 text-sm text-slate-700">
+              <dl className="mt-4 pt-4 border-t border-slate-200 space-y-2 text-sm text-slate-700">
                 <div className="flex items-center justify-between">
-                  <dt>Project ID</dt>
+                  <dt className="text-xs text-slate-500">Project ID</dt>
                   <dd className="font-mono text-xs text-slate-600 truncate max-w-[200px]">{selectedProject.id}</dd>
                 </div>
                 <div className="flex items-center justify-between">
-                  <dt>Last synced</dt>
-                  <dd>{selectedStatus?.last_synced ? new Date(selectedStatus.last_synced).toLocaleString() : "Unknown"}</dd>
-                </div>
-                <div className="flex items-center justify-between">
-                  <dt>Created</dt>
-                  <dd>
-                    {selectedStatus?.created_at
-                      ? new Date(selectedStatus.created_at).toLocaleString()
-                      : formatUpdated(selectedProject.created_at)}
-                  </dd>
+                  <dt className="text-xs text-slate-500">Last synced</dt>
+                  <dd className="text-xs">{blueprintStatus?.last_synced ? new Date(blueprintStatus.last_synced).toLocaleString() : "Unknown"}</dd>
                 </div>
               </dl>
-              <div className="mt-4 text-xs text-slate-500">
-                {"Data reflects the `/sync/status/{project_id}` endpoint. Refresh to pull the latest from Supabase."}
+            </div>
+
+            {/* Session Status Card */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                    {selectedSessionStatus?.is_blueprint ? "Blueprint Status" : "Session Status"}
+                  </p>
+                  <p className="text-lg font-semibold text-slate-900">
+                    {selectedSessionStatus?.session_name || currentSession || "No session selected"}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Project: {currentProject || "Unknown"}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className={`text-sm font-semibold ${sessionProgress.percent > 0 ? "text-cyan-700" : "text-slate-400"}`}>
+                    {sessionProgress.percent}% complete
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {sessionProgress.complete} of {sessionProgress.total} stages
+                  </p>
+                </div>
               </div>
+
+              <div className="mt-4 grid gap-2 md:grid-cols-3">
+                {STAGE_ORDER.map((stage) => {
+                  const status = sessionStages[stage] || "pending";
+                  const badge =
+                    status === "complete" || status === "completed"
+                      ? "mt-2 inline-flex rounded-full border px-3 py-1 text-xs font-semibold bg-emerald-50 text-emerald-700 border-emerald-200"
+                      : status === "in_progress"
+                      ? "mt-2 inline-flex rounded-full border px-3 py-1 text-xs font-semibold bg-blue-50 text-blue-700 border-blue-200"
+                      : "mt-2 inline-flex rounded-full border px-3 py-1 text-xs font-semibold bg-slate-50 text-slate-700 border-slate-200";
+
+                  return (
+                    <div
+                      key={stage}
+                      className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-3 shadow-inner shadow-slate-900/5"
+                    >
+                      <p className="text-sm font-semibold text-slate-900 capitalize">{stage}</p>
+                      <span className={badge}>{status.replace(/_/g, " ")}</span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <dl className="mt-4 pt-4 border-t border-slate-200 space-y-2 text-sm text-slate-700">
+                <div className="flex items-center justify-between">
+                  <dt className="text-xs text-slate-500">Session ID</dt>
+                  <dd className="font-mono text-xs text-slate-600 truncate max-w-[200px]">
+                    {selectedSessionStatus?.session_id || "N/A"}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between">
+                  <dt className="text-xs text-slate-500">Last synced</dt>
+                  <dd className="text-xs">
+                    {selectedSessionStatus?.last_synced
+                      ? new Date(selectedSessionStatus.last_synced).toLocaleString()
+                      : "Not synced"}
+                  </dd>
+                </div>
+                {selectedSessionStatus?.is_blueprint && (
+                  <div className="flex items-center gap-2 pt-2">
+                    <span className="text-lg">📘</span>
+                    <span className="text-xs text-slate-600">
+                      This is the project-level blueprint tracking meta-planning
+                    </span>
+                  </div>
+                )}
+              </dl>
             </div>
           </div>
         )}

@@ -194,7 +194,7 @@ const routes: FastifyPluginAsync = async (fastify) => {
       return {
         path: toRelative(resolvedPath, config.WORKSPACE_ROOT),
         saved: true as const,
-        mode: config.WRITE_MODE,
+        mode: 'local' as const,
       };
     },
   );

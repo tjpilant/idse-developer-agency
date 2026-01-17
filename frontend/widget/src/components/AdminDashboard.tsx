@@ -16,7 +16,7 @@ const API_BASE =
 export interface DashboardState {
   activeWorkspace: "welcome" | "puck" | "md" | "projects";
   puckSubView: "blocks" | "fields" | "outline" | "pages" | null;
-  mdSubView: "open" | "intent" | "spec" | "plan" | "tasks" | "context" | "implementation" | "feedback" | null;
+  mdSubView: "open" | "intent" | "spec" | "plan" | "tasks" | "context" | "implementation" | "feedback" | "meta" | null;
   mdCurrentPath: string | null;
   currentSession: {
     project: string;
@@ -135,7 +135,14 @@ export function AdminDashboard({ initialWorkspace }: AdminDashboardProps) {
     }
 
     if (state.activeWorkspace === "projects") {
-      return <IDSEProjectsDashboard apiBase={API_BASE} onProjectSelect={handleProjectSelect} />;
+      return (
+        <IDSEProjectsDashboard
+          apiBase={API_BASE}
+          currentProject={state.currentSession.project}
+          currentSession={state.currentSession.session}
+          onProjectSelect={handleProjectSelect}
+        />
+      );
     }
 
     return <WelcomeView />;

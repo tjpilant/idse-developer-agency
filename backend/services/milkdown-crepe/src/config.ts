@@ -9,9 +9,11 @@ const configSchema = z.object({
   WORKSPACE_ROOT: z.string().default(process.cwd()),
   MAX_BODY_SIZE: z.coerce.number().default(5 * 1024 * 1024),
   FRONTEND_URL: z.string().url().optional(),
-  ROLE_PROVIDER: z.enum(['memory', 'static', 'file']).default('file'),
+  ROLE_PROVIDER: z.enum(['memory', 'static', 'file', 'supabase']).default('file'),
   ROLE_MAP: z.string().optional(), // JSON map for static provider, e.g. {"user:session": "owner"}
   DISABLE_AUTH: z.coerce.boolean().default(false), // Set to true to disable auth for local dev
+  SUPABASE_URL: z.string().url().optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
 });
 
 export const config = configSchema.parse(process.env);

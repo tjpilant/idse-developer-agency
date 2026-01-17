@@ -8,11 +8,11 @@ import { sanitizeSchema } from './sanitize';
 
 export async function renderMarkdown(markdown: string){
   const result = await unified()
-    .use(remarkParse)
-    .use(remarkRehype, { allowDangerousHtml: true })
-    .use(rehypeRaw)
-    .use(rehypeSanitize, sanitizeSchema)
-    .use(rehypeStringify)
+    .use(remarkParse as any)
+    .use(remarkRehype as any, { allowDangerousHtml: true })
+    .use(rehypeRaw as any)
+    .use(rehypeSanitize as any, sanitizeSchema as any)
+    .use(rehypeStringify as any)
     .process(markdown);
   return String(result);
 }

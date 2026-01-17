@@ -47,15 +47,21 @@ export class StaticRoleProvider implements RoleProvider {
 }
 
 export { FileRoleProvider } from './roles/FileRoleProvider';
+export { SupabaseRoleProvider } from './roles/SupabaseRoleProvider';
 
 export async function configureRoleProvider(opts: {
-  mode: 'memory' | 'static' | 'file';
+  mode: 'memory' | 'static' | 'file' | 'supabase';
   staticMap?: Record<string, Role>;
   workspaceRoot?: string;
+  supabaseUrl?: string;
+  supabaseKey?: string;
 }) {
   if (opts.mode === 'file') {
     const { FileRoleProvider: FRP } = await import('./roles/FileRoleProvider');
     setRoleProvider(new FRP(opts.workspaceRoot || process.cwd()));
+  } else if (opts.mode === 'supabase' && opts.supabaseUrl && opts.supabaseKey) {
+    const { SupabaseRoleProvider: SRP } = await import('./roles/SupabaseRoleProvider');
+    setRoleProvider(new SRP({ supabaseUrl: opts.supabaseUrl, supabaseKey: opts.supabaseKey }));
   } else if (opts.mode === 'static' && opts.staticMap) {
     setRoleProvider(new StaticRoleProvider(opts.staticMap));
   } else {

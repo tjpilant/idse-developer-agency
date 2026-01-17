@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 from agency_swarm.tools import BaseTool
@@ -8,6 +9,7 @@ from pydantic import Field
 
 from implementation.code.spec import spec_agent
 from SessionManager import SessionManager
+from idse_developer_agent.tools.WriteDocumentToSupabaseTool import WriteDocumentToSupabaseTool
 
 
 class CreateSpecTool(BaseTool):
@@ -113,17 +115,53 @@ class CreateSpecTool(BaseTool):
                 raw = context_resolved.read_text(encoding="utf-8")
                 context_data = json.loads(raw)
                 spec_text = self._build_spec_from_structured(context_data)
-                output_resolved.write_text(spec_text, encoding="utf-8")
-                return f"✅ spec.md written from structured context to: {output_resolved}"
+
+                # Write to Supabase database
+                write_tool = WriteDocumentToSupabaseTool(
+                    project=meta.project,
+                    session=meta.session_id,
+                    path="specs/spec.md",
+                    content=spec_text,
+                    stage="spec"
+                )
+                write_result = write_tool.run()
+
+                if "✅" in write_result:
+                    return f"✅ spec.md written from structured context to Supabase database for {meta.project}/{meta.session_id}"
+                else:
+                    return f"❌ Failed to write to database: {write_result}"
+
             except json.JSONDecodeError:
                 # Fallback to spec_agent if not structured
                 pass
             except Exception as exc:
                 return f"❌ Failed to build spec from structured context: {exc}"
 
-        # Fallback to original spec agent
-        return spec_agent.run(
+        # Fallback to original spec agent (writes to filesystem temporarily)
+        result = spec_agent.run(
             intent_path=str(intent_resolved),
             context_path=str(context_resolved),
             output_path=str(output_resolved),
         )
+
+        # Read the generated spec from filesystem and write to database
+        if output_resolved.exists():
+            try:
+                spec_content = output_resolved.read_text(encoding="utf-8")
+                write_tool = WriteDocumentToSupabaseTool(
+                    project=meta.project,
+                    session=meta.session_id,
+                    path="specs/spec.md",
+                    content=spec_content,
+                    stage="spec"
+                )
+                write_result = write_tool.run()
+
+                if "✅" in write_result:
+                    return f"✅ spec.md generated and written to Supabase database for {meta.project}/{meta.session_id}"
+                else:
+                    return f"⚠️ spec.md generated locally but failed to sync to database: {write_result}"
+            except Exception as exc:
+                return f"⚠️ spec.md generated locally but failed to sync to database: {exc}"
+
+        return result

@@ -28,13 +28,14 @@ class StateTracker:
         else:
             self.state_file = None
 
-    def init_state(self, project_name: str, session_id: str) -> Dict:
+    def init_state(self, project_name: str, session_id: str, is_blueprint: bool = False) -> Dict:
         """
         Initialize session_state.json with default values.
 
         Args:
             project_name: Name of the project
             session_id: Session identifier (e.g., "session-1234567890")
+            is_blueprint: Whether this is a blueprint session
 
         Returns:
             Initial state dictionary
@@ -45,6 +46,7 @@ class StateTracker:
         state = {
             "project_name": project_name,
             "session_id": session_id,
+            "is_blueprint": is_blueprint,
             "stages": {stage: "pending" for stage in self.STAGE_NAMES},
             "last_sync": None,
             "validation_status": "unknown",
@@ -108,14 +110,18 @@ class StateTracker:
         Returns:
             Status dictionary with project info and stage progression
         """
-        # Auto-detect project if not specified
-        if not self.state_file and project_name:
+        # Auto-detect project/session_state.json if state_file not set or missing
+        if not self.state_file or not self.state_file.exists():
             from .project_manager import ProjectManager
 
             manager = ProjectManager()
-            project = manager.get_current_project()
-            if project:
-                self.state_file = project / "session_state.json"
+            if project_name:
+                project_path = manager.projects_root / project_name
+            else:
+                project_path = manager.get_current_project()
+
+            if project_path:
+                self.state_file = project_path / "session_state.json"
 
         if not self.state_file or not self.state_file.exists():
             raise FileNotFoundError("No session_state.json found. Run 'idse init' first.")

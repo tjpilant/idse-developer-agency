@@ -80,6 +80,7 @@ def register_routes():
             mcp_routes,
             chat_routes,
             documents_routes,
+            sessions_routes,
         )
 
         status_enabled = (
@@ -113,6 +114,9 @@ def register_routes():
         )
         app.include_router(
             documents_routes.router_legacy, tags=["Documents (Legacy)"]
+        )
+        app.include_router(
+            sessions_routes.router, tags=["Sessions"]
         )
         app.include_router(
             status_routes.active_router, tags=["Active Session"]

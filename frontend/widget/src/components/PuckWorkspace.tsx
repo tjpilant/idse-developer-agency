@@ -9,13 +9,25 @@ import { Save, FileText, Plus, Copy } from "lucide-react";
 const apiBase = (import.meta as any).env?.VITE_API_BASE ?? "http://localhost:8000";
 
 const seedContent: Data = {
-  content: [],
+  content: [
+    {
+      id: "hero-1",
+      type: "Hero",
+      props: {
+        heading: "Welcome to IDSE Developer Agency",
+        subheading: "Build better software with intent-driven guidance and AI copilots.",
+        ctaText: "Open the editor",
+        ctaLink: "/admin",
+        backgroundImage: "",
+      },
+    },
+  ],
   root: {
     props: {
-      title: "Untitled",
+      title: "Homepage",
     },
   },
-  slug: "",
+  slug: "home",
 };
 
 type PuckSubView = "blocks" | "fields" | "outline" | "pages";
@@ -226,7 +238,7 @@ export function PuckWorkspace({ activeSubView, onChangeSubView }: PuckWorkspaceP
   };
 
   return (
-    <>
+    <div className="flex flex-col h-full min-h-screen">
       {/* Toolbar */}
       <div className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4">
         <div className="flex items-center gap-3">
@@ -267,7 +279,7 @@ export function PuckWorkspace({ activeSubView, onChangeSubView }: PuckWorkspaceP
       )}
 
       {/* Puck Editor */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden min-h-0">
         <Puck
           key={`puck-editor-${loadNonce}`}
           config={puckConfig}
@@ -286,8 +298,8 @@ export function PuckWorkspace({ activeSubView, onChangeSubView }: PuckWorkspaceP
             <ControlPanel activeTab={activeSubView} onLoadPage={handleLoad} />
 
             {/* Preview Canvas (center column) */}
-            <main className="flex-1 min-w-0 bg-slate-50 overflow-auto min-h-0">
-              <div className="mx-auto my-4 w-full">
+            <main className="flex-1 min-w-0 bg-slate-50 min-h-0 h-full overflow-y-auto overflow-x-hidden max-h-[calc(100vh-180px)]">
+              <div className="mx-auto my-4 w-full max-w-6xl rounded-xl border border-slate-200 bg-white shadow-sm overflow-visible px-4 py-6">
                 <Puck.Preview />
               </div>
             </main>
@@ -302,6 +314,6 @@ export function PuckWorkspace({ activeSubView, onChangeSubView }: PuckWorkspaceP
         initialTitle={titleInput || (data as any).root?.title || ""}
         initialSlug={slugInput || (data as any).slug || ""}
       />
-    </>
+    </div>
   );
 }
